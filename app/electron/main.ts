@@ -12,8 +12,8 @@ let mainWindow: BrowserWindow | null = null
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1024,
-    height: 768,
+    width: 1424,
+    height: 1068,
     title: 'DV Graphics Engine',
     icon: join(__dirname, '../public/icon.png'),
     backgroundColor: '#141414',
