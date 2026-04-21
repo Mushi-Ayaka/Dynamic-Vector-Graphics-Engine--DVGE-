@@ -159,7 +159,7 @@ export const HomeMenu: React.FC = () => {
                             
                             <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(0,0,0,0.2)', borderRadius: '6px' }}>
                                 <strong style={{ color: 'white' }}>Desarrollador:</strong> Jonatan Barón<br/>
-                                <strong style={{ color: 'white' }}>Arquitectura Core:</strong> v4.0.0 Next-Gen (Sandbox Aislado)<br/>
+                                <strong style={{ color: 'white' }}>Arquitectura Core:</strong> v4.0.0 GA (Sandbox Aislado)<br/>
                                 <strong style={{ color: 'white' }}>Renderer:</strong> Remotion v4<br/>
                             </div>
 
