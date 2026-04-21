@@ -179,19 +179,28 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
         hasAwoken.current = false;
         hasStarted.current = false;
 
-        // CSS
-        if (activePluginFiles.css) {
-            const style = document.createElement('style');
-            style.textContent = activePluginFiles.css;
-            shadow.appendChild(style);
-        }
+        // CSS (Global Modular Styles + Plugin Styles)
+        const style = document.createElement('style');
+        style.textContent = GLOBAL_PLUGIN_CSS + (activePluginFiles.css || '');
+        shadow.appendChild(style);
 
-        // HTML
+        // HTML (Presets Fragments + Plugin HTML)
         const wrapper = document.createElement('div');
         wrapper.id = 'plugin-root';
         wrapper.style.width = '100%';
         wrapper.style.height = '100%';
-        wrapper.innerHTML = activePluginFiles.html;
+        
+        // Inyectar fragmentos de presets basados en lo que declare el manifiesto
+        let presetsHtml = '';
+        if (passedProps.presets) {
+            passedProps.presets.forEach((p: string) => {
+                if (PRESET_HTML_FRAGMENTS[p as keyof typeof PRESET_HTML_FRAGMENTS]) {
+                    presetsHtml += PRESET_HTML_FRAGMENTS[p as keyof typeof PRESET_HTML_FRAGMENTS];
+                }
+            });
+        }
+
+        wrapper.innerHTML = presetsHtml + activePluginFiles.html;
         shadow.appendChild(wrapper);
 
         // JS: Ejecución Segura via new Function

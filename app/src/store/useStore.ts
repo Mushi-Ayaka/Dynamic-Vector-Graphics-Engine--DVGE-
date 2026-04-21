@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { DVPlugin, GlobalEnv } from '../env'
+import { DVPlugin } from '../env'
 import { expandManifestFields } from './presets'
 
 // --- Tipo del Store ---
