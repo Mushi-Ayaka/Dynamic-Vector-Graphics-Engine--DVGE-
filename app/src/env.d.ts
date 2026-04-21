@@ -3,17 +3,18 @@
 export {}
 
 export interface FormField {
-  type: 'string' | 'color' | 'number' | 'image' | 'code' | 'info'
+  type: 'string' | 'color' | 'number' | 'image' | 'code' | 'info' | 'select'
   id: string
   label: string
   defaultValue: string | number
   group?: string // Opcional: para agrupar campos en la UI
+  options?: { label: string, value: string }[]
 }
 
 /**
  * [3.4.0] Tipos de Presets y Entorno Modular
  */
-export type PresetType = 'branding' | 'motion' | 'layout' | 'editor-full' | 'info';
+export type PresetType = 'branding' | 'motion' | 'layout' | 'editor-full';
 
 export interface GlobalEnv {
   isExporting: boolean;
@@ -46,6 +47,8 @@ export interface PluginManifest {
   version: string
   presets?: PresetType[]
   schema: FormField[]
+  externalScripts?: string[] // URLs de scripts JS (CDN)
+  externalStyles?: string[]  // URLs de estilos CSS (CDN)
 }
 
 export interface DVPlugin {

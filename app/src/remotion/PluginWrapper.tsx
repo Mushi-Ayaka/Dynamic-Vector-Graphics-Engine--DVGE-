@@ -179,16 +179,61 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
         hasAwoken.current = false;
         hasStarted.current = false;
 
-        // CSS (Global Modular Styles + Plugin Styles)
+        // CSS (External + Modular + Plugin)
+        const manifest = activePlugin.manifest;
+        if (manifest.externalStyles) {
+            manifest.externalStyles.forEach(url => {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = url;
+                shadow.appendChild(link);
+            });
+        }
+
         const style = document.createElement('style');
         style.textContent = GLOBAL_PLUGIN_CSS + (activePluginFiles.css || '');
         shadow.appendChild(style);
+
+        // JS (External Scripts)
+        if (manifest.externalScripts) {
+            manifest.externalScripts.forEach(url => {
+                const script = document.createElement('script');
+                script.src = url;
+                script.async = false; // Preservar orden
+                shadow.appendChild(script);
+            });
+        }
 
         // HTML (Presets Fragments + Plugin HTML)
         const wrapper = document.createElement('div');
         wrapper.id = 'plugin-root';
         wrapper.style.width = '100%';
         wrapper.style.height = '100%';
+        wrapper.style.display = 'flex';
+        
+        // Manejo de Alineación Global v3.4.0
+        const align = properties.contentAlign || 'top-left';
+        switch (align) {
+            case 'center':
+                wrapper.style.justifyContent = 'center';
+                wrapper.style.alignItems = 'center';
+                break;
+            case 'bottom-center':
+                wrapper.style.justifyContent = 'center';
+                wrapper.style.alignItems = 'flex-end';
+                break;
+            case 'bottom-right':
+                wrapper.style.justifyContent = 'flex-end';
+                wrapper.style.alignItems = 'flex-end';
+                break;
+            case 'bottom-left':
+                wrapper.style.justifyContent = 'flex-start';
+                wrapper.style.alignItems = 'flex-end';
+                break;
+            default: // top-left
+                wrapper.style.justifyContent = 'flex-start';
+                wrapper.style.alignItems = 'flex-start';
+        }
         
         // Inyectar fragmentos de presets basados en lo que declare el manifiesto
         let presetsHtml = '';
@@ -202,6 +247,38 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
 
         wrapper.innerHTML = presetsHtml + activePluginFiles.html;
         shadow.appendChild(wrapper);
+
+        // Inyección Automática de Logo v3.4.0 (Branding Preset)
+        if (properties.brandLogo && properties.logoPosition !== 'none') {
+            const logoContainer = document.createElement('div');
+            logoContainer.className = 'dv-logo-overlay';
+            const size = properties.logoSize || 100;
+            const margin = properties.safeAreaPadding || 60;
+            
+            logoContainer.style.width = `${size}px`;
+            
+            switch (properties.logoPosition) {
+                case 'top-right':
+                    logoContainer.style.top = `${margin}px`;
+                    logoContainer.style.right = `${margin}px`;
+                    break;
+                case 'top-left':
+                    logoContainer.style.top = `${margin}px`;
+                    logoContainer.style.left = `${margin}px`;
+                    break;
+                case 'bottom-right':
+                    logoContainer.style.bottom = `${margin}px`;
+                    logoContainer.style.right = `${margin}px`;
+                    break;
+                case 'bottom-left':
+                    logoContainer.style.bottom = `${margin}px`;
+                    logoContainer.style.left = `${margin}px`;
+                    break;
+            }
+
+            logoContainer.innerHTML = `<img src="${properties.brandLogo}" />`;
+            shadow.appendChild(logoContainer);
+        }
 
         // JS: Ejecución Segura via new Function
         if (activePluginFiles.js) {

@@ -8,29 +8,65 @@ import { FormField, PresetType } from '../env';
 export const PRESET_REGISTRY: Record<PresetType, FormField[]> = {
   'branding': [
     { id: 'brandLogo', type: 'image', label: 'Logo de Marca', defaultValue: '', group: 'Branding' },
+    { 
+      id: 'logoPosition', 
+      type: 'select', 
+      label: 'Posición del Logo', 
+      defaultValue: 'top-right', 
+      group: 'Branding',
+      options: [
+        { label: 'Arriba Derecha', value: 'top-right' },
+        { label: 'Arriba Izquierda', value: 'top-left' },
+        { label: 'Abajo Derecha', value: 'bottom-right' },
+        { label: 'Abajo Izquierda', value: 'bottom-left' },
+        { label: 'Oculto', value: 'none' }
+      ]
+    },
+    { id: 'logoSize', type: 'number', label: 'Tamaño Logo (px)', defaultValue: 100, group: 'Branding' },
     { id: 'brandPrimaryColor', type: 'color', label: 'Color Principal', defaultValue: '#E44C30', group: 'Branding' },
     { id: 'brandSlogan', type: 'string', label: 'Eslogan / Subtítulo', defaultValue: 'Dynamic Graphics', group: 'Branding' },
   ],
   'motion': [
+    { id: 'fps', type: 'number', label: 'FPS (Velocidad)', defaultValue: 60, group: 'Animación' },
+    { id: 'totalDuration', type: 'number', label: 'Duración Total (s)', defaultValue: 5, group: 'Animación' },
     { id: 'entryDuration', type: 'number', label: 'Duración Entrada (ms)', defaultValue: 500, group: 'Animación' },
     { id: 'exitDuration', type: 'number', label: 'Duración Salida (ms)', defaultValue: 500, group: 'Animación' },
-    { id: 'easingType', type: 'string', label: 'Curva de Easing', defaultValue: 'easeOutCubic', group: 'Animación' },
+    { 
+      id: 'easingType', 
+      type: 'select', 
+      label: 'Curva de Easing', 
+      defaultValue: 'easeOutCubic', 
+      group: 'Animación',
+      options: [
+        { label: 'Cubic (Suave)', value: 'easeOutCubic' },
+        { label: 'Expo (Rápido)', value: 'easeOutExpo' },
+        { label: 'Linear (Constante)', value: 'linear' },
+        { label: 'Back (Rebote)', value: 'easeOutBack' }
+      ]
+    },
   ],
   'layout': [
+    { id: 'resolutionWidth', type: 'number', label: 'Ancho (px)', defaultValue: 1920, group: 'Layout' },
+    { id: 'resolutionHeight', type: 'number', label: 'Alto (px)', defaultValue: 1080, group: 'Layout' },
+    { 
+      id: 'contentAlign', 
+      type: 'select', 
+      label: 'Alineación Global', 
+      defaultValue: 'center', 
+      group: 'Layout',
+      options: [
+        { label: 'Centro', value: 'center' },
+        { label: 'Abajo Centro', value: 'bottom-center' },
+        { label: 'Abajo Derecha', value: 'bottom-right' },
+        { label: 'Abajo Izquierda', value: 'bottom-left' },
+        { label: 'Arriba Izquierda (Default)', value: 'top-left' }
+      ]
+    },
     { id: 'safeAreaPadding', type: 'number', label: 'Margen de Seguridad (px)', defaultValue: 60, group: 'Layout' },
     { id: 'showSafeGuides', type: 'code', label: 'Mostrar Guías (true/false)', defaultValue: 'false', group: 'Layout' },
   ],
   'editor-full': [
       { id: 'editorActive', type: 'code', label: 'Estado del Editor (Internal)', defaultValue: 'true', group: 'Editor' }
-  ],
-  'info': [
-      { 
-        id: 'aiInstructions', 
-        type: 'info', 
-        label: 'Super Prompt para IA Externa', 
-        defaultValue: 'Actúa como un desarrollador senior de Motion Graphics. Genera un plugin para DVGE v3.4.0 siguiendo estas reglas:\n\n1. TECNOLOGÍA: Vanilla HTML/CSS/JS (❌ NO React/Librerías).\n2. MODULARIDAD: Usa presets ["branding", "motion", "layout"] en manifest.json.\n3. API: dvEngine.register({ awake, start, update }).\n4. DOM: Usa ctx.root.getElementById() (Shadow DOM). NUNCA uses "document".\n5. ANIMACIÓN: Usa ctx.frame y dvEngine.utils.\n6. BROADCAST: 1920x1080. Usa clases .dv-glass y .dv-safe-area.\n\n[DESCRIPCIÓN DEL PLUGIN: ...]', 
-        group: 'Ayuda' 
-      }
   ]
 };
 

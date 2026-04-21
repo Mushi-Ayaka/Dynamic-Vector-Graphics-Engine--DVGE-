@@ -40,6 +40,19 @@ export const GLOBAL_PLUGIN_CSS = `
     background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
     background-size: 20px 20px;
 }
+
+.dv-logo-overlay {
+    position: absolute;
+    z-index: 9999;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.dv-logo-overlay img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+}
 `;
 
 /**

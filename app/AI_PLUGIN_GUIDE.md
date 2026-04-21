@@ -33,11 +33,10 @@ Define el nombre del plugin, su descripción y los **campos editables** que apar
 }
 ```
 
-Los tipos de campo disponibles son: `"string"` (texto), `"color"` (selector de color), `"number"` (numerico), `"image"` (ruta de imagen) y `"code"` (editor multilínea).
+Los tipos de campo disponibles son: `"string"`, `"color"`, `"number"`, `"image"`, `"code"`, `"info"` (copiable) y `"select"` (desplegable con opciones).
 
-### 1b. [Novedad v3.4] Uso de PRESETS
-
-A partir de la versión 3.4.0, puedes usar **Presets** para no tener que definir campos comunes. El motor expandirá automáticamente estos grupos en el panel lateral:
+### 1b. [Novedad v3.4] Uso de PRESETS y Automatización
+A partir de la versión 3.4.0, el motor no solo genera la UI, sino que **toma decisiones inteligentes** para ahorrarte código:
 
 ```json
 {
@@ -46,9 +45,21 @@ A partir de la versión 3.4.0, puedes usar **Presets** para no tener que definir
 }
 ```
 
-- **`branding`**: Inyecta Logo, Color Principal y Eslogan.
-- **`motion`**: Inyecta Duración de Entrada/Salida y tipo de Easing.
-- **`layout`**: Inyecta Margen de Seguridad y Guías.
+- **`branding` (Activo)**: Inyecta logo y colores. El motor ahora **renderiza automáticamente el logo** en la esquina que elijas (Top-Right, Bottom-Left, etc.) sin que escribas HTML.
+- **`motion` (Export Ready)**: Inyecta controles de FPS, Duración Total (segundos) y curvas de Easing.
+- **`layout` (Auto-Pos)**: Inyecta el campo **"Alineación Global"**. El motor usará Flexbox para centrar o posicionar tu gráfico automáticamente.
+
+### 1c. [Novedad v3.4] Librerías Externas (CDN)
+Ahora puedes usar el poder de librerías como **GSAP** o **Three.js** declarándolas en el manifest:
+```json
+{
+  "externalScripts": ["https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"],
+  "externalStyles": ["https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"]
+}
+```
+
+> [!TIP]
+> **🚀 Inspector Profesional:** El panel lateral ahora organiza los campos en **Grupos Colapsables** (Branding, Animación, etc.), igual que el Inspector de Unity, para mantener el orden.
 
 > [!TIP]
 > **🚀 Caso de Éxito v3.4:** Al migrar un plugin complejo al uso de estos `presets` y clases globales, logramos reducir su código en un **93%** (de 1,896 a 117 líneas). ¡Deja que el motor y los presets construyan la interfaz por ti!
@@ -155,15 +166,15 @@ Para lograr una generación "One-Shot" (que funcione a la primera), es vital inc
 > **Copia el siguiente bloque y pégalo en tu asistente. Está diseñado para prevenir los errores detectados en la auditoría v3.2.1.**
 
 ```text
-Actúa como un desarrollador senior de Motion Graphics. Genera un plugin para DVGE v3.4.0 (Modular Engine) siguiendo estas reglas:
+Actúa como un desarrollador senior de Motion Graphics. Genera un plugin para DVGE v3.4.0 siguiendo estas reglas:
 
-1. TECNOLOGÍA: Usa SOLO HTML/CSS y Vanilla Javascript. ❌ NO USAR React, Vue ni librerías externas (GSAP, etc).
-2. MODULARIDAD: Usa el preset ["branding", "motion", "layout"] en manifest.json. NO definas campos de color o logo manualmente.
+1. TECNOLOGÍA: Usa SOLO HTML/CSS y Vanilla Javascript.
+2. MODULARIDAD: Usa presets ["branding", "motion", "layout"] en manifest.json.
 3. API: Usa dvEngine.register({ awake, start, update }).
 4. DOM: Usa ctx.root.getElementById() (Shadow DOM). NUNCA uses 'document'.
-5. ANIMACIÓN: Usa ctx.frame (no requestAnimationFrame). Usa dvEngine.utils (lerp, easeOutCubic).
-6. BROADCAST: Resolución 1920x1080. Usa clases nativas .dv-glass y .dv-safe-area para un look premium.
-7. OPTIMIZACIÓN: Usa ctx.env.isExporting para desactivar efectos pesados en preview.
+5. POSICIONAMIENTO: No te preocupes por centrar el div principal; el usuario usará la "Alineación Global" del motor.
+6. LIBRERÍAS: Si necesitas GSAP o Three.js, decláralas en "externalScripts" dentro del manifest.json.
+7. ANIMACIÓN: Usa ctx.frame y dvEngine.utils.
 
 Genera 4 archivos (manifest.json, index.html, style.css, script.js).
 
