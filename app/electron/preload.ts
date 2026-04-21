@@ -28,6 +28,8 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   openPluginsFolder: () => ipcRenderer.send('open-plugins-folder'),
   getDocContent: (docName: string) => ipcRenderer.invoke('get-doc-content', docName),
   getPluginFiles: (pluginId: string) => ipcRenderer.invoke('get-plugin-files', pluginId),
+  installPlugin: (pluginId: string, files: any) => ipcRenderer.invoke('install-plugin', { pluginId, files }),
+  deletePlugin: (pluginId: string) => ipcRenderer.invoke('delete-plugin', pluginId),
   logSync: (data: any) => ipcRenderer.send('log-sync', data),
   
   // Workspace / Proyectos

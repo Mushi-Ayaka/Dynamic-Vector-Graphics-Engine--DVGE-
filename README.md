@@ -1,15 +1,14 @@
-# 🚀 Dynamic Vector Graphics Engine (DVGE) v3.1.0
-
+# 🚀 Dynamic Vector Graphics Engine (DVGE) v4.1.0 GA
 **Dynamic Vector Graphics Engine (DVGE)** is a high-performance desktop application designed for professional broadcast graphics. Built with React, Electron, and Remotion, it allows producers and editors to create, customize, and export dynamic graphics (lower thirds, titles, callouts) with real-time feedback and native ProRes 4444 + Alpha support.
 
 ## ✨ Key Features
 
-- **Live 60FPS Preview**: Real-time rendering of complex animations using a dedicated Shadow DOM isolation layer.
-- **Plugin-Based Architecture**: Plugins are standalone web modules (HTML/CSS/JS) isolated via Shadow DOM to prevent style leakage.
-- **Silent Autosave**: State persistence with 500ms debouncing and visual UI feedback.
-- **Professional Export**: Render composition frames directly to ProRes 4444 (.mov) with transparent background.
-- **AI-Ready Workflow**: Comprehensive guides and optimized prompts to generate full plugins using LLMs (Claude, GPT, Gemini).
-- **Native Utility Library (v3.1)**: Built-in `dvEngine.utils` for high-performance math and easing functions (`lerp`, `clamp`, `easeOutBounce`, etc.).
+- **Plugin Marketplace (v4.1)**: Discover, install, and update graphics directly from the official GitHub registry.
+- **Security Sandbox**: Isolated plugin execution via Shadow DOM and `fakeWindow` to prevent system interference.
+- **Atomic Async I/O**: Resilient project persistence using atomic file operations to prevent data corruption.
+- **Live 60FPS Preview**: Real-time rendering with deterministic frame-based animation (`ctx.timeline`).
+- **AI-Ready Workflow**: Comprehensive guides to generate full plugins using LLMs.
+- **Professional Export**: Native ProRes 4444 (.mov) support with transparent background.
 
 ## Technical Stack
 
@@ -54,7 +53,7 @@ To generate the installer (.exe) for Windows:
 ```bash
 npm run build
 ```
-The output will be located in the `release/3.1.0` folder.
+The output will be located in the `release/4.1.0` folder.
 
 ## Project Structure
 

@@ -248,4 +248,28 @@ dvEngine.register({
 
     return files
   }
+
+  public deletePlugin(pluginId: string) {
+    const folderPath = path.join(this.baseDir, pluginId)
+    if (fs.existsSync(folderPath)) {
+      console.log(`[PluginManager] Deleting plugin: ${pluginId}`)
+      fs.rmSync(folderPath, { recursive: true, force: true })
+      return true
+    }
+    return false
+  }
+
+  public installPlugin(pluginId: string, files: { manifest: any, html: string, css: string, js: string }) {
+    const folderPath = path.join(this.baseDir, pluginId)
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true })
+    }
+
+    console.log(`[PluginManager] Installing/Updating plugin: ${pluginId}`)
+    fs.writeFileSync(path.join(folderPath, 'manifest.json'), JSON.stringify(files.manifest, null, 2))
+    fs.writeFileSync(path.join(folderPath, 'index.html'), files.html)
+    fs.writeFileSync(path.join(folderPath, 'style.css'), files.css)
+    fs.writeFileSync(path.join(folderPath, 'script.js'), files.js)
+    return true
+  }
 }

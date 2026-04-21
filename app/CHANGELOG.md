@@ -1,6 +1,12 @@
+## [4.1.0] - 2026-04-21 (GA)
+### 🛍️ Plugin Marketplace & Ecosystem
+- **Marketplace Integrado**: Nuevo panel para descubrir y descargar plugins directamente desde el repositorio oficial de GitHub (`Mushi-Ayaka/Dynamic-Vector-Engine-Plugins`).
+- **Gestión Dinámica**: Soporte para instalación, actualización y borrado de plugins desde la UI.
+- **Identidad Profesional**: Inclusión de redes sociales (GitHub, Portafolio) y contacto directo vía Gmail en el modal "Acerca de".
+
 ## [4.0.0] - 2026-04-21 (GA)
 
-### 🛡️ QA Remediation & Next-Gen Architecture
+### 🛡️ QA Remediation & GA Architecture
 - **Sandbox Aislado**: Se selló la fuga del objeto global. Los plugins se ejecutan con `fakeWindow` y sin acceso a APIs de Electron.
 - **I/O Seguro**: Autoguardado asíncrono y atómico (`.tmp`), impidiendo corrupción de proyectos si el motor se cierra abruptamente.
 - **Graceful Degradation**: Captura y aislamiento de crashes en el código del plugin sin congelar la app.

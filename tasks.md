@@ -14,7 +14,7 @@ Este documento registra la evolución del motor y el cumplimiento de los planes 
 - [x] **Tarea 3.1:** Implementación de `fakeWindow` y sellado de variables `process/require`.
 - [x] **Tarea 3.2:** Aislamiento de excepciones en el loop de 60fps (Graceful Degradation).
 
-## Fase 4: API Determinística (The Next-Gen Engine)
+## Fase 4: API Determinística (The GA Engine)
 - [x] **Tarea 4.1:** Enriquecimiento de `dvUtils` (`spring`, `typewriter`, `lerp`).
 - [x] **Tarea 4.2:** Implementación de `ctx.timeline` normalizado.
 - [x] **Tarea 4.3:** Memoria oficial `ctx.state` y `ctx.refs`.

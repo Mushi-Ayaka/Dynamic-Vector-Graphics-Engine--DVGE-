@@ -12,8 +12,8 @@ let mainWindow: BrowserWindow | null = null
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 900,
-    height: 700,
+    width: 1024,
+    height: 768,
     title: 'DV Graphics Engine',
     icon: join(__dirname, '../public/icon.png'),
     backgroundColor: '#141414',
@@ -73,6 +73,14 @@ app.whenReady().then(() => {
   ipcMain.handle('get-plugin-files', (_event, pluginId: string) => {
     console.log(`[IPC] get-plugin-files: ${pluginId}`)
     return pluginManager.getPluginFiles(pluginId)
+  })
+
+  ipcMain.handle('install-plugin', (_event, data: { pluginId: string, files: any }) => {
+    return pluginManager.installPlugin(data.pluginId, data.files)
+  })
+
+  ipcMain.handle('delete-plugin', (_event, pluginId: string) => {
+    return pluginManager.deletePlugin(pluginId)
   })
 
   // Handlers del Workspace / Proyectos

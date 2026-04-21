@@ -6,7 +6,10 @@ Un **plugin** en el Dynamic Vector Graphics Engine (DVGE) es un gráfico de vide
 
 Cada plugin vive en su propia carpeta dentro del directorio de plugins de tu sistema, y está compuesto por exactamente **cuatro archivos** que definen su apariencia, comportamiento y controles editables.
 
-El motor fue diseñado para que cualquier persona, con o sin experiencia en programación, pueda crear sus propios plugins valiéndose de un asistente de inteligencia artificial. A partir de la **versión 3.2.0**, el motor genera automáticamente los controles en la aplicación basándose en el `manifest.json` que la IA escriba.
+El motor fue diseñado para que cualquier persona, con o sin experiencia en programación, pueda crear sus propios plugins valiéndose de un asistente de inteligencia artificial. A partir de la **versión 4.1.0**, el motor incluye un **Marketplace** integrado para descargar plugins oficiales directamente desde GitHub.
+
+### 🛍️ Novedad v4.1: Plugin Marketplace
+Ahora no solo puedes crear tus propios gráficos, sino que puedes compartirlos con el mundo. Si subes tus carpetas de plugins a un repositorio de GitHub y generas un `registry.json`, cualquier usuario de DVGE podrá instalarlos con un solo clic desde el panel **Marketplace**.
 
 
 ---
@@ -201,7 +204,7 @@ Para lograr una generación "One-Shot" (que funcione a la primera), es vital inc
 > **Copia el siguiente bloque y pégalo en tu asistente. Está diseñado para prevenir los errores detectados en la auditoría v3.2.1.**
 
 ```text
-Actúa como un desarrollador senior de Motion Graphics. Genera un plugin para DVGE v3.4.0 siguiendo estas reglas:
+Actúa como un desarrollador senior de Motion Graphics. Genera un plugin para DVGE v4.1.0 siguiendo estas reglas:
 
 1. TECNOLOGÍA: Usa SOLO HTML/CSS y Vanilla Javascript.
 2. MODULARIDAD: Usa presets ["branding", "motion", "layout"] en manifest.json.

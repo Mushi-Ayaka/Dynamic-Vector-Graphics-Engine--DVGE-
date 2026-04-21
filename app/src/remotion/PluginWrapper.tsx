@@ -75,7 +75,7 @@ const dvUtils = {
 };
 
 /**
- * ## [4.0.0] - PluginWrapper Next-Gen (Sandbox sellado, API Determinística)
+ * ## [4.0.0] - PluginWrapper GA (Sandbox sellado, API Determinística)
  */
 
 export const PluginWrapper: React.FC<any> = (passedProps) => {

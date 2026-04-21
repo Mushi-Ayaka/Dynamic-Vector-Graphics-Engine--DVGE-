@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
-import { FolderOpen, Plus } from 'lucide-react';
+import { FolderOpen, Plus, ShoppingBag } from 'lucide-react';
 import './HomeMenu.css';
+import { PluginGallery } from './PluginGallery';
 
 export const HomeMenu: React.FC = () => {
-    const { loadProject, plugins } = useStore();
+    const { loadProject, plugins, isGalleryOpen, toggleGallery } = useStore();
     const [projects, setProjects] = useState<any[]>([]);
     const [isCreating, setIsCreating] = useState(false);
     const [newProjName, setNewProjName] = useState('');
@@ -121,17 +122,28 @@ export const HomeMenu: React.FC = () => {
 
             <div className="home-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <span><FolderOpen size={14} /> v4.0.0 GA </span>
+                    <span><FolderOpen size={14} /> v4.1.0 GA </span>
                     <span>•</span>
                     <span>Jonatan Barón</span>
                 </div>
-                <button 
-                    className="dv-btn-small secondary" 
-                    onClick={() => setIsAboutOpen(true)}
-                >
-                    ℹ️ Acerca de DVGE
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                        className="dv-btn-small" 
+                        style={{ background: 'rgba(228,76,48,0.15)', color: '#E44C30', border: '1px solid rgba(228,76,48,0.3)' }}
+                        onClick={toggleGallery}
+                    >
+                        <ShoppingBag size={14} style={{ marginRight: '5px' }} /> Plugin Marketplace
+                    </button>
+                    <button 
+                        className="dv-btn-small secondary" 
+                        onClick={() => setIsAboutOpen(true)}
+                    >
+                        ℹ️ Acerca de DVGE
+                    </button>
+                </div>
             </div>
+
+            {isGalleryOpen && <PluginGallery />}
 
             {/* Modal "Acerca de" */}
             {isAboutOpen && (
@@ -150,7 +162,7 @@ export const HomeMenu: React.FC = () => {
                             <img src="icon.png" alt="DVGE" style={{ width: '48px', height: '48px' }} />
                             <div>
                                 <h2 style={{ margin: 0, fontSize: '18px', color: 'white' }}>Dynamic Vector Graphics Engine</h2>
-                                <span style={{ color: '#E44C30', fontSize: '12px', fontWeight: 'bold' }}>[DVGE]-[v4.0.0]-[GA]-[B210426-1720]</span>
+                                <span style={{ color: '#E44C30', fontSize: '12px', fontWeight: 'bold' }}>[DVGE]-[v4.1.0]-[GA]-[B210426-2305]</span>
                             </div>
                         </div>
 
@@ -159,13 +171,14 @@ export const HomeMenu: React.FC = () => {
                             
                             <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(0,0,0,0.2)', borderRadius: '6px' }}>
                                 <strong style={{ color: 'white' }}>Desarrollador:</strong> Jonatan Barón<br/>
-                                <strong style={{ color: 'white' }}>Arquitectura Core:</strong> v4.0.0 GA (Sandbox Aislado)<br/>
-                                <strong style={{ color: 'white' }}>Renderer:</strong> Remotion v4<br/>
+                                <strong style={{ color: 'white' }}>Arquitectura:</strong> Standalone Client-Host (Sandbox Aislado)<br/>
+                                <strong style={{ color: 'white' }}>Motor:</strong> Remotion v4 + Electron<br/>
                             </div>
 
-                            <div style={{ marginTop: '15px', color: 'rgba(255,255,255,0.5)' }}>
-                                {/* TODO: Añadir Redes Sociales / Links aquí */}
-                                <p style={{ fontStyle: 'italic' }}>Esperando información de redes y contacto...</p>
+                            <div style={{ marginTop: '15px', display: 'flex', gap: '15px' }}>
+                                <a href="https://github.com/Mushi-Ayaka" target="_blank" rel="noopener" style={{ color: '#E44C30', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }}>GitHub</a>
+                                <a href="https://portafolio-jonatan-baron.vercel.app/" target="_blank" rel="noopener" style={{ color: '#E44C30', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }}>Portafolio</a>
+                                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=barojonatan8@gmail.com" target="_blank" rel="noopener" style={{ color: '#E44C30', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }}>Contacto</a>
                             </div>
                         </div>
 

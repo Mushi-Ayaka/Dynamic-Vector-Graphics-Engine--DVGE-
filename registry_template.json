@@ -1,0 +1,27 @@
+{
+  "plugins": [
+    {
+      "id": "lower-third-modern",
+      "name": "Lower Third Modern",
+      "description": "Banda de texto minimalista con animación de entrada lateral y desenfoque glassmorphism.",
+      "version": "1.1.0",
+      "author": "Jonatan Barón",
+      "updatedAt": "2026-04-21T18:00:00Z",
+      "files": {
+        "manifest": {
+          "id": "lower-third-modern",
+          "name": "Lower Third Modern",
+          "description": "Minimalist broadcast lower third.",
+          "version": "1.1.0",
+          "schema": [
+            { "type": "string", "id": "name", "label": "Nombre", "defaultValue": "Jonatan Barón" },
+            { "type": "string", "id": "role", "label": "Rol", "defaultValue": "Senior Developer" }
+          ]
+        },
+        "html": "<div id='card' class='dv-glass dv-safe-area'><h1 id='n'></h1><p id='r'></p></div>",
+        "css": "#card { padding: 20px; border-radius: 10px; border-left: 5px solid var(--accent); } #n { font-size: 32px; color: white; margin: 0; } #r { font-size: 18px; color: #ccc; margin: 0; }",
+        "js": "dvEngine.register({ awake: (ctx) => { ctx.refs.n = ctx.root.getElementById('n'); ctx.refs.r = ctx.root.getElementById('r'); }, update: (ctx) => { ctx.refs.n.innerText = ctx.props.name; ctx.refs.r.innerText = ctx.props.role; } });"
+      }
+    }
+  ]
+}

@@ -27,6 +27,8 @@ type StoreState = {
 
   isPluginManagerOpen: boolean
   togglePluginManager: () => void
+  isGalleryOpen: boolean
+  toggleGallery: () => void
 
   activePluginId: string | null
   setRenderProgress: (progress: number) => void
@@ -112,6 +114,8 @@ export const useStore = create<StoreState>((set, get) => ({
 
   isPluginManagerOpen: false,
   togglePluginManager: () => set((state) => ({ isPluginManagerOpen: !state.isPluginManagerOpen })),
+  isGalleryOpen: false,
+  toggleGallery: () => set((state) => ({ isGalleryOpen: !state.isGalleryOpen })),
 
   activePluginId: null,
 

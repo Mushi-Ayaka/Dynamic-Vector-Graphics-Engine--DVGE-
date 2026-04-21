@@ -70,6 +70,10 @@ declare global {
       openPluginsFolder: () => void;
       getManualContent: () => Promise<string>;
       getPluginFiles: (pluginId: string) => Promise<{ html: string; css: string; js: string } | null>;
+      installPlugin: (pluginId: string, files: any) => Promise<boolean>;
+      deletePlugin: (pluginId: string) => Promise<boolean>;
+      logSync: (data: any) => void;
+      getDocContent: (docName: string) => Promise<string>;
       
       // Workspace / Proyectos
       getProjects: () => Promise<any[]>;

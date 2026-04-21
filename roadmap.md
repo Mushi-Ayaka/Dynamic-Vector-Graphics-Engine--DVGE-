@@ -31,11 +31,16 @@ El proyecto adopta una arquitectura desacoplada Standalone Client-Host para aseg
 - [x] **v3.3.0:** Soporte para edición de código (`code` input) y Master Renderer para HTML puro.
 - [x] **v3.4.0:** Presets modulares (`branding`, `motion`, `layout`), inyección automática de logo y CDNs en el manifiesto.
 
-## Fase 5: QA Remediation y Next-Gen Architecture (v4.0.0 GA) (Completado ✅)
+## Fase 5: QA Remediation y GA Architecture (v4.0.0 GA) (Completado ✅)
 
 - [x] **Security Isolation:** Bloqueo del objeto `window` (fakeWindow) para impedir acceso a IPC desde los plugins.
 - [x] **Atomic Async I/O:** Guardado de propiedades mediante archivos `.tmp` y renombrado atómico asíncrono para prevenir la corrupción por apagones.
-- [x] **Graceful Degradation:** Manejo exhaustivo de fallos con `try/catch` en la función `update` del plugin, con deshabilitación de seguridad en caso de crash (Evitando pantallas blancas).
-- [x] **API Determinística (`ctx.timeline`):** Transición a matemática de cuadros (frame-math) prohibiendo librerías asíncronas como GSAP para asegurar renders *frame-perfect* en ProRes.
-- [x] **Estado Persistente Oficial:** Inclusión de `ctx.state` y `ctx.refs` en la API del motor.
-- [x] **Ecosistema Refactorizado:** Adaptación del `cinematic-opener` y `scoreboard-pro` a Vanilla JS 100%.
+- [x] **Graceful Degradation:** Manejo exhaustivo de fallos con `try/catch` en la función `update` del plugin.
+- [x] **API Determinística (`ctx.timeline`):** Transición a matemática de cuadros (frame-math).
+
+## Fase 6: Ecosistema y Distribución (v4.1.0 GA) (Completado ✅)
+
+- [x] **Plugin Marketplace:** Implementación de galería de descarga directa desde GitHub.
+- [x] **Gestión Dinámica:** Sistemas de instalación, actualización y eliminación de módulos desde la UI.
+- [x] **Identidad Profesional:** Integración de enlaces sociales y contacto directo en el producto.
+- [x] **Repositorio de Plugins Centralizado:** Creación del catálogo oficial `Dynamic-Vector-Engine-Plugins`.
