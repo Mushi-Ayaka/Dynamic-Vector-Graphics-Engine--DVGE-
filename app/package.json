@@ -2,6 +2,8 @@
   "name": "dv-web-graphics-engine",
   "version": "3.4.0",
   "main": "dist-electron/main.js",
+  "description": "Professional Dynamic Vector Graphics Engine for Broadcast Animation",
+  "author": "Jonatan Baron",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
