@@ -267,16 +267,18 @@ dvEngine.register({
 
 ---
 
-## 🛠️ Paso a Paso para Crear un Plugin con IA
+## 🛠️ Paso a Paso para Crear un Plugin con IA (v3.4.0)
 
 Sigue este flujo de trabajo garantizado para generar plugins de alta calidad sin frustraciones:
 
-1. **Copia el Prompt Maestro:** Copia el bloque delineado arriba ("Actúa como un desarrollador senior...") y pégalo en tu asistente de IA (ChatGPT, Claude, etc).
-2. **Describe tu Visión:** Completa la sección `[DESCRIPCIÓN DEL PLUGIN]` con instrucciones claras.
-   - *Mal:* "Hazme un título".
-   - *Bien:* "Haz un Lower Third para documentales. Fondo transparente con `.dv-glass`, un texto grande para el nombre y otro pequeño para la profesión. Usa `brandPrimaryColor` para una línea separadora."
-3. **Crea la Carpeta:** En la app DVGE, ve a **Menú Ayuda → Abrir Carpeta de Plugins**. Crea una nueva carpeta, por ejemplo `mi-super-titulo`.
-4. **Pega los 4 Archivos:** Copia los cuatro bloques de código que te dio la IA (`manifest.json`, `index.html`, `style.css`, y `script.js`) y guárdalos dentro de esa carpeta.
-5. **Abre DVGE:** Inicia la aplicación. Verás tu plugin aparecer mágicamente en la lista, y gracias a los Presets Modulares de la v3.4, los paneles de colores y opciones se generarán solos en el Sidebar.
+1. **Copia el Super Prompt:** Dentro de DVGE, abre cualquier plugin (ej: Master Renderer) y en la sección **AYUDA**, haz clic en el botón **COPIAR**. Ese texto ya contiene todas las reglas técnicas de la v3.4.0. Pégalo en tu asistente de IA (ChatGPT, Claude, etc).
+2. **Describe tu Visión (Saca provecho a los Presets):** Dile a la IA qué quieres, pero no pierdas tiempo describiendo colores o logos.
+   - *Ejemplo Ganador:* "Crea un contador de tiempo circular. Usa los presets **`branding`** (para el color de la barra), **`motion`** (para la velocidad) y **`layout`** (para que yo pueda posicionarlo donde quiera). Quiero que el círculo tenga un efecto `.dv-glass`."
+3. **Crea la Carpeta:** En la app DVGE, ve a **Menú Ayuda → Abrir Carpeta de Plugins**. Crea una nueva carpeta, por ejemplo `mi-contador-circular`.
+4. **Pega los 4 Archivos:** Copia los bloques que te dio la IA (`manifest.json`, `index.html`, `style.css`, y `script.js`) y guárdalos en esa carpeta.
+5. **Configura en DVGE:** Abre la app y selecciona tu nuevo plugin. 
+   - **Branding:** Sube tu logo y elige la esquina; el motor lo posicionará solo.
+   - **Layout:** Elige "Centro" o "Abajo-Derecha" en **Alineación Global**; el motor moverá tu gráfico por ti.
+   - **Animación:** Ajusta los FPS y la duración del video final.
 
-¡Si hay algún error, simplemente dile a la IA: *"Recuerda que debes usar ctx.root.getElementById y backticks para el CSS dinámico. Revisa el código."* y lo arreglará al instante!
+¡Si algo no se ve bien, dile a la IA: *"Usa las utilidades de dvEngine.utils y las variables de branding"*. ¡Ella ya conoce las reglas gracias al Super Prompt!
