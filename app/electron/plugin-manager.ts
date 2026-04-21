@@ -189,6 +189,14 @@ dvEngine.register({
             const raw = fs.readFileSync(manifestPath, 'utf8')
             const manifest = JSON.parse(raw) as PluginManifest
             
+            // [v4.0] Tarea 2.1: Sanitización Defensiva del Schema.
+            // La IA puede generar schema como objeto en lugar de Array.
+            // Aseguramos que siempre sea un Array para evitar crash en .map()/.forEach()
+            if (!Array.isArray(manifest.schema)) {
+              console.warn(`[PluginManager] ⚠ Plugin "${manifest.id}" tiene un schema inválido. Sanitizando a [].`);
+              manifest.schema = [];
+            }
+            
             plugins.push({
               manifest,
               folderPath,

@@ -9,6 +9,7 @@ export const HomeMenu: React.FC = () => {
     const [isCreating, setIsCreating] = useState(false);
     const [newProjName, setNewProjName] = useState('');
     const [selectedPlugin, setSelectedPlugin] = useState('');
+    const [isAboutOpen, setIsAboutOpen] = useState(false);
 
     useEffect(() => {
         fetchProjects();
@@ -118,11 +119,62 @@ export const HomeMenu: React.FC = () => {
                 </div>
             </div>
 
-            <div className="home-footer">
-                <span><FolderOpen size={14} /> v3.4.0 </span>
-                <span>•</span>
-                <span>Jonatan Barón</span>
+            <div className="home-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <span><FolderOpen size={14} /> v4.0.0 GA </span>
+                    <span>•</span>
+                    <span>Jonatan Barón</span>
+                </div>
+                <button 
+                    className="dv-btn-small secondary" 
+                    onClick={() => setIsAboutOpen(true)}
+                >
+                    ℹ️ Acerca de DVGE
+                </button>
             </div>
+
+            {/* Modal "Acerca de" */}
+            {isAboutOpen && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', zIndex: 9999
+                }}>
+                    <div style={{
+                        background: 'var(--bg-elevated)', padding: '30px',
+                        borderRadius: '8px', maxWidth: '500px', width: '100%',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        display: 'flex', flexDirection: 'column', gap: '15px'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '15px' }}>
+                            <img src="icon.png" alt="DVGE" style={{ width: '48px', height: '48px' }} />
+                            <div>
+                                <h2 style={{ margin: 0, fontSize: '18px', color: 'white' }}>Dynamic Vector Graphics Engine</h2>
+                                <span style={{ color: '#E44C30', fontSize: '12px', fontWeight: 'bold' }}>[DVGE]-[v4.0.0]-[GA]-[B210426-1720]</span>
+                            </div>
+                        </div>
+
+                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                            <p>Motor de generación de gráficos broadcast dinámicos, impulsado por arquitecturas <strong>Standalone Client-Host</strong> y tecnología de inyección <strong>Shadow DOM</strong>.</p>
+                            
+                            <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(0,0,0,0.2)', borderRadius: '6px' }}>
+                                <strong style={{ color: 'white' }}>Desarrollador:</strong> Jonatan Barón<br/>
+                                <strong style={{ color: 'white' }}>Arquitectura Core:</strong> v4.0.0 Next-Gen (Sandbox Aislado)<br/>
+                                <strong style={{ color: 'white' }}>Renderer:</strong> Remotion v4<br/>
+                            </div>
+
+                            <div style={{ marginTop: '15px', color: 'rgba(255,255,255,0.5)' }}>
+                                {/* TODO: Añadir Redes Sociales / Links aquí */}
+                                <p style={{ fontStyle: 'italic' }}>Esperando información de redes y contacto...</p>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                            <button className="dv-btn" onClick={() => setIsAboutOpen(false)}>Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

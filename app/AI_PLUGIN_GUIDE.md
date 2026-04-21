@@ -49,14 +49,11 @@ A partir de la versión 3.4.0, el motor no solo genera la UI, sino que **toma de
 - **`motion` (Export Ready)**: Inyecta controles de FPS, Duración Total (segundos) y curvas de Easing.
 - **`layout` (Auto-Pos)**: Inyecta el campo **"Alineación Global"**. El motor usará Flexbox para centrar o posicionar tu gráfico automáticamente.
 
-### 1c. [Novedad v3.4] Librerías Externas (CDN)
-Ahora puedes usar el poder de librerías como **GSAP** o **Three.js** declarándolas en el manifest:
-```json
-{
-  "externalScripts": ["https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"],
-  "externalStyles": ["https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"]
-}
-```
+### 1c. [v4.0] PROHIBICIÓN: Librerías Externas Basadas en Tiempo Real
+
+> [!CAUTION]
+> **❌ GSAP, Anime.js y cualquier librería basada en `requestAnimationFrame` están PROHIBIDAS en DVGE v4.0.**
+> El motor es **Frame-Based** (Remotion). Las librerías de tiempo real no son predecibles frame a frame y provocan renders corruptos en ProRes 4444. La nueva API nativa del motor (`ctx.timeline`, `utils.spring`) reemplaza toda esa funcionalidad con garantías de determinismo absoluto.
 
 > [!TIP]
 > **🚀 Inspector Profesional:** El panel lateral ahora organiza los campos en **Grupos Colapsables** (Branding, Animación, etc.), igual que el Inspector de Unity, para mantener el orden.
@@ -110,21 +107,58 @@ El motor ejecuta el script fotograma a fotograma dentro de un entorno aislado. P
 
 ---
 
-## Librerías de Animación Nativas (v3.1)
+## API Nativa del Motor v4.0 (La API Determinística)
 
-A partir de la versión 3.1.0, el motor inyecta automáticamente una librería de utilidades (`dvEngine.utils`) para que no tengas que escribir lógica matemática compleja. Puedes pedirle a la IA que use cualquiera de estas opciones para tus animaciones:
+### `ctx.timeline` — Tiempo Normalizado
+El motor inyecta automáticamente un objeto `timeline` en cada frame. **Úsalo siempre para animar.**
 
-| Función | Tipo | Uso Recomendado |
+| Propiedad | Tipo | Descripción |
 | :--- | :--- | :--- |
-| `utils.lerp(a, b, t)` | Math | Transiciones suaves entre dos valores. |
-| `utils.clamp(v, min, max)`| Math | Limitar valores a un rango (ej: opacidad 0-1). |
-| `utils.easeOutCubic(t)` | Easing | Empieza rápido, termina lento (muy elegante). |
-| `utils.easeInOutCubic(t)` | Easing | Suavizado natural de entrada y de salida. |
-| `utils.easeOutBounce(t)` | Easing | Efecto de rebote elástico (notificaciones). |
-| `utils.easeOutElastic(t)` | Easing | Efecto de "muelle" dinámico. |
-| `utils.hexToRgb(hex)` | Parser | Útil para inyectar colores manifest en variables CSS. |
-| `settings` | Metadata | Acceso a `fps`, `duration` (segundos) y `resolution`. |
-| `env` | Environment | [v3.4] Acceso a `isExporting` y `safeArea`. |
+| `timeline.progress` | `float [0-1]` | Progreso total del clip (0 = inicio, 1 = fin). |
+| `timeline.isIntro` | `boolean` | `true` si estamos en la fase de entrada (~0.8s). |
+| `timeline.isOutro` | `boolean` | `true` si estamos en la fase de salida (~0.5s). |
+| `timeline.introProgress` | `float [0-1]` | Progreso local de la fase de entrada. |
+| `timeline.outroProgress` | `float [0-1]` | Progreso local de la fase de salida. |
+
+```javascript
+// Ejemplo: Elemento que entra y sale correctamente
+update: (ctx) => {
+    const { refs, timeline, utils } = ctx;
+    // Entrada
+    refs.card.style.opacity   = timeline.introProgress.toString();
+    refs.card.style.transform = `translateY(${utils.lerp(40, 0, utils.spring(timeline.introProgress))}px)`;
+    // Salida
+    if (timeline.isOutro) {
+        refs.card.style.opacity = (1 - timeline.outroProgress).toString();
+    }
+}
+```
+
+### `ctx.state` y `ctx.refs` — Memoria Oficial del Plugin
+- `ctx.refs`: Guarda referencias del DOM en `awake`. **No llames a `getElementById` en cada frame.**
+- `ctx.state`: Guarda acumuladores y banderas persistentes.
+
+```javascript
+awake: (ctx) => {
+    ctx.refs.title = ctx.root.getElementById('titulo');
+    ctx.state.hasAnimated = false;
+},
+```
+
+### `dvEngine.utils` — Librería Matemática Completa
+
+| Función | Descripción |
+| :--- | :--- |
+| `utils.lerp(a, b, t)` | Interpolación lineal. |
+| `utils.clamp(v, min, max)` | Limitar a un rango. |
+| `utils.easeOutCubic(t)` | Empieza rápido, termina lento. |
+| `utils.easeInOutCubic(t)` | Entrada y salida suaves. |
+| `utils.easeOutBounce(t)` | Rebote elástico. |
+| `utils.easeOutElastic(t)` | Efecto muelle. |
+| `utils.spring(t, stiffness, damping)` | **[v4.0] Física de resorte. Reemplaza `back.out` de GSAP.** |
+| `utils.typewriter(text, frame, fpc)` | **[v4.0] Texto aparece carácter a carácter.** |
+| `utils.tickerOffset(frame, speed, textW)` | **[v4.0] Loop infinito para crawl/ticker sin saltos.** |
+| `utils.hexToRgb(hex)` | Convierte color a RGB. |
 
 ---
 
@@ -154,10 +188,11 @@ Para simplificar el diseño, el motor inyecta automáticamente clases CSS profes
 
 Para lograr una generación "One-Shot" (que funcione a la primera), es vital incluir estas reglas en tu prompt. Hemos detectado que los errores más comunes de la IA son **sintácticos**:
 
-1. **Backticks Obligatorios**: La IA suele olvidar usar backticks (`` ` ``) al inyectar valores en strings de CSS (ej: `` `translateY(${val}px)` ``). Sin ellos, el plugin crashea.
-2. **Contexto Persistente**: A partir de la v3.2.1, el objeto `ctx` es persistente. La IA puede guardar estado en `ctx._state = {}` dentro de `awake` y recuperarlo en `update` sin perder datos.
-3. **Uso de `ctx.settings`**: Pedir a la IA que use `ctx.settings.fps` y `ctx.settings.duration` en lugar de valores hardcoded para que el gráfico se adapte automáticamente al proyecto.
-4. **Validación de Operadores**: Asegurar que la IA no olvide operadores lógicos (como `||`) en bloques condicionales complejos.
+1. **Backticks Obligatorios**: La IA suele olvidar usar backticks (`` ` ``) al inyectar valores en strings de CSS. Sin ellos, el plugin crashea.
+2. **Contexto Persistente**: El objeto `ctx` es persistente. Guarda el estado en `ctx.state = {}` dentro de `awake` y recupéralo en `update`. **Ya no uses `ctx._state`, ese patrón está deprecado.**
+3. **[v4.0 OBLIGATORIO] Usar `ctx.timeline`**: La IA NUNCA debe hardcodear frames para la entrada/salida. Debe usar `timeline.introProgress` y `timeline.outroProgress`. Esto garantiza que el gráfico se adapta a cualquier duración del proyecto.
+4. **[v4.0 OBLIGATORIO] Usar `ctx.refs`**: La IA debe cachear referencias del DOM en `awake` usando `ctx.refs`. **No llamar a `getElementById` dentro del loop `update`** (se ejecuta 60 veces por segundo).
+5. **[v4.0 PROHIBIDO] No usar `window`**: El sandbox del motor bloquea `window`. Cualquier acceso a `window.algo` retornará `undefined`. El plugin sólo puede interactuar con el DOM vía `ctx.root`.
 
 ---
 

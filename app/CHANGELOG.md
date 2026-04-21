@@ -1,5 +1,18 @@
-## [3.3.0] - 2026-04-21
+## [4.0.0] - 2026-04-21 (GA)
 
+### 🛡️ QA Remediation & Next-Gen Architecture
+- **Sandbox Aislado**: Se selló la fuga del objeto global. Los plugins se ejecutan con `fakeWindow` y sin acceso a APIs de Electron.
+- **I/O Seguro**: Autoguardado asíncrono y atómico (`.tmp`), impidiendo corrupción de proyectos si el motor se cierra abruptamente.
+- **Graceful Degradation**: Captura y aislamiento de crashes en el código del plugin sin congelar la app.
+- **Error Boundary Reactivo**: Interfaz protegida contra `manifest.json` malformados.
+- **La API Determinística**:
+  - Deprecado el soporte a librerías de tiempo real (como GSAP) en favor del nuevo objeto `ctx.timeline` (Frame math 100% precisa para renders).
+  - Nueva memoria oficial de persistencia: `ctx.state` y `ctx.refs`.
+  - Expansión de utilidades nativas: `utils.spring`, `utils.typewriter`, y `utils.tickerOffset`.
+
+---
+
+## [3.3.0] - 2026-04-21
 ### ✨ Editor Edition (HTML-a-Video Profesional)
 - **Campos de Código (Textarea)**: Soporte para edición multilínea de HTML y CSS directamente en el sidebar. El motor ahora renderiza una caja de edición profesional para campos de tipo `code`.
 - **Plugin Oficial: HTML Master Renderer**: Introducción de una plantilla de alto rendimiento diseñada específicamente para renderizar código puro sin capas de UI adicionales.

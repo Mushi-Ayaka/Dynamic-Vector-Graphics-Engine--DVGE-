@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as fsPromises from 'fs/promises';
 import * as path from 'path';
 import { app } from 'electron';
 
@@ -84,26 +85,37 @@ export class ProjectManager {
     return projectData;
   }
 
-  public saveProjectProperties(projectId: string, properties: Record<string, any>) {
+  public async saveProjectProperties(projectId: string, properties: Record<string, any>): Promise<boolean> {
     const projectPath = path.join(this.baseDir, projectId);
     const metadataPath = path.join(projectPath, 'project.json');
+    const tmpPath = metadataPath + '.tmp';
 
-    if (fs.existsSync(metadataPath)) {
-        try {
-            const raw = fs.readFileSync(metadataPath, 'utf8');
-            const data = JSON.parse(raw);
-            data.properties = properties;
-            data.updatedAt = Date.now();
-            fs.writeFileSync(metadataPath, JSON.stringify(data, null, 2));
-            console.log(`[ProjectManager] ✅ Saved properties for: ${projectId} - Props: ${Object.keys(properties).length}`);
-            return true;
-        } catch(e) {
-            console.error(`[ProjectManager] ❌ Failed to save project state for ${projectId}:`, e);
-        }
-    } else {
+    if (!fs.existsSync(metadataPath)) {
         console.warn(`[ProjectManager] ⚠ Attempted to save to non-existent project: ${projectId}`);
+        return false;
     }
-    return false;
+
+    try {
+        // Leer actual de forma asíncrona (no bloquea el hilo)
+        const raw = await fsPromises.readFile(metadataPath, 'utf8');
+        const data = JSON.parse(raw);
+        data.properties = properties;
+        data.updatedAt = Date.now();
+
+        // Escritura Atómica: escribe en .tmp primero, luego rename
+        // Si el proceso muere en medio de la escritura, .tmp queda incompleto
+        // pero el project.json original permanece intacto.
+        await fsPromises.writeFile(tmpPath, JSON.stringify(data, null, 2), 'utf8');
+        await fsPromises.rename(tmpPath, metadataPath);
+
+        console.log(`[ProjectManager] ✅ Saved (atomic) for: ${projectId} - Props: ${Object.keys(properties).length}`);
+        return true;
+    } catch(e) {
+        console.error(`[ProjectManager] ❌ Failed atomic save for ${projectId}:`, e);
+        // Limpieza defensiva: borrar .tmp si quedó a medias
+        try { await fsPromises.unlink(tmpPath); } catch { /* no existe, ignorar */ }
+        return false;
+    }
   }
 
   public getProjectExportsFolder(projectId: string): string {

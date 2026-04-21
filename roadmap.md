@@ -1,4 +1,4 @@
-# Roadmap: Dynamic Vector Graphics Engine (DVGE) v3.1.0
+# Roadmap: Dynamic Vector Graphics Engine (DVGE) v4.0.0
 
 El proyecto adopta una arquitectura desacoplada Standalone Client-Host para asegurar compatibilidad universal con DaVinci Resolve 18+, esquivando limitaciones de versiones no oficiales (cracks) y sistemas sin Python en el PATH.
 
@@ -11,38 +11,38 @@ El proyecto adopta una arquitectura desacoplada Standalone Client-Host para aseg
 
 ## Fase 2: Estabilidad y UX (Completado ✅)
 
-- [ ] Implementación del servidor WebSocket local en el Main Process de Electron (Puerto `47821`).
-- [ ] Diseño UX/UI del shell en modo "Kiosk/Toolbox" (compacto, always-on-top mode).
-
-## Objetivo del MVP
-
-- Gráficos de alta calidad (ProRes 4444 + Alfa).
-- Aplicación Electron independiente (Standalone).
-- Drag & Drop nativo a DaVinci Resolve.
+- [x] Implementación del servidor WebSocket local en el Main Process de Electron (Puerto `47821`).
+- [x] Diseño UX/UI del shell en modo "Kiosk/Toolbox" (compacto, always-on-top mode).
 
 ## Fase 3: Motor de Renderizado (Completado ✅)
 
-- [ ] Integración de `@remotion/bundler` y `@remotion/renderer` en el Main Process.
-- [ ] Definición del Composition principal (`LowerThirdBasic`).
-- [ ] Transpilación dinámica: De formulario React -> props JSON-> H.265/ProRes4444.
-- [ ] Implementación de Property-Based Testing (PBT) sobre el inyector de propiedades para evitar fallos de renderizado en inputs extremos.
+- [x] Integración de `@remotion/bundler` y `@remotion/renderer` en el Main Process.
+- [x] Definición del Composition principal (`LowerThirdBasic`).
+- [x] Transpilación dinámica: De formulario React -> props JSON-> H.265/ProRes4444.
+- [x] Implementación de Property-Based Testing (PBT) sobre el inyector de propiedades para evitar fallos de renderizado en inputs extremos.
 
-## Fase 4: DaVinci Resolve JS Bridge (v2.0.0-beta)
+## Fase 4: Producción y Generación Dinámica (v2.2.0 a v3.4.1) (Completado ✅)
 
-- [ ] Creación del plugin minimalista nativo (HTML/JS) para el folder `Workflow Integration`.
-- [ ] Lógica del cliente WebSocket (Reconexión automática, Heartbeat).
-- [ ] Invocación segura de la API JavaScript de DaVinci (`ImportMedia`).
-- [ ] Script de automatización: Copiado silencioso del plugin desde la App Electron al OS `%APPDATA%` en el primer boot.
+- [x] **v2.2.0:** Implementación del bridge de registro `dvEngine.register`.
+- [x] **v2.3.0:** Arquitectura Hot-Swap (Sincronización Dual).
+- [x] **v3.0.0:** Sistema Persistente de Workspace y autoguardado.
+- [x] **v3.1.0:** Utilidades Nativas (`dvEngine.utils`) y autoguardado silencioso de estado.
+- [x] **v3.2.1:** Formularios Generativos (UI dinámica basada en `manifest.json`), Hard-Reset del Shadow DOM por proyecto.
+- [x] **v3.3.0:** Soporte para edición de código (`code` input) y Master Renderer para HTML puro.
+- [x] **v3.4.0:** Presets modulares (`branding`, `motion`, `layout`), inyección automática de logo y CDNs en el manifiesto.
 
-## Fase 4: UX Avanzada y Fallback (v2.0.0-rc)
+## Fase 5: QA Remediation y Next-Gen Architecture (v4.0.0 GA) (Completado ✅)
+
+- [x] **Security Isolation:** Bloqueo del objeto `window` (fakeWindow) para impedir acceso a IPC desde los plugins.
+- [x] **Atomic Async I/O:** Guardado de propiedades mediante archivos `.tmp` y renombrado atómico asíncrono para prevenir la corrupción por apagones.
+- [x] **Graceful Degradation:** Manejo exhaustivo de fallos con `try/catch` en la función `update` del plugin, con deshabilitación de seguridad en caso de crash (Evitando pantallas blancas).
+- [x] **API Determinística (`ctx.timeline`):** Transición a matemática de cuadros (frame-math) prohibiendo librerías asíncronas como GSAP para asegurar renders *frame-perfect* en ProRes.
+- [x] **Estado Persistente Oficial:** Inclusión de `ctx.state` y `ctx.refs` en la API del motor.
+- [x] **Ecosistema Refactorizado:** Adaptación del `cinematic-opener` y `scoreboard-pro` a Vanilla JS 100%.
+
+## Fase 6: Próximos Pasos (Futuro)
 
 - [ ] Implementación del Native OS Drag & Drop (Arrastrar el video renderizado directamente de la App al timeline).
+- [ ] DaVinci Resolve JS Bridge: Invocación segura de la API JavaScript de DaVinci (`ImportMedia`).
 - [ ] Cola de tareas (Task Queue) para evitar la saturación si el usuario presiona "Render" masivamente.
-- [ ] Gestión robusta de caché temporal (Auto-limpiar el directorio `/temp_renders` al cerrar la App).
-- [ ] Pruebas E2E sobre el flujo completo de vida del video generado.
-
-## Fase 5: Producción (v2.0.0)
-
-- [ ] Notarización y firma (Opcional, enfocado a perfiles de distribución).
-- [ ] Instalador único `.exe` para usuario final.
-- [ ] Documentación / Manual interactivo de usuario en la UI.
+- [ ] Implementación de "Plugin Store" visual en el Menú Principal.
