@@ -1,4 +1,4 @@
-# Documentación Técnica: Dynamic Vector Graphics Engine (DVGE) v3.1.0
+# Documentación Técnica: Dynamic Vector Graphics Engine (DVGE) v3.2.0
 
 ## Introducción
 
@@ -157,6 +157,39 @@ update: (ctx) => {
   // ...
 }
 ```
+
+### 3.7 Motor de Plugins Universal (v3.2)
+
+A partir de la versión 3.2, el motor es **completamente data-driven**: ningún campo de la interfaz está codificado de forma fija. El formulario del panel lateral se genera dinámicamente leyendo el `schema` del `manifest.json` del plugin activo.
+
+#### Flujo de Datos del Panel de Control
+
+```
+manifest.json
+  └─► schema: [{ type, id, label, defaultValue }]
+        │
+        ▼
+  useStore.activePlugin  (cargado en loadProject)
+        │
+        ▼
+  App.tsx → <DynamicField> por cada campo del schema
+        │
+        ▼
+  setProperties({ [field.id]: value })  →  ctx.props en update()
+```
+
+#### Tipos de Campos Soportados
+
+| Tipo en `manifest.json` | Componente generado |
+|---|---|
+| `string` | `<input type="text">` |
+| `color` | `<input type="color">` |
+| `number` | `<input type="number">` |
+| `image` | `<input type="text">` (ruta o URL) |
+
+#### Hard Reset al Cambiar de Proyecto
+
+El reproductor usa `key={activeProject.id}`, que obliga a React a destruir y recrear el componente al cambiar de proyecto. Esto garantiza que el Shadow DOM previo se destruya completamente, el `__DV_BRIDGE__` se reinicialice, y los hooks de ciclo de vida comiencen desde cero.
 
 ---
 

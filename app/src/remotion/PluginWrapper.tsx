@@ -25,7 +25,8 @@ declare global {
 export const PluginWrapper: React.FC<any> = (passedProps) => {
     const frame = useCurrentFrame();
     const { fps, width, height } = useVideoConfig();
-    const { activePluginFiles } = useStore();
+    const storeFiles = useStore().activePluginFiles;
+    const activePluginFiles = passedProps.activePluginFiles || storeFiles;
     
     // Reactividad de Props
     const properties = passedProps.title ? passedProps : useStore().properties;

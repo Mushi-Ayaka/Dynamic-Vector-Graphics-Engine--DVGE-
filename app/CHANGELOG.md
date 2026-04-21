@@ -1,5 +1,22 @@
 # 📝 Changelog - Dynamic Vector Graphics Engine (DVGE)
 
+## [3.2.0] - 2026-04-21
+
+### 🐛 Corrección Crítica — Motor de Plugins Universal
+- **Bug Resuelto: Plugin Visual Estático.** El motor previamente mostraba siempre la forma del primer plugin cargado al cambiar de proyecto. Los campos del formulario tampoco se actualizaban al abrir un proyecto con un plugin diferente.
+
+### ✨ Motor de Plugins Dinámico
+- **Formulario Generativo**: El panel lateral ya no tiene campos fijos. Lee el `manifest.json` del plugin activo y genera dinámicamente los inputs correctos (`string`, `color`, `number`, `image`) para cada plugin instalado.
+- **Plugin Badge**: El sidebar muestra el nombre y versión del plugin activo para contexto rápido.
+- **Hard Reset en Cambio de Proyecto**: El reproductor de previsualización se destruye y recrea completamente al cambiar de proyecto (`key={activeProject.id}`), eliminando cualquier residuo visual o de estado del plugin anterior.
+
+### 🏗️ Arquitectura
+- **`useStore.ts`**: Añadidos `activePlugin`, `plugins[]`, y `initialize()`. La lista de plugins se carga una sola vez al arrancar la app y es compartida por todo el store.
+- **`main.tsx`**: Llamada a `useStore.getState().initialize()` antes del primer render para pre-cargar el catálogo de plugins.
+- **`App.tsx`**: Refactorizado a arquitectura data-driven. Nuevo componente `DynamicField` que renderiza cada campo del schema de forma polimórfica.
+
+---
+
 ## [3.1.0] - 2026-04-21
 
 ### ✨ Core & Developer Experience (DX)

@@ -4,18 +4,14 @@ import { FolderOpen, Plus } from 'lucide-react';
 import './HomeMenu.css';
 
 export const HomeMenu: React.FC = () => {
-    const { loadProject } = useStore();
+    const { loadProject, plugins } = useStore();
     const [projects, setProjects] = useState<any[]>([]);
     const [isCreating, setIsCreating] = useState(false);
     const [newProjName, setNewProjName] = useState('');
-    const [plugins, setPlugins] = useState<any[]>([]);
     const [selectedPlugin, setSelectedPlugin] = useState('');
 
     useEffect(() => {
         fetchProjects();
-        if (window.ipcRenderer) {
-            window.ipcRenderer.getPlugins().then(setPlugins);
-        }
     }, []);
 
     const fetchProjects = async () => {
