@@ -194,128 +194,129 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
         style.textContent = GLOBAL_PLUGIN_CSS + (activePluginFiles.css || '');
         shadow.appendChild(style);
 
-        // JS (External Scripts)
-        if (manifest.externalScripts) {
-            manifest.externalScripts.forEach(url => {
-                const script = document.createElement('script');
-                script.src = url;
-                script.async = false; // Preservar orden
-                shadow.appendChild(script);
-            });
-        }
-
-        // HTML (Presets Fragments + Plugin HTML)
-        const wrapper = document.createElement('div');
-        wrapper.id = 'plugin-root';
-        wrapper.style.width = '100%';
-        wrapper.style.height = '100%';
-        wrapper.style.display = 'flex';
-        
-        // Manejo de Alineación Global v3.4.0
-        const align = properties.contentAlign || 'top-left';
-        switch (align) {
-            case 'center':
-                wrapper.style.justifyContent = 'center';
-                wrapper.style.alignItems = 'center';
-                break;
-            case 'bottom-center':
-                wrapper.style.justifyContent = 'center';
-                wrapper.style.alignItems = 'flex-end';
-                break;
-            case 'bottom-right':
-                wrapper.style.justifyContent = 'flex-end';
-                wrapper.style.alignItems = 'flex-end';
-                break;
-            case 'bottom-left':
-                wrapper.style.justifyContent = 'flex-start';
-                wrapper.style.alignItems = 'flex-end';
-                break;
-            default: // top-left
-                wrapper.style.justifyContent = 'flex-start';
-                wrapper.style.alignItems = 'flex-start';
-        }
-        
-        // Inyectar fragmentos de presets basados en lo que declare el manifiesto
-        let presetsHtml = '';
-        if (passedProps.presets) {
-            passedProps.presets.forEach((p: string) => {
-                if (PRESET_HTML_FRAGMENTS[p as keyof typeof PRESET_HTML_FRAGMENTS]) {
-                    presetsHtml += PRESET_HTML_FRAGMENTS[p as keyof typeof PRESET_HTML_FRAGMENTS];
-                }
-            });
-        }
-
-        wrapper.innerHTML = presetsHtml + activePluginFiles.html;
-        shadow.appendChild(wrapper);
-
-        // Inyección Automática de Logo v3.4.0 (Branding Preset)
-        if (properties.brandLogo && properties.logoPosition !== 'none') {
-            const logoContainer = document.createElement('div');
-            logoContainer.className = 'dv-logo-overlay';
-            const size = properties.logoSize || 100;
-            const margin = properties.safeAreaPadding || 60;
+        // JS (External Scripts) - CARGA ASÍNCRONA v3.4.1
+        const loadExternalAssets = async () => {
+            if (manifest.externalScripts) {
+                const loadPromises = manifest.externalScripts.map(url => {
+                    return new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = url;
+                        script.async = false;
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        shadow.appendChild(script);
+                    });
+                });
+                await Promise.all(loadPromises);
+            }
             
-            logoContainer.style.width = `${size}px`;
+            // Una vez cargados los scripts, ejecutar el código del plugin
+            executePluginJS();
+        };
+
+        const executePluginJS = () => {
+            // HTML (Presets Fragments + Plugin HTML)
+            const wrapper = document.createElement('div');
+            wrapper.id = 'plugin-root';
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.display = 'flex';
             
-            switch (properties.logoPosition) {
-                case 'top-right':
-                    logoContainer.style.top = `${margin}px`;
-                    logoContainer.style.right = `${margin}px`;
+            // Manejo de Alineación Global v3.4.0
+            const align = properties.contentAlign || 'top-left';
+            switch (align) {
+                case 'center':
+                    wrapper.style.justifyContent = 'center';
+                    wrapper.style.alignItems = 'center';
                     break;
-                case 'top-left':
-                    logoContainer.style.top = `${margin}px`;
-                    logoContainer.style.left = `${margin}px`;
+                case 'bottom-center':
+                    wrapper.style.justifyContent = 'center';
+                    wrapper.style.alignItems = 'flex-end';
                     break;
                 case 'bottom-right':
-                    logoContainer.style.bottom = `${margin}px`;
-                    logoContainer.style.right = `${margin}px`;
+                    wrapper.style.justifyContent = 'flex-end';
+                    wrapper.style.alignItems = 'flex-end';
                     break;
                 case 'bottom-left':
-                    logoContainer.style.bottom = `${margin}px`;
-                    logoContainer.style.left = `${margin}px`;
+                    wrapper.style.justifyContent = 'flex-start';
+                    wrapper.style.alignItems = 'flex-end';
                     break;
+                default: // top-left
+                    wrapper.style.justifyContent = 'flex-start';
+                    wrapper.style.alignItems = 'flex-start';
             }
-
-            logoContainer.innerHTML = `<img src="${properties.brandLogo}" />`;
-            shadow.appendChild(logoContainer);
-        }
-
-        // JS: Ejecución Segura via new Function
-        if (activePluginFiles.js) {
-            try {
-                const dvEngine = {
-                    utils: dvUtils,  // Referencia al objeto module-level
-                    register: (callback: any) => {
-                        window.__DV_BRIDGE__?.register(callback);
+            
+            // Inyectar fragmentos de presets basados en lo que declare el manifiesto
+            let presetsHtml = '';
+            if (passedProps.presets) {
+                passedProps.presets.forEach((p: string) => {
+                    if (PRESET_HTML_FRAGMENTS[p as keyof typeof PRESET_HTML_FRAGMENTS]) {
+                        presetsHtml += PRESET_HTML_FRAGMENTS[p as keyof typeof PRESET_HTML_FRAGMENTS];
                     }
-                };
+                });
+            }
 
-                const pluginRuntime = new Function('dvEngine', 'window', 'dvContext', activePluginFiles.js);
-                pluginRuntime(dvEngine, window, (window as any).dvContext);
+            wrapper.innerHTML = presetsHtml + activePluginFiles.html;
+            shadow.appendChild(wrapper);
+
+            // Inyección Automática de Logo v3.4.0 (Branding Preset)
+            if (properties.brandLogo && properties.logoPosition !== 'none') {
+                const logoContainer = document.createElement('div');
+                logoContainer.className = 'dv-logo-overlay';
+                const size = properties.logoSize || 100;
+                const margin = properties.safeAreaPadding || 60;
                 
-                // Marcar como inyectado
-                injectedFilesRef.current = filesSignature;
-
-                // Log de éxito (solo una vez)
-                if ((window as any).ipcRenderer) {
-                    (window as any).ipcRenderer.logSync({
-                        _debug: 'PLUGIN_INJECTED',
-                        registered: !!lifecycleRef.current,
-                        bridgeExists: !!window.__DV_BRIDGE__,
-                        jsLength: activePluginFiles.js.length
-                    });
+                logoContainer.style.width = `${size}px`;
+                
+                switch (properties.logoPosition) {
+                    case 'top-right':
+                        logoContainer.style.top = `${margin}px`;
+                        logoContainer.style.right = `${margin}px`;
+                        break;
+                    case 'top-left':
+                        logoContainer.style.top = `${margin}px`;
+                        logoContainer.style.left = `${margin}px`;
+                        break;
+                    case 'bottom-right':
+                        logoContainer.style.bottom = `${margin}px`;
+                        logoContainer.style.right = `${margin}px`;
+                        break;
+                    case 'bottom-left':
+                        logoContainer.style.bottom = `${margin}px`;
+                        logoContainer.style.left = `${margin}px`;
+                        break;
                 }
-            } catch (err: any) {
-                // Rutear error al terminal (NO al browser console)
-                if ((window as any).ipcRenderer) {
-                    (window as any).ipcRenderer.logSync({
-                        _debug: 'JS_EXEC_ERROR',
-                        error: err?.message || String(err),
-                        stack: err?.stack?.slice(0, 300)
-                    });
+
+                logoContainer.innerHTML = `<img src="${properties.brandLogo}" />`;
+                shadow.appendChild(logoContainer);
+            }
+
+            if (activePluginFiles.js) {
+                try {
+                    const dvEngine = {
+                        utils: dvUtils,
+                        register: (callback: any) => {
+                            window.__DV_BRIDGE__?.register(callback);
+                        }
+                    };
+
+                    const pluginRuntime = new Function('dvEngine', 'window', 'dvContext', activePluginFiles.js);
+                    pluginRuntime(dvEngine, window, (window as any).dvContext);
+                    
+                    injectedFilesRef.current = filesSignature;
+                } catch (err: any) {
+                    if ((window as any).ipcRenderer) {
+                        (window as any).ipcRenderer.logSync({
+                            _debug: 'JS_EXEC_ERROR',
+                            error: err?.message || String(err),
+                            stack: err?.stack?.slice(0, 300)
+                        });
+                    }
                 }
             }
-        }
+        };
+
+        loadExternalAssets();
     }, [shadow, activePluginFiles]);
 
     // 3. SINCRONIZACIÓN DE DATOS (Soft-Sync fluido - cada frame)
