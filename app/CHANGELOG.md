@@ -1,6 +1,6 @@
 ## [4.1.0] - 2026-04-21 (GA)
-### 🛍️ Plugin Marketplace & Ecosystem
-- **Marketplace Integrado**: Nuevo panel para descubrir y descargar plugins directamente desde el repositorio oficial de GitHub (`Mushi-Ayaka/Dynamic-Vector-Engine-Plugins`).
+### 🛍️ Catálogo de Plugins & Ecosystem
+- **Catálogo Integrado**: Nuevo panel para descubrir y descargar plugins directamente desde el repositorio oficial de GitHub (`Mushi-Ayaka/Dynamic-Vector-Engine-Plugins`).
 - **Gestión Dinámica**: Soporte para instalación, actualización y borrado de plugins desde la UI.
 - **Identidad Profesional**: Inclusión de redes sociales (GitHub, Portafolio) y contacto directo vía Gmail en el modal "Acerca de".
 

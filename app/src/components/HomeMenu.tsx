@@ -132,7 +132,7 @@ export const HomeMenu: React.FC = () => {
                         style={{ background: 'rgba(228,76,48,0.15)', color: '#E44C30', border: '1px solid rgba(228,76,48,0.3)' }}
                         onClick={toggleGallery}
                     >
-                        <ShoppingBag size={14} style={{ marginRight: '5px' }} /> Plugin Marketplace
+                        <ShoppingBag size={14} style={{ marginRight: '5px' }} /> Catálogo de Plugins
                     </button>
                     <button 
                         className="dv-btn-small secondary" 

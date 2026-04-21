@@ -77,7 +77,7 @@ export const PluginGallery: React.FC = () => {
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                     <div>
-                        <h2 style={{ margin: 0, color: 'white' }}>Plugin Marketplace</h2>
+                        <h2 style={{ margin: 0, color: 'white' }}>Catálogo de Plugins</h2>
                         <p style={{ margin: '5px 0 0', fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
                             Descubre y descarga nuevos gráficos para tu motor.
                         </p>

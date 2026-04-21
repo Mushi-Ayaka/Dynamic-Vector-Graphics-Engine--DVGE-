@@ -3,7 +3,7 @@
 
 ## ✨ Key Features
 
-- **Plugin Marketplace (v4.1)**: Discover, install, and update graphics directly from the official GitHub registry.
+- **Catálogo de Plugins (v4.1)**: Discover, install, and update graphics directly from the official GitHub registry.
 - **Security Sandbox**: Isolated plugin execution via Shadow DOM and `fakeWindow` to prevent system interference.
 - **Atomic Async I/O**: Resilient project persistence using atomic file operations to prevent data corruption.
 - **Live 60FPS Preview**: Real-time rendering with deterministic frame-based animation (`ctx.timeline`).

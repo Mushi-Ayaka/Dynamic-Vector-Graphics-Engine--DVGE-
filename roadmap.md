@@ -40,7 +40,7 @@ El proyecto adopta una arquitectura desacoplada Standalone Client-Host para aseg
 
 ## Fase 6: Ecosistema y Distribución (v4.1.0 GA) (Completado ✅)
 
-- [x] **Plugin Marketplace:** Implementación de galería de descarga directa desde GitHub.
+- [x] **Catálogo de Plugins:** Implementación de galería de descarga directa desde GitHub.
 - [x] **Gestión Dinámica:** Sistemas de instalación, actualización y eliminación de módulos desde la UI.
 - [x] **Identidad Profesional:** Integración de enlaces sociales y contacto directo en el producto.
 - [x] **Repositorio de Plugins Centralizado:** Creación del catálogo oficial `Dynamic-Vector-Engine-Plugins`.
