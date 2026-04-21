@@ -1,0 +1,125 @@
+/* ============================================================
+   resolve-theme.css — DV-Remotion Graphics Engine (V2)
+   Design tokens inspirados en la estética nativa de DaVinci Resolve.
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg-primary:    #141414;
+  --bg-secondary:  #1E1E1E;
+  --bg-surface:    #2A2A2A;
+  --bg-elevated:   #333333;
+  --bg-input:      #1A1A1A;
+
+  --text-primary:  #D4D4D4;
+  --text-secondary:#8A8A8A;
+  --text-disabled: #555555;
+  --text-label:    #A0A0A0;
+
+  --accent:        #E44C30;
+  --accent-hover:  #FF5F43;
+
+  --border:        #3C3C3C;
+  --border-focus:  #5A5A5A;
+  
+  --success:       #4CAF50;
+
+  --radius-sm:     3px;
+  --radius:        4px;
+  --font:          'Inter', system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  user-select: none;
+}
+
+.dv-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  outline: none;
+  font-family: var(--font);
+  box-sizing: border-box;
+}
+.dv-input:focus { border-color: var(--border-focus); }
+
+.dv-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.1s;
+}
+.dv-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.dv-btn.secondary {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+.dv-btn.secondary:hover:not(:disabled) {
+  background: var(--border-focus);
+}
+.dv-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dv-btn-small {
+  padding: 6px 12px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+.dv-btn-small:hover {
+  background: var(--accent-hover);
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.btn-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* Drag Box Styles */
+.drag-box {
+  margin-top: 20px;
+  padding: 20px;
+  border: 2px dashed var(--success);
+  background: rgba(76, 175, 80, 0.1);
+  text-align: center;
+  border-radius: var(--radius);
+  cursor: grab;
+  transition: all 0.2s;
+}
+.drag-box:active {
+  cursor: grabbing;
+  background: rgba(76, 175, 80, 0.2);
+}
