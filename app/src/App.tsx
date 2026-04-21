@@ -67,6 +67,48 @@ const DynamicField: React.FC<{ field: FormField; value: any; onChange: (id: stri
           />
         </div>
       )
+    case 'info':
+      return (
+        <div style={{ marginBottom: '10px' }}>
+          <label style={labelStyle}>{field.label}</label>
+          <div style={{ position: 'relative' }}>
+            <textarea
+              readOnly
+              className="dv-input"
+              style={{ 
+                  fontFamily: 'monospace', 
+                  height: '100px', 
+                  fontSize: '10px',
+                  background: 'rgba(228,76,48,0.05)',
+                  border: '1px solid rgba(228,76,48,0.2)',
+                  color: '#aaa',
+                  cursor: 'default'
+              }}
+              value={field.defaultValue}
+            />
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(String(field.defaultValue));
+                alert('¡Copiado al portapapeles!');
+              }}
+              style={{
+                position: 'absolute',
+                top: '5px',
+                right: '5px',
+                padding: '2px 8px',
+                fontSize: '9px',
+                background: 'var(--accent)',
+                border: 'none',
+                borderRadius: '3px',
+                color: 'white',
+                cursor: 'pointer'
+              }}
+            >
+              COPIAR
+            </button>
+          </div>
+        </div>
+      )
     default: // 'string'
       return (
         <div>
@@ -163,7 +205,7 @@ export default function App() {
           <h3 style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => window.location.reload()}>
             ← Volver a Proyectos
           </h3>
-          <span style={{ fontSize: '12px', color: '#E44C30', fontWeight: 'bold' }}>v3.3.0 // {activeProject.name}</span>
+          <span style={{ fontSize: '12px', color: '#E44C30', fontWeight: 'bold' }}>v3.4.0 // {activeProject.name}</span>
         </div>
 
         {/* Plugin Badge */}
@@ -173,21 +215,47 @@ export default function App() {
           </div>
         )}
 
-        {/* Campos Generados Dinámicamente desde el Schema */}
-        {schema.length > 0 ? (
-          schema.map((field) => (
-            <DynamicField
-              key={field.id}
-              field={field}
-              value={properties[field.id]}
-              onChange={handleFieldChange}
-            />
-          ))
-        ) : (
-          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', padding: '20px 0' }}>
-            Este plugin no tiene propiedades configurables.
-          </div>
-        )}
+        {/* Campos Generados Dinámicamente desde el Schema (Agrupados) */}
+        {(() => {
+          if (schema.length === 0) {
+            return (
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', padding: '20px 0' }}>
+                Este plugin no tiene propiedades configurables.
+              </div>
+            );
+          }
+
+          let lastGroup = '';
+          return schema.map((field) => {
+            const showHeader = field.group && field.group !== lastGroup;
+            if (field.group) lastGroup = field.group;
+
+            return (
+              <React.Fragment key={field.id}>
+                {showHeader && (
+                  <div style={{ 
+                    marginTop: '15px', 
+                    marginBottom: '5px', 
+                    paddingBottom: '4px', 
+                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    fontSize: '11px', 
+                    fontWeight: 'bold', 
+                    color: '#E44C30',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px'
+                  }}>
+                    {field.group}
+                  </div>
+                )}
+                <DynamicField
+                  field={field}
+                  value={properties[field.id]}
+                  onChange={handleFieldChange}
+                />
+              </React.Fragment>
+            );
+          });
+        })()}
 
         <div style={{ flex: 1 }} />
 

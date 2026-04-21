@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { DVPlugin } from '../env'
+import { DVPlugin, GlobalEnv } from '../env'
+import { expandManifestFields } from './presets'
 
 // --- Tipo del Store ---
 type StoreState = {
@@ -17,6 +18,8 @@ type StoreState = {
   lastSaved: Date | null
 
   // Render State Machine
+  isExporting: boolean
+  globalConfig: Record<string, any>
   renderState: 'IDLE' | 'RENDERING' | 'DONE' | 'ERROR'
   renderProgress: number
   renderError?: string
@@ -36,6 +39,11 @@ export const useStore = create<StoreState>((set, get) => ({
   plugins: [],
   activePluginFiles: null,
   properties: {},
+  isExporting: false,
+  globalConfig: {
+      safeArea: 60, // Valor por defecto
+      previewQuality: 'high'
+  },
   isSaving: false,
   lastSaved: null,
 
@@ -52,8 +60,21 @@ export const useStore = create<StoreState>((set, get) => ({
 
   loadProject: async (project) => {
     const { plugins } = get()
-    // Buscar el plugin correspondiente al proyecto en la lista ya cargada
-    const activePlugin = plugins.find(p => p.manifest.id === project.pluginId) || null
+    const rawPlugin = plugins.find(p => p.manifest.id === project.pluginId) || null
+    
+    let activePlugin = null
+    if (rawPlugin) {
+        // [v3.4.0] Resolución Proactiva de Presets
+        const expandedSchema = expandManifestFields(rawPlugin.manifest.presets, rawPlugin.manifest.schema);
+        activePlugin = {
+            ...rawPlugin,
+            manifest: {
+                ...rawPlugin.manifest,
+                schema: expandedSchema
+            }
+        };
+    }
+
     set({ activeProject: project, properties: project.properties || {}, activePlugin })
     try {
       const files = await window.ipcRenderer.getPluginFiles(project.pluginId)

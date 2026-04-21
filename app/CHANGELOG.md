@@ -9,16 +9,6 @@
 ## [3.2.1] - 2026-04-21
 
 ### 🛠️ Auditoría y Robustez (AI-Ready)
-- **Fix: Sincronización Proactiva**: Se resolvió un bug crítico donde el reproductor usaba datos viejos al no detectar cambios en props dinámicos. Ahora `setProperties` es síncrono con el objeto del proyecto.
-- **Fix: Persistencia de Contexto**: El objeto `ctx` de los plugins ahora es persistente durante toda la vida del plugin, permitiendo a la IA guardar estado en `ctx._state` sin que se pierda cada frame.
-- **Enriquecimiento del Contexto**: Añadido `ctx.settings` con `fps`, `duration`, `width`, `height` y `resolution` para compatibilidad universal con generadores de código.
-- **Reparación de Plugins de Terceros**: Auditado y corregido el plugin "PRO" (Gemini) resolviendo errores de sintaxis en template literals y operadores lógicos.
-
-### 💾 Persistencia
-- **Verificación de Autoguardado**: Añadido feedback en el log de Electron para confirmar la escritura física en `project.json`.
-
-## [3.2.0] - 2026-04-21
-
 ### 🐛 Corrección Crítica — Motor de Plugins Universal
 - **Bug Resuelto: Plugin Visual Estático.** El motor previamente mostraba siempre la forma del primer plugin cargado al cambiar de proyecto. Los campos del formulario tampoco se actualizaban al abrir un proyecto con un plugin diferente.
 

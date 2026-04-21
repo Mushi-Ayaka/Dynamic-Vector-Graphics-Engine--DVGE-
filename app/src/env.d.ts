@@ -3,10 +3,40 @@
 export {}
 
 export interface FormField {
-  type: 'string' | 'color' | 'number' | 'image' | 'code'
+  type: 'string' | 'color' | 'number' | 'image' | 'code' | 'info'
   id: string
   label: string
   defaultValue: string | number
+  group?: string // Opcional: para agrupar campos en la UI
+}
+
+/**
+ * [3.4.0] Tipos de Presets y Entorno Modular
+ */
+export type PresetType = 'branding' | 'motion' | 'layout' | 'editor-full' | 'info';
+
+export interface GlobalEnv {
+  isExporting: boolean;
+  resolution: { width: number, height: number };
+  safeArea: { top: number, left: number, right: number, bottom: number };
+}
+
+export interface DVContext {
+  frame: number;
+  root: ShadowRoot;
+  props: Record<string, any>;
+  utils: any;
+  settings: {
+    fps: number;
+    duration: number;
+    resolution: string;
+    width: number;
+    height: number;
+  };
+  env: GlobalEnv;
+  global: Record<string, any>;
+  _state?: Record<string, any>;
+  [key: string]: any;
 }
 
 export interface PluginManifest {
@@ -14,6 +44,7 @@ export interface PluginManifest {
   name: string
   description: string
   version: string
+  presets?: PresetType[]
   schema: FormField[]
 }
 

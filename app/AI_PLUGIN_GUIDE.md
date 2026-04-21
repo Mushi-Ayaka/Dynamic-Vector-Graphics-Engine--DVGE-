@@ -33,7 +33,25 @@ Define el nombre del plugin, su descripción y los **campos editables** que apar
 }
 ```
 
-Los tipos de campo disponibles son: `"string"` (texto), `"color"` (selector de color), `"number"` (numérico) e `"image"` (ruta de imagen).
+Los tipos de campo disponibles son: `"string"` (texto), `"color"` (selector de color), `"number"` (numerico), `"image"` (ruta de imagen) y `"code"` (editor multilínea).
+
+### 1b. [Novedad v3.4] Uso de PRESETS
+
+A partir de la versión 3.4.0, puedes usar **Presets** para no tener que definir campos comunes. El motor expandirá automáticamente estos grupos en el panel lateral:
+
+```json
+{
+  "presets": ["branding", "motion", "layout"],
+  "schema": []
+}
+```
+
+- **`branding`**: Inyecta Logo, Color Principal y Eslogan.
+- **`motion`**: Inyecta Duración de Entrada/Salida y tipo de Easing.
+- **`layout`**: Inyecta Margen de Seguridad y Guías.
+
+> [!TIP]
+> **🚀 Caso de Éxito v3.4:** Al migrar un plugin complejo al uso de estos `presets` y clases globales, logramos reducir su código en un **93%** (de 1,896 a 117 líneas). ¡Deja que el motor y los presets construyan la interfaz por ti!
 
 > [!TIP]
 > **Novedad v3.1:** El motor ahora incluye `dvEngine.utils` con funciones de easing (`easeOutCubic`, `easeOutBounce`, etc.) y math (`lerp`, `clamp`) integradas. ¡No necesitas redefinirlas en cada script!
@@ -95,6 +113,29 @@ A partir de la versión 3.1.0, el motor inyecta automáticamente una librería d
 | `utils.easeOutElastic(t)` | Easing | Efecto de "muelle" dinámico. |
 | `utils.hexToRgb(hex)` | Parser | Útil para inyectar colores manifest en variables CSS. |
 | `settings` | Metadata | Acceso a `fps`, `duration` (segundos) y `resolution`. |
+| `env` | Environment | [v3.4] Acceso a `isExporting` y `safeArea`. |
+
+---
+
+## 🚫 Límites y Alcance Técnico (Scope)
+
+Para que un gráfico generado por una IA externa (ChatGPT, Claude, Gemini) funcione en el motor, **debes imponer estos límites** en tu conversación:
+
+1.  **Frameworks**: ❌ NO usar React, Vue, Angular o Svelte. Los plugins son micro-apps de **Vanilla Javascript** puro.
+2.  **Librerías Externas**: ⚠️ Evita CDNs externos (como GSAP o FontAwesome) a menos que el usuario tenga conexión a internet durante el renderizado. Es preferible usar las utilidades nativas `dvEngine.utils`.
+3.  **Aislamiento**: 🔒 El plugin corre en un **Shadow DOM**. Esto significa que el CSS del plugin no afectará a la app y viceversa. La IA debe saber que no puede acceder al `document` global, solo al `ctx.root`.
+4.  **Recursos Locales**: 📁 El motor permite usar imágenes y assets locales si se pasan las rutas correctas a través de los campos tipo `image` del manifest.
+
+---
+
+## 🎨 Utilidades CSS del Motor (LEGO Classes)
+
+Para simplificar el diseño, el motor inyecta automáticamente clases CSS profesionales en tu Shadow DOM. ¡Úsalas en lugar de escribir estilos complejos!
+
+- `.dv-glass`: Fondo oscuro desenfocado (Glassmorphism).
+- `.dv-safe-area`: Posiciona el elemento automáticamente respetando los márgenes de seguridad de TV.
+- `.dv-label`: Estilo de etiqueta técnica pequeña y elegante.
+- `--accent`: Variable con el color corporativo del motor (#E44C30).
 
 ---
 
@@ -114,20 +155,19 @@ Para lograr una generación "One-Shot" (que funcione a la primera), es vital inc
 > **Copia el siguiente bloque y pégalo en tu asistente. Está diseñado para prevenir los errores detectados en la auditoría v3.2.1.**
 
 ```text
-Actúa como un desarrollador senior de Motion Graphics y JavaScript. Genera un plugin para DVGE v3.2.1 siguiendo estas reglas técnicas IRROMPIBLES:
+Actúa como un desarrollador senior de Motion Graphics. Genera un plugin para DVGE v3.4.0 (Modular Engine) siguiendo estas reglas:
 
-1. ARCHIVOS: Genera manifest.json, index.html, style.css y script.js.
-2. API: Usa estrictamente dvEngine.register({ awake, start, update }).
-3. CONTEXTO: Usa ctx.root.getElementById, ctx.frame, ctx.props, ctx.utils y ctx.settings.
-4. PERSISTENCIA: El objeto ctx es persistente. Guarda referencias DOM en ctx._el y estado en ctx._state.
-5. SINTAXIS CRÍTICA: 
-   - Usa SIEMPRE backticks (``) para CUALQUIER string de CSS dinámico en JS.
-   - Verifica que todos los operadores lógicos (&&, ||) estén presentes.
-6. DISEÑO: Calidad broadcast, 1920x1080, animaciones fluidas con easing.
+1. TECNOLOGÍA: Usa SOLO HTML/CSS y Vanilla Javascript. ❌ NO USAR React, Vue ni librerías externas (GSAP, etc).
+2. MODULARIDAD: Usa el preset ["branding", "motion", "layout"] en manifest.json. NO definas campos de color o logo manualmente.
+3. API: Usa dvEngine.register({ awake, start, update }).
+4. DOM: Usa ctx.root.getElementById() (Shadow DOM). NUNCA uses 'document'.
+5. ANIMACIÓN: Usa ctx.frame (no requestAnimationFrame). Usa dvEngine.utils (lerp, easeOutCubic).
+6. BROADCAST: Resolución 1920x1080. Usa clases nativas .dv-glass y .dv-safe-area para un look premium.
+7. OPTIMIZACIÓN: Usa ctx.env.isExporting para desactivar efectos pesados en preview.
 
-[DESCRIPCIÓN DEL PLUGIN: Define aquí lo que quieres. Ej: Un Lower Third con estilo Cyberpunk.]
+Genera 4 archivos (manifest.json, index.html, style.css, script.js).
 
-ANTES DE ENTREGAR, VERIFICA: ¿Usaste backticks en todos los .transform y .style? ¿Pasaste ctx a todos los hooks?
+[DESCRIPCIÓN DEL PLUGIN: ...]
 ```
 
 El objetivo del plugin es generar un gráfico visual dinámico para producción audiovisual profesional. El plugin debe verse elegante, moderno y de calidad broadcast.
@@ -216,12 +256,16 @@ dvEngine.register({
 
 ---
 
-## Instalación del Plugin Generado
+## 🛠️ Paso a Paso para Crear un Plugin con IA
 
-Una vez tengas los cuatro archivos del plugin (ya sea vía .zip descomprimido o copiando cada bloque de código en su archivo correspondiente):
+Sigue este flujo de trabajo garantizado para generar plugins de alta calidad sin frustraciones:
 
-1. Abre la carpeta de plugins desde la aplicación: **Menú Ayuda → Abrir Carpeta de Plugins**.
-2. Dentro de esa carpeta, crea una nueva carpeta con el mismo nombre que el `id` del plugin.
-3. Coloca los cuatro archivos dentro de esa carpeta.
-4. Vuelve a la pantalla de inicio de la aplicación.
-5. El nuevo plugin aparecerá automáticamente en la lista de plantillas disponibles al crear un proyecto.
+1. **Copia el Prompt Maestro:** Copia el bloque delineado arriba ("Actúa como un desarrollador senior...") y pégalo en tu asistente de IA (ChatGPT, Claude, etc).
+2. **Describe tu Visión:** Completa la sección `[DESCRIPCIÓN DEL PLUGIN]` con instrucciones claras.
+   - *Mal:* "Hazme un título".
+   - *Bien:* "Haz un Lower Third para documentales. Fondo transparente con `.dv-glass`, un texto grande para el nombre y otro pequeño para la profesión. Usa `brandPrimaryColor` para una línea separadora."
+3. **Crea la Carpeta:** En la app DVGE, ve a **Menú Ayuda → Abrir Carpeta de Plugins**. Crea una nueva carpeta, por ejemplo `mi-super-titulo`.
+4. **Pega los 4 Archivos:** Copia los cuatro bloques de código que te dio la IA (`manifest.json`, `index.html`, `style.css`, y `script.js`) y guárdalos dentro de esa carpeta.
+5. **Abre DVGE:** Inicia la aplicación. Verás tu plugin aparecer mágicamente en la lista, y gracias a los Presets Modulares de la v3.4, los paneles de colores y opciones se generarán solos en el Sidebar.
+
+¡Si hay algún error, simplemente dile a la IA: *"Recuerda que debes usar ctx.root.getElementById y backticks para el CSS dinámico. Revisa el código."* y lo arreglará al instante!

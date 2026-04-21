@@ -52,7 +52,7 @@ export const HomeMenu: React.FC = () => {
     return (
         <div className="home-menu-container">
             <div className="home-hero">
-                <img src="/icon_base.png" alt="DVGE Logo" className="hero-logo" />
+                <img src="/icon.png" alt="DVGE Logo" className="hero-logo" />
                 <h1>Dynamic Vector Graphics Engine (DVGE)</h1>
                 <p>Proyectos de Animación Broadcast</p>
             </div>

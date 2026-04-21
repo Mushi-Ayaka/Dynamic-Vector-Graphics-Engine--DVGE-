@@ -1,6 +1,6 @@
 {
-  "name": "dv-web-remotion-engine",
-  "version": "3.3.0",
+  "name": "dv-web-graphics-engine",
+  "version": "3.4.0",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",

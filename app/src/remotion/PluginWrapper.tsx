@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useCurrentFrame, useVideoConfig } from 'remotion';
 import { useStore } from '../store/useStore';
+import { GLOBAL_PLUGIN_CSS, PRESET_HTML_FRAGMENTS } from './GlobalStyles';
 
 // Extendemos window para el bridge persistente
 declare global {
@@ -93,7 +94,13 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
                     // REINICIAR CONTEXTO: Conservar root y utils pero limpiar lo demás
                     pluginContextRef.current = {
                         root: shadowRef.current,
-                        utils: dvUtils
+                        utils: dvUtils,
+                        env: {
+                            isExporting: false,
+                            resolution: { width: 1920, height: 1080 },
+                            safeArea: { top: 60, left: 60, right: 60, bottom: 60 }
+                        },
+                        global: {}
                     };
                     hasAwoken.current = false;
                     hasStarted.current = false;
@@ -105,9 +112,21 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
 
                     // Sincronizar solo los datos dinámicos del frame actual
                     ctx.frame = data.frame;
-                    ctx.fps = data.fps;
                     ctx.props = data.props;
                     
+                    // [v3.4.0] Sincronización de Entorno Global
+                    ctx.env = {
+                        isExporting: useStore.getState().isExporting,
+                        resolution: { width, height },
+                        safeArea: { 
+                            top: useStore.getState().globalConfig.safeArea,
+                            left: useStore.getState().globalConfig.safeArea,
+                            right: useStore.getState().globalConfig.safeArea,
+                            bottom: useStore.getState().globalConfig.safeArea,
+                        }
+                    };
+                    ctx.global = useStore.getState().globalConfig;
+
                     // Enriquecer con settings para compatibilidad con IA
                     ctx.settings = {
                         fps: data.fps,
