@@ -3,7 +3,7 @@
 export {}
 
 export interface FormField {
-  type: 'string' | 'color' | 'number' | 'image'
+  type: 'string' | 'color' | 'number' | 'image' | 'code'
   id: string
   label: string
   defaultValue: string | number

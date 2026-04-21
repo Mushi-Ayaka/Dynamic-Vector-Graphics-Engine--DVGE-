@@ -6,7 +6,8 @@ Un **plugin** en el Dynamic Vector Graphics Engine (DVGE) es un gráfico de vide
 
 Cada plugin vive en su propia carpeta dentro del directorio de plugins de tu sistema, y está compuesto por exactamente **cuatro archivos** que definen su apariencia, comportamiento y controles editables.
 
-El motor fue diseñado para que cualquier persona, con o sin experiencia en programación, pueda crear sus propios plugins valiéndose de un asistente de inteligencia artificial. Esta guía te explica exactamente cómo hacerlo.
+El motor fue diseñado para que cualquier persona, con o sin experiencia en programación, pueda crear sus propios plugins valiéndose de un asistente de inteligencia artificial. A partir de la **versión 3.2.0**, el motor genera automáticamente los controles en la aplicación basándose en el `manifest.json` que la IA escriba.
+
 
 ---
 
@@ -93,25 +94,41 @@ A partir de la versión 3.1.0, el motor inyecta automáticamente una librería d
 | `utils.easeOutBounce(t)` | Easing | Efecto de rebote elástico (notificaciones). |
 | `utils.easeOutElastic(t)` | Easing | Efecto de "muelle" dinámico. |
 | `utils.hexToRgb(hex)` | Parser | Útil para inyectar colores manifest en variables CSS. |
+| `settings` | Metadata | Acceso a `fps`, `duration` (segundos) y `resolution`. |
 
 ---
 
-## Cómo Usar un Asistente de IA para Crear un Plugin
+## 🤖 Auditoría: Reglas de Oro para la IA (v3.2.1)
 
-A continuación encontrarás el **prompt maestro** pensado para trabajar con cualquier asistente de inteligencia artificial con capacidad de generar código. Úsalo copiándolo y completando la sección de descripción al final con los detalles de tu plugin.
+Para lograr una generación "One-Shot" (que funcione a la primera), es vital incluir estas reglas en tu prompt. Hemos detectado que los errores más comunes de la IA son **sintácticos**:
 
-> **Compatibilidad con distintos asistentes:**
-> - Si el asistente que estás usando puede generar archivos comprimidos (.zip), pídele que lo haga directamente.
-> - Si el asistente solo puede generar texto (como la mayoría de los chats de IA en su versión web), pedirá que te devuelva cada archivo en un bloque de código separado y etiquetado. Esa sección está incluida en el prompt.
+1. **Backticks Obligatorios**: La IA suele olvidar usar backticks (`` ` ``) al inyectar valores en strings de CSS (ej: `` `translateY(${val}px)` ``). Sin ellos, el plugin crashea.
+2. **Contexto Persistente**: A partir de la v3.2.1, el objeto `ctx` es persistente. La IA puede guardar estado en `ctx._state = {}` dentro de `awake` y recuperarlo en `update` sin perder datos.
+3. **Uso de `ctx.settings`**: Pedir a la IA que use `ctx.settings.fps` y `ctx.settings.duration` en lugar de valores hardcoded para que el gráfico se adapte automáticamente al proyecto.
+4. **Validación de Operadores**: Asegurar que la IA no olvide operadores lógicos (como `||`) en bloques condicionales complejos.
 
 ---
 
-## El Prompt Maestro
+## El Nuevo Prompt Maestro (Optimizado para One-Shot)
 
-> **Copia el siguiente bloque de texto completo y pégalo en tu asistente de IA favorito.**
+> **Copia el siguiente bloque y pégalo en tu asistente. Está diseñado para prevenir los errores detectados en la auditoría v3.2.1.**
 
 ```text
-Actúa como un desarrollador senior de gráficos de video. Necesito que crees un Plugin completo para el Dynamic Vector Graphics Engine (DVGE) v3.1.0.
+Actúa como un desarrollador senior de Motion Graphics y JavaScript. Genera un plugin para DVGE v3.2.1 siguiendo estas reglas técnicas IRROMPIBLES:
+
+1. ARCHIVOS: Genera manifest.json, index.html, style.css y script.js.
+2. API: Usa estrictamente dvEngine.register({ awake, start, update }).
+3. CONTEXTO: Usa ctx.root.getElementById, ctx.frame, ctx.props, ctx.utils y ctx.settings.
+4. PERSISTENCIA: El objeto ctx es persistente. Guarda referencias DOM en ctx._el y estado en ctx._state.
+5. SINTAXIS CRÍTICA: 
+   - Usa SIEMPRE backticks (``) para CUALQUIER string de CSS dinámico en JS.
+   - Verifica que todos los operadores lógicos (&&, ||) estén presentes.
+6. DISEÑO: Calidad broadcast, 1920x1080, animaciones fluidas con easing.
+
+[DESCRIPCIÓN DEL PLUGIN: Define aquí lo que quieres. Ej: Un Lower Third con estilo Cyberpunk.]
+
+ANTES DE ENTREGAR, VERIFICA: ¿Usaste backticks en todos los .transform y .style? ¿Pasaste ctx a todos los hooks?
+```
 
 El objetivo del plugin es generar un gráfico visual dinámico para producción audiovisual profesional. El plugin debe verse elegante, moderno y de calidad broadcast.
 

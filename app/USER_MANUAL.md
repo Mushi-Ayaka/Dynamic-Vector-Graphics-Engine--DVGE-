@@ -45,13 +45,16 @@ Una vez dentro de un proyecto, la pantalla se divide en dos áreas:
 
 ### 3.1 Panel de Propiedades (lado izquierdo)
 
-Aquí encontrarás los campos editables del gráfico: textos, colores, imágenes, etc. Estos campos son definidos por la plantilla gráfica que seleccionaste, por lo que cada plugin puede tener controles distintos.
+Aquí encontrarás los campos editables del gráfico: textos, colores, imágenes y **código**. Estos campos son definidos por la plantilla gráfica que seleccionaste.
 
-**A medida que escribas o modifiques cualquier valor, el gráfico en el reproductor se actualizará automáticamente en tiempo real.** No hay necesidad de confirmar los cambios ni de pulsar ningún botón.
+**A medida que escribas o modifiques cualquier valor, el gráfico en el reproductor se actualizará automáticamente en tiempo real.**
 
-### 3.2 Autoguardado
+> [!TIP]
+> **Edición de Código (v3.3)**: A partir de la versión 3.3.0, puedes usar la plantilla **HTML Master Renderer**. Encontrarás campos de "Código HTML" y "Código CSS" que son cajas de texto grandes (textarea). Esto te permite pegar bloques enteros de código y ver el resultado instantáneamente sin programar.
 
-La aplicación guarda automáticamente tus cambios a los pocos instantes de realizarlos. No existe riesgo de perder el trabajo si la aplicación se cierra inesperadamente. Un indicador silencioso confirma que el guardado fue exitoso.
+### 3.2 Autoguardado y Guardado Manual
+
+La aplicación guarda automáticamente tus cambios por "Autoguardado Silencioso". Si deseas asegurar que el archivo se ha escrito físicamente en el disco en un momento específico, usa el botón **"💾 Guardar Proyecto"** ubicado en la parte inferior del panel lateral.
 
 ### 3.3 El Reproductor de Previsualización (lado derecho)
 

@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { useStore, FormField } from './store/useStore'
+import { useStore } from './store/useStore'
+import { FormField } from './env'
 import './styles/resolve-theme.css'
 import { PreviewPlayer } from './remotion/PreviewPlayer'
 import { HomeMenu } from './components/HomeMenu'
@@ -42,6 +43,25 @@ const DynamicField: React.FC<{ field: FormField; value: any; onChange: (id: stri
             type="text"
             className="dv-input"
             placeholder="Ruta o URL de imagen..."
+            value={value ?? field.defaultValue}
+            onChange={(e) => onChange(field.id, e.target.value)}
+          />
+        </div>
+      )
+    case 'code':
+      return (
+        <div>
+          <label style={labelStyle}>{field.label}</label>
+          <textarea
+            className="dv-input"
+            style={{ 
+                fontFamily: 'monospace', 
+                height: '160px', 
+                resize: 'vertical',
+                fontSize: '11px',
+                lineHeight: '1.4',
+                background: '#0d0d0d'
+            }}
             value={value ?? field.defaultValue}
             onChange={(e) => onChange(field.id, e.target.value)}
           />
@@ -143,7 +163,7 @@ export default function App() {
           <h3 style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => window.location.reload()}>
             ← Volver a Proyectos
           </h3>
-          <span style={{ fontSize: '12px', color: '#E44C30' }}>{activeProject.name}</span>
+          <span style={{ fontSize: '12px', color: '#E44C30', fontWeight: 'bold' }}>v3.3.0 // {activeProject.name}</span>
         </div>
 
         {/* Plugin Badge */}
@@ -171,19 +191,31 @@ export default function App() {
 
         <div style={{ flex: 1 }} />
 
-        {/* Indicador de Autoguardado */}
         <div style={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '10px',
-          fontSize: '12px',
-          color: isSaving ? '#aaa' : 'var(--success)',
+          flexDirection: 'column',
+          gap: '8px',
+          padding: '12px',
           background: 'rgba(255,255,255,0.03)',
           borderRadius: '6px',
-          fontStyle: 'italic'
         }}>
-          {isSaving ? '⏳ Guardando...' : lastSaved ? `✓ Guardado (${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : 'Autoguardado activado'}
+          <div style={{
+            fontSize: '11px',
+            color: isSaving ? '#aaa' : 'var(--success)',
+            textAlign: 'center',
+            fontStyle: 'italic'
+          }}>
+            {isSaving ? '⏳ Guardando cambios...' : lastSaved ? `✓ Guardado (${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : 'Autoguardado activo'}
+          </div>
+          
+          <button 
+            className="dv-btn secondary" 
+            style={{ fontSize: '11px', padding: '6px' }}
+            disabled={isSaving}
+            onClick={() => saveProjectState()}
+          >
+            💾 Guardar Proyecto
+          </button>
         </div>
 
         <button

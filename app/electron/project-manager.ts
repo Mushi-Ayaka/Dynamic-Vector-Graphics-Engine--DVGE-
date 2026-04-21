@@ -95,10 +95,13 @@ export class ProjectManager {
             data.properties = properties;
             data.updatedAt = Date.now();
             fs.writeFileSync(metadataPath, JSON.stringify(data, null, 2));
+            console.log(`[ProjectManager] ✅ Saved properties for: ${projectId} - Props: ${Object.keys(properties).length}`);
             return true;
         } catch(e) {
-            console.error('Failed to save project state:', e);
+            console.error(`[ProjectManager] ❌ Failed to save project state for ${projectId}:`, e);
         }
+    } else {
+        console.warn(`[ProjectManager] ⚠ Attempted to save to non-existent project: ${projectId}`);
     }
     return false;
   }

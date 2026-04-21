@@ -1,4 +1,4 @@
-# Documentación Técnica: Dynamic Vector Graphics Engine (DVGE) v3.2.0
+# Documentación Técnica: Dynamic Vector Graphics Engine (DVGE) v3.3.0
 
 ## Introducción
 
@@ -25,7 +25,8 @@ La aplicación se basa en una arquitectura híbrida de doble proceso separados p
 
 ### 1.1 Proceso del Renderizador (Frontend)
 
-Gestiona toda la interfaz de usuario: formularios de propiedades, el reproductor de previsualización en tiempo real a 60fps, y el estado global de la sesión a través de un store reactivo. El sistema de previsualización convierte directamente la animación del plugin activo en un flujo de imágenes renderizadas cuadro por cuadro.
+Gestiona toda la interfaz de usuario: genera formularios dinámicos a partir del `manifest.json` del plugin activo, controla el reproductor de previsualización en tiempo real a 60fps con reinicio de estado por Hard Reset al cambiar de proyecto, y maneja el estado global de la sesión a través de un store reactivo. El sistema de previsualización convierte directamente la animación del plugin en un flujo de imágenes renderizadas cuadro por cuadro.
+
 
 ### 1.2 Proceso Principal (Backend)
 
@@ -85,7 +86,24 @@ Cada plugin es una carpeta independiente que contiene exactamente cuatro archivo
 | `style.css` | Los estilos visuales del gráfico (posicionamiento absoluto en 1920×1080). |
 | `script.js` | La lógica de animación y enlace de datos, usando la API del motor. |
 
-### 3.2 Aislamiento por Shadow DOM
+### 3.2 Interfaz Dinámica (UI Generativa)
+
+El panel lateral de la aplicación **no tiene campos fijos**. El motor lee la propiedad `schema` del `manifest.json` y construye los controles visuales (*inputs, selectores de color, etc.*) dinámicamente. 
+
+Ejemplo de `manifest.json`:
+```json
+{
+  "id": "my-plugin",
+  "name": "My Plugin",
+  "schema": [
+    { "type": "string", "id": "title", "label": "Título Principal", "defaultValue": "Texto" },
+    { "type": "color", "id": "bgColor", "label": "Color de Fondo", "defaultValue": "#FF0000" }
+  ]
+}
+```
+*Tipos soportados:* `string`, `color`, `number`, `image`.
+
+### 3.3 Aislamiento por Shadow DOM
 
 Cuando el motor carga un plugin para su previsualización, inyecta el HTML y el CSS del plugin dentro de un Shadow Root adjunto a un contenedor interno. Esta tecnología nativa del navegador garantiza el **aislamiento total de estilos**: ninguna regla CSS de la interfaz del motor afecta al gráfico del plugin, y viceversa.
 
@@ -121,7 +139,12 @@ Cada hook recibe el mismo objeto de contexto con las siguientes propiedades:
 |---|---|---|
 | `ctx.frame` | `number` | Fotograma actual de la animación (empieza en 0). |
 | `ctx.root` | `ShadowRoot` | Referencia al Shadow Root que contiene el HTML del plugin. |
-| `ctx.props` | `object` | Las propiedades actuales definidas en el `manifest.json` y editadas por el usuario en tiempo real. |
+| `ctx.props` | `object` | Las propiedades actuales definidas en el `manifest.json`. |
+| `ctx.utils` | `object` | Librería nativa de easing y matemáticas (`lerp`, `clamp`, etc.). |
+| `ctx.settings`| `object` | Metadatos globales: `fps`, `duration`, `resolution`, `width`, `height`. |
+
+> [!IMPORTANT]
+> **Persistencia de Contexto**: A partir de v3.2.1, el objeto `ctx` es persistente durante toda la vida del plugin. Esto permite a los desarrolladores guardar estado en propiedades personalizadas (ej: `ctx._state`) en el hook `awake` y recuperarlas en cada cuadro del loop `update`.
 
 ### 3.5 Enlace Reactivo de Datos
 
@@ -157,39 +180,6 @@ update: (ctx) => {
   // ...
 }
 ```
-
-### 3.7 Motor de Plugins Universal (v3.2)
-
-A partir de la versión 3.2, el motor es **completamente data-driven**: ningún campo de la interfaz está codificado de forma fija. El formulario del panel lateral se genera dinámicamente leyendo el `schema` del `manifest.json` del plugin activo.
-
-#### Flujo de Datos del Panel de Control
-
-```
-manifest.json
-  └─► schema: [{ type, id, label, defaultValue }]
-        │
-        ▼
-  useStore.activePlugin  (cargado en loadProject)
-        │
-        ▼
-  App.tsx → <DynamicField> por cada campo del schema
-        │
-        ▼
-  setProperties({ [field.id]: value })  →  ctx.props en update()
-```
-
-#### Tipos de Campos Soportados
-
-| Tipo en `manifest.json` | Componente generado |
-|---|---|
-| `string` | `<input type="text">` |
-| `color` | `<input type="color">` |
-| `number` | `<input type="number">` |
-| `image` | `<input type="text">` (ruta o URL) |
-
-#### Hard Reset al Cambiar de Proyecto
-
-El reproductor usa `key={activeProject.id}`, que obliga a React a destruir y recrear el componente al cambiar de proyecto. Esto garantiza que el Shadow DOM previo se destruya completamente, el `__DV_BRIDGE__` se reinicialice, y los hooks de ciclo de vida comiencen desde cero.
 
 ---
 

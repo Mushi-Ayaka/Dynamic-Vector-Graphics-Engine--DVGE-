@@ -1,26 +1,5 @@
 import { create } from 'zustand'
-
-// --- Tipos del Ecosistema de Plugins ---
-export type FormField =
-  | { type: 'string'; id: string; label: string; defaultValue: string }
-  | { type: 'color'; id: string; label: string; defaultValue: string }
-  | { type: 'number'; id: string; label: string; defaultValue: number }
-  | { type: 'image'; id: string; label: string; defaultValue: string }
-
-export interface PluginManifest {
-  id: string
-  name: string
-  description: string
-  version: string
-  schema: FormField[]
-}
-
-export interface DVPlugin {
-  manifest: PluginManifest
-  folderPath: string
-  hasCss: boolean
-  hasJs: boolean
-}
+import { DVPlugin } from '../env'
 
 // --- Tipo del Store ---
 type StoreState = {
@@ -92,7 +71,18 @@ export const useStore = create<StoreState>((set, get) => ({
     set({ isSaving: false, lastSaved: new Date() })
   },
 
-  setProperties: (props) => set((state) => ({ properties: { ...state.properties, ...props } })),
+  setProperties: (props) => set((state) => {
+    const nextProps = { ...state.properties, ...props };
+    // Sincronización proactiva con el objeto del proyecto activo
+    const nextProject = state.activeProject 
+      ? { ...state.activeProject, properties: nextProps } 
+      : null;
+      
+    return { 
+      properties: nextProps,
+      activeProject: nextProject
+    };
+  }),
 
   renderState: 'IDLE',
   renderProgress: 0,

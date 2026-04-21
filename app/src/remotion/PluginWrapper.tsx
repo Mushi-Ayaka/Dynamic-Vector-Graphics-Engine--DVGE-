@@ -13,59 +13,117 @@ declare global {
     }
 }
 
+// --- Utilidades nativas del motor (module-level, sin estado) ---
+const dvUtils = {
+    lerp: (a: number, b: number, t: number) => a * (1 - t) + b * t,
+    clamp: (val: number, min: number, max: number) => Math.min(Math.max(val, min), max),
+    easeOutCubic: (t: number) => 1 - Math.pow(1 - t, 3),
+    easeInOutCubic: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+    easeOutBounce: (x: number) => {
+        const n1 = 7.5625;
+        const d1 = 2.75;
+        if (x < 1 / d1) return n1 * x * x;
+        if (x < 2 / d1) return n1 * (x -= 1.5 / d1) * x + 0.75;
+        if (x < 2.5 / d1) return n1 * (x -= 2.25 / d1) * x + 0.9375;
+        return n1 * (x -= 2.625 / d1) * x + 0.984375;
+    },
+    easeOutElastic: (x: number) => {
+        const c4 = (2 * Math.PI) / 3;
+        return x === 0 ? 0 : x === 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1;
+    },
+    hexToRgb: (hex: string) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : null;
+    }
+};
+
 /**
- * ## [2.4.0] - 2026-04-21
- * ### 🏗️ Arquitectura (Atomic Init)
- * - **Callback Ref Pattern**: El Shadow DOM se inicializa mediante un callback ref
- *   que garantiza la creación del bridge en el momento exacto del montaje del DOM.
- * - **Always-Render Container**: El contenedor siempre se renderiza para asegurar
- *   que el ref esté disponible desde el primer frame.
+ * ## [3.2.0] - PluginWrapper con Hard Reset correcto
  */
 
 export const PluginWrapper: React.FC<any> = (passedProps) => {
     const frame = useCurrentFrame();
-    const { fps, width, height } = useVideoConfig();
+    const { fps, width, height, durationInFrames } = useVideoConfig(); // Añadido durationInFrames
     const storeFiles = useStore().activePluginFiles;
     const activePluginFiles = passedProps.activePluginFiles || storeFiles;
     
-    // Reactividad de Props
-    const properties = passedProps.title ? passedProps : useStore().properties;
+    // Reactividad de Props — usa passedProps si vienen del reproductor, si no, del store.
+    const storeProps = useStore().properties;
+    
+    // Filtramos para saber si passedProps contiene datos del usuario o solo de Remotion
+    const hasPassedUserProps = passedProps && Object.keys(passedProps).some(k => 
+        !['width', 'height', 'fps', 'durationInFrames', 'activePluginFiles'].includes(k)
+    );
+
+    const properties = hasPassedUserProps ? passedProps : storeProps;
     
     const [shadow, setShadow] = useState<ShadowRoot | null>(null);
     const lifecycleRef = useRef<any>(null);
     const shadowRef = useRef<ShadowRoot | null>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    
+    // El Contexto persistente donde el plugin guarda su estado (_state, _el, etc)
+    const pluginContextRef = useRef<any>({});
     
     // Lifecycle flags
     const hasAwoken = useRef<boolean>(false);
     const hasStarted = useRef<boolean>(false);
+    // Track si ya inyectamos, para no repetir
+    const injectedFilesRef = useRef<string | null>(null);
 
-    // 1. CALLBACK REF: Se ejecuta cuando el div se monta en el DOM real
+    // 1. CALLBACK REF: Se ejecuta cuando el div se monta en el DOM real.
     const containerCallback = useCallback((node: HTMLDivElement | null) => {
-        if (node && !shadowRef.current) {
-            const shadowRoot = node.attachShadow({ mode: 'open' });
+        containerRef.current = node;
+        
+        if (node) {
+            let shadowRoot: ShadowRoot;
+            if (node.shadowRoot) {
+                shadowRoot = node.shadowRoot;
+                shadowRoot.innerHTML = ''; 
+            } else {
+                shadowRoot = node.attachShadow({ mode: 'open' });
+            }
+            
             shadowRef.current = shadowRoot;
 
             // Crear el bridge global vinculado a este ShadowRoot
             window.__DV_BRIDGE__ = {
                 register: (pluginLifecycle) => {
                     lifecycleRef.current = pluginLifecycle;
+                    // REINICIAR CONTEXTO: Conservar root y utils pero limpiar lo demás
+                    pluginContextRef.current = {
+                        root: shadowRef.current,
+                        utils: dvUtils
+                    };
                     hasAwoken.current = false;
                     hasStarted.current = false;
                 },
                 update: (data) => {
                     const lc = lifecycleRef.current;
-                    const root = shadowRef.current;
-                    if (!lc || !root) return;
+                    const ctx = pluginContextRef.current;
+                    if (!lc || !ctx) return;
 
-                    const ctx = { ...data, root };
+                    // Sincronizar solo los datos dinámicos del frame actual
+                    ctx.frame = data.frame;
+                    ctx.fps = data.fps;
+                    ctx.props = data.props;
+                    
+                    // Enriquecer con settings para compatibilidad con IA
+                    ctx.settings = {
+                        fps: data.fps,
+                        duration: durationInFrames / data.fps,
+                        width: width,
+                        height: height,
+                        resolution: `${width}x${height}`
+                    };
 
-                    // AWAKE: Runs only once per plugin instance after registration
+                    // AWAKE: Se ejecuta una vez después del registro
                     if (!hasAwoken.current && typeof lc.awake === 'function') {
                         lc.awake(ctx);
                         hasAwoken.current = true;
                     }
 
-                    // START: Runs on frame 0, or whenever scrubbed back to 0
+                    // START: Se ejecuta en frame 0 o al resetear
                     if (data.frame === 0 || !hasStarted.current) {
                         if (typeof lc.start === 'function') {
                             lc.start(ctx);
@@ -73,31 +131,28 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
                         hasStarted.current = true;
                     }
 
-                    // UPDATE: Runs every frame to apply visual properties
+                    // UPDATE: Loop principal reactivo
                     if (typeof lc.update === 'function') {
                         lc.update(ctx);
                     }
                 }
             };
 
+            injectedFilesRef.current = null;
             setShadow(shadowRoot);
+        } else {
+            shadowRef.current = null;
+            setShadow(null);
         }
     }, []);
 
     // 2. INYECCIÓN DE CÓDIGO (Cuando shadow está listo Y los archivos están cargados)
     useEffect(() => {
-        if (!shadow || !activePluginFiles) {
-            // Diagnóstico: ¿POR QUÉ no se inyecta?
-            if ((window as any).ipcRenderer) {
-                (window as any).ipcRenderer.logSync({
-                    _debug: 'INJECT_SKIP',
-                    hasShadow: !!shadow,
-                    hasFiles: !!activePluginFiles,
-                    props: {}
-                });
-            }
-            return;
-        }
+        if (!shadow || !activePluginFiles) return;
+        
+        // Crear una firma única de los archivos para evitar re-inyección duplicada
+        const filesSignature = `${activePluginFiles.html?.length || 0}-${activePluginFiles.css?.length || 0}-${activePluginFiles.js?.length || 0}`;
+        if (injectedFilesRef.current === filesSignature) return;
         
         // LIMPIEZA TOTAL: Forzamos el "Hard Swap"
         shadow.innerHTML = '';
@@ -122,59 +177,27 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
 
         // JS: Ejecución Segura via new Function
         if (activePluginFiles.js) {
-            let registered = false;
             try {
-                // Utilidades nativas del motor para facilitar el desarrollo de los plugins
-                const dvUtils = {
-                    lerp: (a: number, b: number, t: number) => a * (1 - t) + b * t,
-                    clamp: (val: number, min: number, max: number) => Math.min(Math.max(val, min), max),
-                    // Funciones de Easing
-                    easeOutCubic: (t: number) => 1 - Math.pow(1 - t, 3),
-                    easeInOutCubic: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
-                    easeOutBounce: (x: number) => {
-                        const n1 = 7.5625;
-                        const d1 = 2.75;
-                        if (x < 1 / d1) {
-                            return n1 * x * x;
-                        } else if (x < 2 / d1) {
-                            return n1 * (x -= 1.5 / d1) * x + 0.75;
-                        } else if (x < 2.5 / d1) {
-                            return n1 * (x -= 2.25 / d1) * x + 0.9375;
-                        } else {
-                            return n1 * (x -= 2.625 / d1) * x + 0.984375;
-                        }
-                    },
-                    easeOutElastic: (x: number) => {
-                        const c4 = (2 * Math.PI) / 3;
-                        return x === 0 ? 0 : x === 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1;
-                    },
-                    // Hex to RGB parser for CSS Custom properties
-                    hexToRgb: (hex: string) => {
-                        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-                        return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : null;
-                    }
-                };
-
                 const dvEngine = {
-                    utils: dvUtils,
+                    utils: dvUtils,  // Referencia al objeto module-level
                     register: (callback: any) => {
-                        registered = true;
                         window.__DV_BRIDGE__?.register(callback);
                     }
                 };
 
                 const pluginRuntime = new Function('dvEngine', 'window', 'dvContext', activePluginFiles.js);
                 pluginRuntime(dvEngine, window, (window as any).dvContext);
+                
+                // Marcar como inyectado
+                injectedFilesRef.current = filesSignature;
 
-                // Reportar al terminal
+                // Log de éxito (solo una vez)
                 if ((window as any).ipcRenderer) {
                     (window as any).ipcRenderer.logSync({
-                        _debug: 'JS_EXEC_OK',
-                        registered,
-                        callbackSet: !!lifecycleRef.current,
+                        _debug: 'PLUGIN_INJECTED',
+                        registered: !!lifecycleRef.current,
                         bridgeExists: !!window.__DV_BRIDGE__,
-                        jsLength: activePluginFiles.js.length,
-                        props: {}
+                        jsLength: activePluginFiles.js.length
                     });
                 }
             } catch (err: any) {
@@ -183,8 +206,7 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
                     (window as any).ipcRenderer.logSync({
                         _debug: 'JS_EXEC_ERROR',
                         error: err?.message || String(err),
-                        stack: err?.stack?.slice(0, 300),
-                        props: {}
+                        stack: err?.stack?.slice(0, 300)
                     });
                 }
             }
@@ -192,28 +214,20 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
     }, [shadow, activePluginFiles]);
 
     // 3. SINCRONIZACIÓN DE DATOS (Soft-Sync fluido - cada frame)
+    //    Solo ejecuta si hay un lifecycle registrado para evitar spam de logs.
     useEffect(() => {
-        if (!window.__DV_BRIDGE__) return;
+        if (!window.__DV_BRIDGE__ || !lifecycleRef.current) return;
 
         const data = {
             frame,
             fps,
             props: properties,
+            utils: dvUtils,  // <-- ¡La pieza que faltaba!
             shadowId: 'plugin-host-root'
         };
 
         window.dvContext = data;
         window.__DV_BRIDGE__.update(data);
-
-        // LOG PARA TERMINAL
-        if ((window as any).ipcRenderer) {
-            (window as any).ipcRenderer.logSync({
-                ...data,
-                hasCallback: !!lifecycleRef.current,
-                hasAwoken: hasAwoken.current,
-                hasStarted: hasStarted.current
-            });
-        }
 
         if ((window as any).renderFrame) {
             (window as any).renderFrame();

@@ -1,4 +1,21 @@
-# 📝 Changelog - Dynamic Vector Graphics Engine (DVGE)
+## [3.3.0] - 2026-04-21
+
+### ✨ Editor Edition (HTML-a-Video Profesional)
+- **Campos de Código (Textarea)**: Soporte para edición multilínea de HTML y CSS directamente en el sidebar. El motor ahora renderiza una caja de edición profesional para campos de tipo `code`.
+- **Plugin Oficial: HTML Master Renderer**: Introducción de una plantilla de alto rendimiento diseñada específicamente para renderizar código puro sin capas de UI adicionales.
+- **Botón de Guardado Manual**: Nueva opción en el sidebar para forzar la escritura en disco del proyecto, complementando el sistema de autoguardado.
+- **Branding v3.3.0**: Actualización de la identidad visual en la barra de navegación y metadatos.
+
+## [3.2.1] - 2026-04-21
+
+### 🛠️ Auditoría y Robustez (AI-Ready)
+- **Fix: Sincronización Proactiva**: Se resolvió un bug crítico donde el reproductor usaba datos viejos al no detectar cambios en props dinámicos. Ahora `setProperties` es síncrono con el objeto del proyecto.
+- **Fix: Persistencia de Contexto**: El objeto `ctx` de los plugins ahora es persistente durante toda la vida del plugin, permitiendo a la IA guardar estado en `ctx._state` sin que se pierda cada frame.
+- **Enriquecimiento del Contexto**: Añadido `ctx.settings` con `fps`, `duration`, `width`, `height` y `resolution` para compatibilidad universal con generadores de código.
+- **Reparación de Plugins de Terceros**: Auditado y corregido el plugin "PRO" (Gemini) resolviendo errores de sintaxis en template literals y operadores lógicos.
+
+### 💾 Persistencia
+- **Verificación de Autoguardado**: Añadido feedback en el log de Electron para confirmar la escritura física en `project.json`.
 
 ## [3.2.0] - 2026-04-21
 
