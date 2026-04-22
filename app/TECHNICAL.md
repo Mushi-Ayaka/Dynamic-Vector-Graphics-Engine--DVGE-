@@ -159,7 +159,14 @@ Cada hook recibe el mismo objeto de contexto con las siguientes propiedades:
 | `ctx.utils` | `object` | Librería nativa de easing y matemáticas (`lerp`, `clamp`, etc.). |
 | `ctx.settings`| `object` | Metadatos globales: `fps`, `duration`, `resolution`, `width`, `height`. |
 
-### 3.5 Determinismo vs Tiempo Real
+### 3.5 Inteligencia de Rescate (v4.1.5)
+
+El motor implementa un **Auto-Bridge** que garantiza la ejecución de plugins incluso si no siguen el estándar oficial:
+- **Detección Global**: Si el script define `window.renderDVGE`, `window.update` o `window.draw`, el motor lo detecta y lo registra automáticamente.
+- **Neutralización**: El Sandbox intercepta `requestAnimationFrame` y lo anula para forzar el determinismo.
+- **Utils v4.1.5**: Se añade `ctx.utils.loop(frame, duration)` que retorna un valor normalizado [0-1] para ciclos perfectos.
+
+### 3.6 Determinismo vs Tiempo Real
 
 DVGE v4.0 prohíbe el uso de librerías basadas en `requestAnimationFrame` (como GSAP) para garantizar la coherencia cuadro a cuadro durante la exportación a ProRes 4444. La animación debe ser puramente matemática basada en el `ctx.frame` o el `ctx.timeline`.
 

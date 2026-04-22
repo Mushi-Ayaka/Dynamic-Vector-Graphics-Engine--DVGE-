@@ -44,3 +44,10 @@ El proyecto adopta una arquitectura desacoplada Standalone Client-Host para aseg
 - [x] **Gestión Dinámica:** Sistemas de instalación, actualización y eliminación de módulos desde la UI.
 - [x] **Identidad Profesional:** Integración de enlaces sociales y contacto directo en el producto.
 - [x] **Repositorio de Plugins Centralizado:** Creación del catálogo oficial `Dynamic-Vector-Engine-Plugins`.
+
+## Fase 7: Smart Engine & Auto-Rescue (v4.1.5 GA) (Completado ✅)
+
+- [x] **Capa de Inteligencia:** Detección y auto-envoltura de scripts mal formados.
+- [x] **Sandbox Resiliente:** Neutralización silenciosa de llamadas no determinísticas (`requestAnimationFrame`).
+- [x] **Simplificación de API:** Helper `utils.loop` y unificación del Prompt Maestro.
+- [x] **Estabilidad 'One-Shot':** Optimización del motor para ejecución de código generado por LLMs sin intervención humana.

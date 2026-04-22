@@ -1,3 +1,10 @@
+## [4.1.5] - 2026-04-22 (GA)
+### 🧠 Smart Engine & Auto-Rescue
+- **Capa de Inteligencia (Auto-Rescate)**: El motor ahora detecta y envuelve automáticamente scripts que no sigan el estándar de registro oficial (p. ej., detectando funciones globales como `update` o `renderDVGE`).
+- **Sandbox Resiliente**: Inyección de un `fakeWindow` inteligente que silencia llamadas no determinísticas como `requestAnimationFrame`, protegiendo la integridad del renderizado ProRes 4444.
+- **Simplificación de API**: Introducción de `ctx.utils.loop(frame, duration)` para facilitar la creación de animaciones cíclicas perfectas.
+- **AI-Native Workflow**: El motor ahora es capaz de ejecutar código generado por IA con una tasa de éxito 'One-Shot' significativamente mayor gracias a su capacidad de perdón estructural.
+
 ## [4.1.0] - 2026-04-21 (GA)
 ### 🛍️ Catálogo de Plugins & Ecosystem
 - **Catálogo Integrado**: Nuevo panel para descubrir y descargar plugins directamente desde el repositorio oficial de GitHub (`Mushi-Ayaka/Dynamic-Vector-Engine-Plugins`).

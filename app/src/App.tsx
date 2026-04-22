@@ -258,57 +258,56 @@ export default function App() {
         )}
 
         {/* [v4.0] Campos dinámicos protegidos por Error Boundary */}
-        <InspectorErrorBoundary>
-          {(() => {
-            // [v4.0] Tarea 2.1 doble check: Sanitización en runtime también
-            const safeSchema = Array.isArray(schema) ? schema : [];
-            if (safeSchema.length === 0) {
-              return (
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', padding: '20px 0' }}>
-                  Este plugin no tiene propiedades configurables.
-                </div>
-              );
-            }
+        <div style={{ flex: 1, overflowY: 'auto', paddingRight: '10px', margin: '0 -10px', paddingLeft: '10px' }} className="dv-scroll-area">
+          <InspectorErrorBoundary>
+            {(() => {
+              const safeSchema = Array.isArray(schema) ? schema : [];
+              if (safeSchema.length === 0) {
+                return (
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', padding: '20px 0' }}>
+                    Este plugin no tiene propiedades configurables.
+                  </div>
+                );
+              }
 
-            // Agrupar campos por el atributo 'group'
-            const groups: Record<string, FormField[]> = {};
-            safeSchema.forEach(field => {
-              const groupName = (field as any).group || 'General';
-              if (!groups[groupName]) groups[groupName] = [];
-              groups[groupName].push(field);
-            });
+              const groups: Record<string, FormField[]> = {};
+              safeSchema.forEach(field => {
+                const groupName = (field as any).group || 'General';
+                if (!groups[groupName]) groups[groupName] = [];
+                groups[groupName].push(field);
+              });
 
-            return Object.entries(groups).map(([groupName, fields]) => (
-              <details key={groupName} open style={{ marginBottom: '10px', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', overflow: 'hidden' }}>
-                <summary style={{ 
-                  padding: '10px', 
-                  background: 'rgba(255,255,255,0.02)', 
-                  cursor: 'pointer', 
-                  fontSize: '11px', 
-                  fontWeight: 'bold', 
-                  color: '#E44C30',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  userSelect: 'none'
-                }}>
-                  {groupName}
-                </summary>
-                <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(0,0,0,0.2)' }}>
-                  {fields.map(field => (
-                    <DynamicField
-                      key={field.id}
-                      field={field}
-                      value={properties[field.id]}
-                      onChange={handleFieldChange}
-                    />
-                  ))}
-                </div>
-              </details>
-            ));
-          })()}
-        </InspectorErrorBoundary>
-
-        <div style={{ flex: 1 }} />
+              return Object.entries(groups).map(([groupName, fields]) => (
+                <details key={groupName} open style={{ marginBottom: '10px', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', overflow: 'hidden', background: 'rgba(255,255,255,0.02)' }}>
+                  <summary style={{ 
+                    padding: '10px', 
+                    background: 'rgba(255,255,255,0.04)', 
+                    cursor: 'pointer', 
+                    fontSize: '11px', 
+                    fontWeight: 'bold', 
+                    color: '#E44C30',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    userSelect: 'none',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)'
+                  }}>
+                    {groupName}
+                  </summary>
+                  <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(0,0,0,0.1)' }}>
+                    {fields.map(field => (
+                      <DynamicField
+                        key={field.id}
+                        field={field}
+                        value={properties[field.id]}
+                        onChange={handleFieldChange}
+                      />
+                    ))}
+                  </div>
+                </details>
+              ));
+            })()}
+          </InspectorErrorBoundary>
+        </div>
 
         <div style={{
           display: 'flex',

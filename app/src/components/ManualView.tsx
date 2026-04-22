@@ -181,6 +181,8 @@ const DOCS = [
     { id: 'USER_MANUAL.md', label: 'Manual de Usuario' },
     { id: 'TECHNICAL.md', label: 'Documentación Técnica' },
     { id: 'AI_PLUGIN_GUIDE.md', label: 'Guía IA / Super-Prompt' },
+    { id: 'LEGAL.md', label: 'Aviso Legal' },
+    { id: 'PLUGIN_POLICY.md', label: 'Política de Plugins' },
 ]
 
 const mdComponents: Partial<Components> = {

@@ -1,10 +1,10 @@
-# Manual de Usuario: Dynamic Vector Graphics Engine (DVGE) v4.1.0 GA
+# Manual de Usuario: Dynamic Vector Graphics Engine (DVGE) v4.1.5 GA
 
 ## Bienvenida
 
 Dynamic Vector Graphics Engine (DVGE) es una herramienta de producción audiovisual diseñada para que editores, productores y realizadores puedan crear, personalizar y exportar gráficos de video de forma rápida y sin necesidad de conocimientos técnicos avanzados.
 
-A partir de la versión **v4.1.0**, el motor se convierte en una plataforma extensible gracias a su nuevo **Catálogo de Plugins**, permitiéndote descargar nuevos diseños profesionales directamente desde la nube.
+A partir de la versión **v4.1.5**, el motor incluye un **Smart Engine** con capacidad de auto-rescate, asegurando que tus plantillas funcionen siempre con la máxima estabilidad, incluso si fueron generadas por inteligencia artificial.
 
 ---
 

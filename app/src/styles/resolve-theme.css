@@ -123,3 +123,31 @@ body {
   cursor: grabbing;
   background: rgba(76, 175, 80, 0.2);
 }
+
+/* ============================================================
+   Custom Scrollbars (Dark Theme)
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-surface);
+  border-radius: 10px;
+  border: 2px solid var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-elevated);
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-surface) var(--bg-primary);
+}

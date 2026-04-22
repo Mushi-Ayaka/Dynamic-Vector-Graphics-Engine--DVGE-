@@ -1,8 +1,9 @@
-# 🚀 Dynamic Vector Graphics Engine (DVGE) v4.1.0 GA
+# 🚀 Dynamic Vector Graphics Engine (DVGE) v4.1.5 GA
 **Dynamic Vector Graphics Engine (DVGE)** is a high-performance desktop application designed for professional broadcast graphics. Built with React, Electron, and Remotion, it allows producers and editors to create, customize, and export dynamic graphics (lower thirds, titles, callouts) with real-time feedback and native ProRes 4444 + Alpha support.
 
 ## ✨ Key Features
 
+- **Smart Engine (v4.1.5)**: Intelligence layer that automatically wraps and fixes structural errors in AI-generated scripts (Auto-Rescue).
 - **Catálogo de Plugins (v4.1)**: Discover, install, and update graphics directly from the official GitHub registry.
 - **Security Sandbox**: Isolated plugin execution via Shadow DOM and `fakeWindow` to prevent system interference.
 - **Atomic Async I/O**: Resilient project persistence using atomic file operations to prevent data corruption.

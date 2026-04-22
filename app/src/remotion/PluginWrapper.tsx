@@ -68,6 +68,12 @@ const dvUtils = {
         const totalTravel = frame * speed;
         return -(totalTravel % textWidth);
     },
+    /**
+     * [v4.1] Helper para loops perfectos.
+     * @param frame Cuadro actual.
+     * @param duration Cuadros totales del ciclo (ej. 180 para 3s a 60fps).
+     */
+    loop: (frame: number, duration: number) => (frame % duration) / duration,
     hexToRgb: (hex: string) => {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : null;
@@ -232,17 +238,14 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
     useEffect(() => {
         if (!shadow || !activePluginFiles) return;
         
-        // Crear una firma única de los archivos para evitar re-inyección duplicada
         const filesSignature = `${activePluginFiles.html?.length || 0}-${activePluginFiles.css?.length || 0}-${activePluginFiles.js?.length || 0}`;
         if (injectedFilesRef.current === filesSignature) return;
         
-        // LIMPIEZA TOTAL: Forzamos el "Hard Swap"
         shadow.innerHTML = '';
         lifecycleRef.current = null;
         hasAwoken.current = false;
         hasStarted.current = false;
 
-        // CSS (External + Modular + Plugin)
         const manifest = useStore.getState().activePlugin?.manifest;
         if (manifest?.externalStyles) {
             manifest.externalStyles.forEach((url: string) => {
@@ -257,7 +260,91 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
         style.textContent = GLOBAL_PLUGIN_CSS + (activePluginFiles.css || '');
         shadow.appendChild(style);
 
-        // JS (External Scripts) - CARGA ASÍNCRONA v3.4.1
+        const executePluginJS = () => {
+            const wrapper = document.createElement('div');
+            wrapper.id = 'plugin-root';
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.display = 'flex';
+            
+            const align = properties.contentAlign || 'top-left';
+            switch (align) {
+                case 'center': wrapper.style.justifyContent = 'center'; wrapper.style.alignItems = 'center'; break;
+                case 'bottom-center': wrapper.style.justifyContent = 'center'; wrapper.style.alignItems = 'flex-end'; break;
+                case 'bottom-right': wrapper.style.justifyContent = 'flex-end'; wrapper.style.alignItems = 'flex-end'; break;
+                case 'bottom-left': wrapper.style.justifyContent = 'flex-start'; wrapper.style.alignItems = 'flex-end'; break;
+                default: wrapper.style.justifyContent = 'flex-start'; wrapper.style.alignItems = 'flex-start';
+            }
+            
+            let presetsHtml = '';
+            if (passedProps.presets) {
+                passedProps.presets.forEach((p: string) => {
+                    if (PRESET_HTML_FRAGMENTS[p as keyof typeof PRESET_HTML_FRAGMENTS]) {
+                        presetsHtml += PRESET_HTML_FRAGMENTS[p as keyof typeof PRESET_HTML_FRAGMENTS];
+                    }
+                });
+            }
+
+            wrapper.innerHTML = presetsHtml + activePluginFiles.html;
+            shadow.appendChild(wrapper);
+
+            if (properties.brandLogo && properties.logoPosition !== 'none') {
+                const logoContainer = document.createElement('div');
+                logoContainer.className = 'dv-logo-overlay';
+                const size = properties.logoSize || 100;
+                const margin = properties.safeAreaPadding || 60;
+                logoContainer.style.width = `${size}px`;
+                
+                switch (properties.logoPosition) {
+                    case 'top-right': logoContainer.style.top = `${margin}px`; logoContainer.style.right = `${margin}px`; break;
+                    case 'top-left': logoContainer.style.top = `${margin}px`; logoContainer.style.left = `${margin}px`; break;
+                    case 'bottom-right': logoContainer.style.bottom = `${margin}px`; logoContainer.style.right = `${margin}px`; break;
+                    case 'bottom-left': logoContainer.style.bottom = `${margin}px`; logoContainer.style.left = `${margin}px`; break;
+                }
+                logoContainer.innerHTML = `<img src="${properties.brandLogo}" />`;
+                shadow.appendChild(logoContainer);
+            }
+
+            if (activePluginFiles.js) {
+                try {
+                    const sandboxedCode = `
+                        "use strict";
+                        const process = undefined;
+                        const require = undefined;
+                        const globalThis = undefined;
+                        const window = {
+                            requestAnimationFrame: (cb) => { },
+                            ctx: dvContext,
+                            renderDVGE: undefined, update: undefined, draw: undefined
+                        };
+                        ${activePluginFiles.js}
+                        if (typeof dvEngine.registered === 'undefined') {
+                            const foundUpdate = window.renderDVGE || window.update || window.draw || (typeof update !== 'undefined' ? update : undefined);
+                            if (foundUpdate) {
+                                dvEngine.register({ update: (ctx) => foundUpdate(ctx.frame, ctx.props, ctx) });
+                            }
+                        }
+                    `;
+
+                    let isRegistered = false;
+                    const dvEngine = {
+                        utils: dvUtils,
+                        get registered() { return isRegistered; },
+                        register: (callback: any) => {
+                            isRegistered = true;
+                            window.__DV_BRIDGE__?.register(callback);
+                        }
+                    };
+
+                    const pluginRuntime = new Function('dvEngine', 'dvContext', sandboxedCode);
+                    pluginRuntime(dvEngine, (window as any).dvContext);
+                    injectedFilesRef.current = filesSignature;
+                } catch (err: any) {
+                    console.error('[DV-Engine] Plugin initialization error:', err);
+                }
+            }
+        };
+
         const loadExternalAssets = async () => {
             if (manifest?.externalScripts) {
                 const loadPromises = manifest.externalScripts.map((url: string) => {
@@ -272,127 +359,11 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
                 });
                 await Promise.all(loadPromises);
             }
-            
-            // Una vez cargados los scripts, ejecutar el código del plugin
             executePluginJS();
         };
 
-        const executePluginJS = () => {
-            // HTML (Presets Fragments + Plugin HTML)
-            const wrapper = document.createElement('div');
-            wrapper.id = 'plugin-root';
-            wrapper.style.width = '100%';
-            wrapper.style.height = '100%';
-            wrapper.style.display = 'flex';
-            
-            // Manejo de Alineación Global v3.4.0
-            const align = properties.contentAlign || 'top-left';
-            switch (align) {
-                case 'center':
-                    wrapper.style.justifyContent = 'center';
-                    wrapper.style.alignItems = 'center';
-                    break;
-                case 'bottom-center':
-                    wrapper.style.justifyContent = 'center';
-                    wrapper.style.alignItems = 'flex-end';
-                    break;
-                case 'bottom-right':
-                    wrapper.style.justifyContent = 'flex-end';
-                    wrapper.style.alignItems = 'flex-end';
-                    break;
-                case 'bottom-left':
-                    wrapper.style.justifyContent = 'flex-start';
-                    wrapper.style.alignItems = 'flex-end';
-                    break;
-                default: // top-left
-                    wrapper.style.justifyContent = 'flex-start';
-                    wrapper.style.alignItems = 'flex-start';
-            }
-            
-            // Inyectar fragmentos de presets basados en lo que declare el manifiesto
-            let presetsHtml = '';
-            if (passedProps.presets) {
-                passedProps.presets.forEach((p: string) => {
-                    if (PRESET_HTML_FRAGMENTS[p as keyof typeof PRESET_HTML_FRAGMENTS]) {
-                        presetsHtml += PRESET_HTML_FRAGMENTS[p as keyof typeof PRESET_HTML_FRAGMENTS];
-                    }
-                });
-            }
-
-            wrapper.innerHTML = presetsHtml + activePluginFiles.html;
-            shadow.appendChild(wrapper);
-
-            // Inyección Automática de Logo v3.4.0 (Branding Preset)
-            if (properties.brandLogo && properties.logoPosition !== 'none') {
-                const logoContainer = document.createElement('div');
-                logoContainer.className = 'dv-logo-overlay';
-                const size = properties.logoSize || 100;
-                const margin = properties.safeAreaPadding || 60;
-                
-                logoContainer.style.width = `${size}px`;
-                
-                switch (properties.logoPosition) {
-                    case 'top-right':
-                        logoContainer.style.top = `${margin}px`;
-                        logoContainer.style.right = `${margin}px`;
-                        break;
-                    case 'top-left':
-                        logoContainer.style.top = `${margin}px`;
-                        logoContainer.style.left = `${margin}px`;
-                        break;
-                    case 'bottom-right':
-                        logoContainer.style.bottom = `${margin}px`;
-                        logoContainer.style.right = `${margin}px`;
-                        break;
-                    case 'bottom-left':
-                        logoContainer.style.bottom = `${margin}px`;
-                        logoContainer.style.left = `${margin}px`;
-                        break;
-                }
-
-                logoContainer.innerHTML = `<img src="${properties.brandLogo}" />`;
-                shadow.appendChild(logoContainer);
-            }
-
-            if (activePluginFiles.js) {
-                try {
-                    const dvEngine = {
-                        utils: dvUtils,
-                        register: (callback: any) => {
-                            window.__DV_BRIDGE__?.register(callback);
-                        }
-                    };
-
-                    // [v4.0] Tarea 3.1: Sandbox Sellado.
-                    // Se pasa un fakeWindow vacío en lugar del window real para bloquear
-                    // el acceso a ipcRenderer, process, require y otras APIs peligrosas de Electron.
-                    const sandboxedCode = `
-                        "use strict";
-                        const process = undefined;
-                        const require = undefined;
-                        const globalThis = undefined;
-                        ${activePluginFiles.js}
-                    `;
-                    const fakeWindow = {}; // Proxy vacío sin acceso al contexto Electron
-                    const pluginRuntime = new Function('dvEngine', 'window', 'dvContext', sandboxedCode);
-                    pluginRuntime(dvEngine, fakeWindow, (window as any).dvContext);
-                    
-                    injectedFilesRef.current = filesSignature;
-                } catch (err: any) {
-                    console.error('[DV-Engine] Plugin initialization error:', err);
-                    if ((window as any).ipcRenderer) {
-                        (window as any).ipcRenderer.logSync({
-                            _debug: 'JS_EXEC_ERROR',
-                            error: err?.message || String(err),
-                            stack: err?.stack?.slice(0, 300)
-                        });
-                    }
-                }
-            }
-        };
-
         loadExternalAssets();
-    }, [shadow, activePluginFiles]);
+    }, [shadow, activePluginFiles, properties, passedProps]);
 
     // 3. SINCRONIZACIÓN DE DATOS (Soft-Sync fluido - cada frame)
     //    Solo ejecuta si hay un lifecycle registrado para evitar spam de logs.
