@@ -43,7 +43,8 @@
       "**/*",
       "!**/.cache",
       "!**/node_modules/.cache",
-      "!src"
+      "!src",
+      "src/remotion"
     ],
     "icon": "public/icon_highlight.png",
     "win": {
@@ -61,7 +62,8 @@
     },
     "asarUnpack": [
       "**/*ffmpeg*",
-      "**/@remotion/compositor-*"
+      "**/@remotion/compositor-*",
+      "src/remotion/**/*"
     ]
   }
 }

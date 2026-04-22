@@ -8,7 +8,10 @@ export function setupRemotionIPC() {
   ipcMain.handle('start-render', async (event, props) => {
     try {
       console.log(`[Remotion] New render request received with props:`, JSON.stringify(props, null, 2))
-      const entryPoint = join(__dirname, '../src/remotion/index.ts')
+      let entryPoint = join(__dirname, '../src/remotion/index.ts')
+      if (app.isPackaged) {
+          entryPoint = join(app.getAppPath().replace('app.asar', 'app.asar.unpacked'), 'src/remotion/index.ts')
+      }
       console.log('📦 Bundling Remotion...', entryPoint)
       
       const bundled = await bundle({
