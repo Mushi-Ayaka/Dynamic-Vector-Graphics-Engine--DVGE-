@@ -47,10 +47,11 @@
       ]
     },
     "nsis": {
-      "oneClick": true,
+      "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": false,
-      "artifactName": "DVGE-Setup-Win.${ext}"
+      "allowToChangeInstallationDirectory": true,
+      "license": "EULA.txt",
+      "artifactName": "DVGE-Setup-${version}.${ext}"
     },
     "asarUnpack": [
       "**/*ffmpeg*",

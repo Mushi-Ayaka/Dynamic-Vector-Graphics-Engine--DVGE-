@@ -175,10 +175,11 @@ export const HomeMenu: React.FC = () => {
                                 <strong style={{ color: 'white' }}>Motor:</strong> Remotion v4 + Electron<br/>
                             </div>
 
-                            <div style={{ marginTop: '15px', display: 'flex', gap: '15px' }}>
-                                <a href="https://github.com/Mushi-Ayaka" target="_blank" rel="noopener" style={{ color: '#E44C30', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }}>GitHub</a>
-                                <a href="https://portafolio-jonatan-baron.vercel.app/" target="_blank" rel="noopener" style={{ color: '#E44C30', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }}>Portafolio</a>
-                                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=barojonatan8@gmail.com" target="_blank" rel="noopener" style={{ color: '#E44C30', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }}>Contacto</a>
+                            <div style={{ marginTop: '15px', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                                <a href="https://mushi-ayaka.github.io/DVGE-Docs/" target="_blank" rel="noopener" style={{ color: '#E44C30', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', padding: '4px 8px', border: '1px solid #E44C30', borderRadius: '4px' }}>📚 Documentación</a>
+                                <a href="https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-" target="_blank" rel="noopener" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', paddingTop: '5px' }}>GitHub</a>
+                                <a href="https://portafolio-jonatan-baron.vercel.app/" target="_blank" rel="noopener" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', paddingTop: '5px' }}>Portafolio</a>
+                                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=barojonatan8@gmail.com" target="_blank" rel="noopener" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', paddingTop: '5px' }}>Contacto</a>
                             </div>
                         </div>
 

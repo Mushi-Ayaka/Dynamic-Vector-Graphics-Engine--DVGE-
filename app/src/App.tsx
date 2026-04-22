@@ -247,7 +247,7 @@ export default function App() {
           <h3 style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => window.location.reload()}>
             ← Volver a Proyectos
           </h3>
-          <span style={{ fontSize: '12px', color: '#E44C30', fontWeight: 'bold' }}>v4.1 // {activeProject.name}</span>
+          <span style={{ fontSize: '12px', color: '#E44C30', fontWeight: 'bold' }}>v4.1.5 GA // {activeProject.name}</span>
         </div>
 
         {/* Plugin Badge */}
