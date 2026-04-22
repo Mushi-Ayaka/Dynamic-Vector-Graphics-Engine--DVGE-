@@ -10,7 +10,10 @@ export function setupRemotionIPC() {
       console.log(`[Remotion] New render request received with props:`, JSON.stringify(props, null, 2))
       let entryPoint = join(__dirname, '../src/remotion/index.ts')
       if (app.isPackaged) {
-          entryPoint = join(app.getAppPath().replace('app.asar', 'app.asar.unpacked'), 'src/remotion/index.ts')
+          const asarUnpackedPath = app.getAppPath().replace('app.asar', 'app.asar.unpacked')
+          entryPoint = join(asarUnpackedPath, 'src/remotion/index.ts')
+          // [v4.1.5] Fix: Esbuild cannot run from inside ASAR, we point to the unpacked binary
+          process.env.ESBUILD_BINARY_PATH = join(asarUnpackedPath, 'node_modules/@esbuild/win32-x64/esbuild.exe')
       }
       console.log('📦 Bundling Remotion...', entryPoint)
       
