@@ -1,4 +1,4 @@
-# Documentación Técnica: Dynamic Vector Graphics Engine (DVGE) v3.3.0
+# Documentación Técnica: Dynamic Vector Graphics Engine (DVGE) v4.1.0 GA
 
 ## Introducción
 
@@ -36,11 +36,14 @@ Corre en el entorno de Node.js y se responsabiliza de:
 - Ejecutar el proceso de renderizado a video en segundo plano.
 - Escanear la carpeta de plugins del sistema.
 
-### 1.3 Política de Seguridad de Contenido (CSP)
+### 1.3 Sandbox de Seguridad y Aislamiento (v4.0+)
 
-El motor evalúa el código JavaScript de los plugins en tiempo de ejecución mediante un mecanismo de evaluación dinámica dentro de un Shadow DOM aislado. Esta arquitectura exige permisos de ejecución de código dinámico que el entorno de ventanas de escritorio reportaría como advertencia. Para suprimir estas advertencias (que son falsas alarmas en el contexto de una aplicación de escritorio controlada), se establece la bandera `ELECTRON_DISABLE_SECURITY_WARNINGS` en tiempo de inicio.
+A diferencia de versiones anteriores, el motor v4.0 implementa un **Sandbox Sellado**:
+- **fakeWindow**: Los plugins no tienen acceso al objeto `window` real ni a las APIs de Electron. Se inyecta un objeto simulado que sólo permite interactuar con el Shadow DOM.
+- **Shadow DOM**: El HTML/CSS del plugin está encapsulado, impidiendo colisiones de estilos con el shell de la aplicación.
+- **Evaluación Aislada**: El código JS se ejecuta en un contexto restringido, eliminando riesgos de inyección o acceso no autorizado al sistema de archivos del host.
 
-> **Nota de seguridad:** Los plugins son archivos JavaScript locales instalados manualmente por el usuario. El motor nunca descarga ni ejecuta código de fuentes externas o de red.
+> **Seguridad Industrial:** Esta arquitectura garantiza que un plugin malicioso no pueda comprometer la estabilidad del sistema ni la privacidad del usuario.
 
 ---
 
@@ -67,15 +70,25 @@ Este archivo actúa como la memoria permanente del proyecto. Contiene:
 - Las propiedades editables actuales (texto, colores, etc.).
 - La fecha de última modificación.
 
-### 2.3 Sistema de Autoguardado
+### 2.3 Persistencia Atómica Asíncrona (Resiliencia)
 
-El motor implementa un autoguardado por debouncing de **500ms**. Cada vez que el usuario modifica una propiedad en el panel de formulario, se activa un temporizador. Si no se realiza ningún cambio adicional en ese intervalo, el sistema escribe silenciosamente el estado actual al `project.json`. Esto evita escrituras excesivas al disco durante la edición fluida y no interrumpe el ciclo de renderizado a 60fps.
+Para garantizar la integridad de los datos, el motor utiliza un subsistema de **I/O Atómico**:
+1. **Debouncing:** Los cambios se acumulan durante 500ms.
+2. **Escritura Temporal:** El estado se escribe primero en un archivo `.tmp`.
+3. **Renombrado Seguro:** Solo si la escritura tiene éxito, el archivo temporal reemplaza al original `project.json`.
+
+Este flujo impide la corrupción de proyectos en caso de cierres inesperados, fallos de energía o bloqueos del sistema durante el guardado.
 
 ---
 
-## 3. Motor de Plugins v3
+## 3. Motor de Plugins v4 (Arquitectura GA)
 
-### 3.1 Estructura de Archivos
+### 3.0 Catálogo de Plugins (Marketplace)
+
+A partir de la versión v4.1.0, el motor incluye un sistema de distribución dinámico:
+- **Registry JSON:** La app consulta un índice centralizado en GitHub.
+- **Instalación One-Click:** Descarga e instalación automatizada de gráficos profesionales.
+- **Versionado Semántico:** El motor detecta actualizaciones disponibles y permite la actualización con un solo clic.
 
 Cada plugin es una carpeta independiente que contiene exactamente cuatro archivos:
 
@@ -138,13 +151,17 @@ Cada hook recibe el mismo objeto de contexto con las siguientes propiedades:
 | Propiedad | Tipo | Descripción |
 |---|---|---|
 | `ctx.frame` | `number` | Fotograma actual de la animación (empieza en 0). |
+| `ctx.timeline`| `object` | **[v4.0]** Tiempos normalizados (`progress`, `introProgress`, `outroProgress`). |
 | `ctx.root` | `ShadowRoot` | Referencia al Shadow Root que contiene el HTML del plugin. |
 | `ctx.props` | `object` | Las propiedades actuales definidas en el `manifest.json`. |
+| `ctx.refs` | `object` | **[v4.0]** Caché oficial para referencias del DOM (persistente). |
+| `ctx.state` | `object` | **[v4.0]** Almacén de estado interno persistente para el plugin. |
 | `ctx.utils` | `object` | Librería nativa de easing y matemáticas (`lerp`, `clamp`, etc.). |
 | `ctx.settings`| `object` | Metadatos globales: `fps`, `duration`, `resolution`, `width`, `height`. |
 
-> [!IMPORTANT]
-> **Persistencia de Contexto**: A partir de v3.2.1, el objeto `ctx` es persistente durante toda la vida del plugin. Esto permite a los desarrolladores guardar estado en propiedades personalizadas (ej: `ctx._state`) en el hook `awake` y recuperarlas en cada cuadro del loop `update`.
+### 3.5 Determinismo vs Tiempo Real
+
+DVGE v4.0 prohíbe el uso de librerías basadas en `requestAnimationFrame` (como GSAP) para garantizar la coherencia cuadro a cuadro durante la exportación a ProRes 4444. La animación debe ser puramente matemática basada en el `ctx.frame` o el `ctx.timeline`.
 
 ### 3.5 Enlace Reactivo de Datos
 

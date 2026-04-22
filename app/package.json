@@ -46,6 +46,12 @@
         "nsis"
       ]
     },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "artifactName": "DVGE-Setup-Win.${ext}"
+    },
     "asarUnpack": [
       "**/*ffmpeg*",
       "**/@remotion/compositor-*"

@@ -1,322 +1,77 @@
-# Guía de Creación de Plugins con Inteligencia Artificial
+# Guía de Creación de Plugins con Inteligencia Artificial (v4.1.0 GA)
 
 ## ¿Qué es un Plugin?
 
-Un **plugin** en el Dynamic Vector Graphics Engine (DVGE) es un gráfico de video personalizado: puede ser una banda de texto, un título animado, un marcador de tiempo, un callout, o cualquier elemento visual que necesites superponer sobre tu video.
+Un **plugin** en el Dynamic Vector Graphics Engine (DVGE) es un gráfico de video personalizado: puede ser una banda de texto, un título animado, un marcador de tiempo, o un callout.
 
-Cada plugin vive en su propia carpeta dentro del directorio de plugins de tu sistema, y está compuesto por exactamente **cuatro archivos** que definen su apariencia, comportamiento y controles editables.
+Cada plugin vive en su propia carpeta y está compuesto por **cuatro archivos** (`manifest.json`, `index.html`, `style.css`, `script.js`). El motor está diseñado para que puedas generarlos usando asistentes de IA como Claude, GPT-4 o Gemini.
 
-El motor fue diseñado para que cualquier persona, con o sin experiencia en programación, pueda crear sus propios plugins valiéndose de un asistente de inteligencia artificial. A partir de la **versión 4.1.0**, el motor incluye un **Catálogo de Plugins** integrado para descargar plugins oficiales directamente desde GitHub.
+---
 
-### 🛍️ Novedad v4.1: Catálogo de Plugins
-Ahora no solo puedes crear tus propios gráficos, sino que puedes compartirlos con el mundo. Si subes tus carpetas de plugins a un repositorio de GitHub y generas un `registry.json`, cualquier usuario de DVGE podrá instalarlos con un solo clic desde el panel **Catálogo**.
-
+## 🛍️ Novedad v4.1: Catálogo de Plugins
+A partir de esta versión, puedes compartir tus creaciones subiéndolas a GitHub. Cualquier usuario podrá instalarlas directamente desde el **Catálogo** integrado en la app.
 
 ---
 
 ## Los Cuatro Archivos de un Plugin
 
-Antes de hablar con el asistente de IA, es importante que entiendas qué hace cada archivo. Esto te permitirá describir mejor lo que necesitas y evaluar si el resultado es correcto.
+### 1. `manifest.json` — El descriptor
+Define el nombre, versión y los campos editables de la UI.
+**💡 Novedad v4.1**: Usa `presets: ["branding", "motion", "layout"]` para que el motor genere automáticamente los controles de logo, duración y posición.
 
-### 1. `manifest.json` — El descriptor del plugin
+### 2. `index.html` — La estructura
+Contenido visual puro. **⚠️ REGLA: No usar etiquetas `<html>`, `<head>` ni `<body>`.**
 
-Define el nombre del plugin, su descripción y los **campos editables** que aparecerán en el panel de propiedades de la aplicación.
+### 3. `style.css` — La estética
+Estilos CSS estándar. El lienzo de trabajo es siempre **1920×1080 píxeles**.
 
-```json
-{
-  "id": "mi-plugin-id",
-  "name": "Nombre Visible en la App",
-  "description": "Una línea describiendo este gráfico.",
-  "version": "1.0.0",
-  "schema": [
-    { "type": "string", "id": "nombre", "label": "Nombre", "defaultValue": "Ana López" },
-    { "type": "string", "id": "cargo", "label": "Cargo", "defaultValue": "Directora" },
-    { "type": "color", "id": "colorPrincipal", "label": "Color", "defaultValue": "#E44C30" }
-  ]
-}
-```
-
-Los tipos de campo disponibles son: `"string"`, `"color"`, `"number"`, `"image"`, `"code"`, `"info"` (copiable) y `"select"` (desplegable con opciones).
-
-### 1b. [Novedad v3.4] Uso de PRESETS y Automatización
-A partir de la versión 3.4.0, el motor no solo genera la UI, sino que **toma decisiones inteligentes** para ahorrarte código:
-
-```json
-{
-  "presets": ["branding", "motion", "layout"],
-  "schema": []
-}
-```
-
-- **`branding` (Activo)**: Inyecta logo y colores. El motor ahora **renderiza automáticamente el logo** en la esquina que elijas (Top-Right, Bottom-Left, etc.) sin que escribas HTML.
-- **`motion` (Export Ready)**: Inyecta controles de FPS, Duración Total (segundos) y curvas de Easing.
-- **`layout` (Auto-Pos)**: Inyecta el campo **"Alineación Global"**. El motor usará Flexbox para centrar o posicionar tu gráfico automáticamente.
-
-### 1c. [v4.0] PROHIBICIÓN: Librerías Externas Basadas en Tiempo Real
-
-> [!CAUTION]
-> **❌ GSAP, Anime.js y cualquier librería basada en `requestAnimationFrame` están PROHIBIDAS en DVGE v4.0.**
-> El motor es **Frame-Based** (Remotion). Las librerías de tiempo real no son predecibles frame a frame y provocan renders corruptos en ProRes 4444. La nueva API nativa del motor (`ctx.timeline`, `utils.spring`) reemplaza toda esa funcionalidad con garantías de determinismo absoluto.
-
-> [!TIP]
-> **🚀 Inspector Profesional:** El panel lateral ahora organiza los campos en **Grupos Colapsables** (Branding, Animación, etc.), igual que el Inspector de Unity, para mantener el orden.
-
-> [!TIP]
-> **🚀 Caso de Éxito v3.4:** Al migrar un plugin complejo al uso de estos `presets` y clases globales, logramos reducir su código en un **93%** (de 1,896 a 117 líneas). ¡Deja que el motor y los presets construyan la interfaz por ti!
-
-> [!TIP]
-> **Novedad v3.1:** El motor ahora incluye `dvEngine.utils` con funciones de easing (`easeOutCubic`, `easeOutBounce`, etc.) y math (`lerp`, `clamp`) integradas. ¡No necesitas redefinirlas en cada script!
-
-### 2. `index.html` — La estructura del gráfico
-
-Define los elementos visuales del gráfico usando HTML estándar. **No debe contener etiquetas `<html>`, `<head>` ni `<body>`**, solo el contenido visual directo.
-
-```html
-<div id="contenedor-principal">
-  <div id="nombre-texto">Ana López</div>
-  <div id="cargo-texto">Directora</div>
-</div>
-```
-
-### 3. `style.css` — Los estilos visuales
-
-Contiene las reglas CSS que definen la estética del gráfico. El lienzo de trabajo es siempre **1920×1080 píxeles** con posicionamiento absoluto.
-
-```css
-#contenedor-principal {
-  position: absolute;
-  bottom: 120px;
-  left: 100px;
-  /* ... */
-}
-```
-
-### 4. `script.js` — La lógica de animación
-
-Contiene la lógica de la animación. **Debe usar obligatoriamente la API del motor** mediante `dvEngine.register({})`. Este archivo es el más crítico y tiene reglas estrictas que se explican a continuación.
+### 4. `script.js` — La lógica (API v4.1 GA)
+El archivo más importante. Debe usar `dvEngine.register()`.
 
 ---
 
-## Reglas Críticas del Script de Animación
+## ⛔ Reglas Críticas de Animación (Determinismo)
 
-El motor ejecuta el script fotograma a fotograma dentro de un entorno aislado. Para funcionar correctamente, el script debe respetar las siguientes reglas:
-
-1. **Usar `dvEngine.register({})`** con los tres hooks: `awake`, `start`, y `update`.
-2. **Usar `ctx.root.getElementById()`** en lugar de `document.getElementById()`, ya que el plugin vive dentro de un Shadow DOM.
-3. **Enlazar los datos de los formularios dentro del hook `update`**, no en `awake` ni en `start`, para que la previsualización sea reactiva en tiempo real.
-4. **No usar `window.requestAnimationFrame()`**; el motor maneja su propio ciclo de fotogramas mediante `ctx.frame`.
+1. **PROHIBIDO TIEMPO REAL**: No uses GSAP, Anime.js o `requestAnimationFrame`. El motor es **Frame-Based**.
+2. **DETERMINISMO**: Toda animación debe basarse en `ctx.frame` o `ctx.timeline` para asegurar un renderizado perfecto en ProRes 4444.
+3. **AISLAMIENTO**: Usa `ctx.root.getElementById()` en lugar de `document`. El plugin corre en un Shadow DOM.
+4. **SANDBOX**: El objeto `window` está bloqueado por seguridad. Usa la API de `ctx`.
 
 ---
 
----
+## 🚀 El Prompt Maestro (Optimizado para v4.1.0 GA)
 
-## API Nativa del Motor v4.0 (La API Determinística)
-
-### `ctx.timeline` — Tiempo Normalizado
-El motor inyecta automáticamente un objeto `timeline` en cada frame. **Úsalo siempre para animar.**
-
-| Propiedad | Tipo | Descripción |
-| :--- | :--- | :--- |
-| `timeline.progress` | `float [0-1]` | Progreso total del clip (0 = inicio, 1 = fin). |
-| `timeline.isIntro` | `boolean` | `true` si estamos en la fase de entrada (~0.8s). |
-| `timeline.isOutro` | `boolean` | `true` si estamos en la fase de salida (~0.5s). |
-| `timeline.introProgress` | `float [0-1]` | Progreso local de la fase de entrada. |
-| `timeline.outroProgress` | `float [0-1]` | Progreso local de la fase de salida. |
-
-```javascript
-// Ejemplo: Elemento que entra y sale correctamente
-update: (ctx) => {
-    const { refs, timeline, utils } = ctx;
-    // Entrada
-    refs.card.style.opacity   = timeline.introProgress.toString();
-    refs.card.style.transform = `translateY(${utils.lerp(40, 0, utils.spring(timeline.introProgress))}px)`;
-    // Salida
-    if (timeline.isOutro) {
-        refs.card.style.opacity = (1 - timeline.outroProgress).toString();
-    }
-}
-```
-
-### `ctx.state` y `ctx.refs` — Memoria Oficial del Plugin
-- `ctx.refs`: Guarda referencias del DOM en `awake`. **No llames a `getElementById` en cada frame.**
-- `ctx.state`: Guarda acumuladores y banderas persistentes.
-
-```javascript
-awake: (ctx) => {
-    ctx.refs.title = ctx.root.getElementById('titulo');
-    ctx.state.hasAnimated = false;
-},
-```
-
-### `dvEngine.utils` — Librería Matemática Completa
-
-| Función | Descripción |
-| :--- | :--- |
-| `utils.lerp(a, b, t)` | Interpolación lineal. |
-| `utils.clamp(v, min, max)` | Limitar a un rango. |
-| `utils.easeOutCubic(t)` | Empieza rápido, termina lento. |
-| `utils.easeInOutCubic(t)` | Entrada y salida suaves. |
-| `utils.easeOutBounce(t)` | Rebote elástico. |
-| `utils.easeOutElastic(t)` | Efecto muelle. |
-| `utils.spring(t, stiffness, damping)` | **[v4.0] Física de resorte. Reemplaza `back.out` de GSAP.** |
-| `utils.typewriter(text, frame, fpc)` | **[v4.0] Texto aparece carácter a carácter.** |
-| `utils.tickerOffset(frame, speed, textW)` | **[v4.0] Loop infinito para crawl/ticker sin saltos.** |
-| `utils.hexToRgb(hex)` | Convierte color a RGB. |
-
----
-
-## 🚫 Límites y Alcance Técnico (Scope)
-
-Para que un gráfico generado por una IA externa (ChatGPT, Claude, Gemini) funcione en el motor, **debes imponer estos límites** en tu conversación:
-
-1.  **Frameworks**: ❌ NO usar React, Vue, Angular o Svelte. Los plugins son micro-apps de **Vanilla Javascript** puro.
-2.  **Librerías Externas**: ⚠️ Evita CDNs externos (como GSAP o FontAwesome) a menos que el usuario tenga conexión a internet durante el renderizado. Es preferible usar las utilidades nativas `dvEngine.utils`.
-3.  **Aislamiento**: 🔒 El plugin corre en un **Shadow DOM**. Esto significa que el CSS del plugin no afectará a la app y viceversa. La IA debe saber que no puede acceder al `document` global, solo al `ctx.root`.
-4.  **Recursos Locales**: 📁 El motor permite usar imágenes y assets locales si se pasan las rutas correctas a través de los campos tipo `image` del manifest.
-
----
-
-## 🎨 Utilidades CSS del Motor (LEGO Classes)
-
-Para simplificar el diseño, el motor inyecta automáticamente clases CSS profesionales en tu Shadow DOM. ¡Úsalas en lugar de escribir estilos complejos!
-
-- `.dv-glass`: Fondo oscuro desenfocado (Glassmorphism).
-- `.dv-safe-area`: Posiciona el elemento automáticamente respetando los márgenes de seguridad de TV.
-- `.dv-label`: Estilo de etiqueta técnica pequeña y elegante.
-- `--accent`: Variable con el color corporativo del motor (#E44C30).
-
----
-
-## 🤖 Auditoría: Reglas de Oro para la IA (v3.2.1)
-
-Para lograr una generación "One-Shot" (que funcione a la primera), es vital incluir estas reglas en tu prompt. Hemos detectado que los errores más comunes de la IA son **sintácticos**:
-
-1. **Backticks Obligatorios**: La IA suele olvidar usar backticks (`` ` ``) al inyectar valores en strings de CSS. Sin ellos, el plugin crashea.
-2. **Contexto Persistente**: El objeto `ctx` es persistente. Guarda el estado en `ctx.state = {}` dentro de `awake` y recupéralo en `update`. **Ya no uses `ctx._state`, ese patrón está deprecado.**
-3. **[v4.0 OBLIGATORIO] Usar `ctx.timeline`**: La IA NUNCA debe hardcodear frames para la entrada/salida. Debe usar `timeline.introProgress` y `timeline.outroProgress`. Esto garantiza que el gráfico se adapta a cualquier duración del proyecto.
-4. **[v4.0 OBLIGATORIO] Usar `ctx.refs`**: La IA debe cachear referencias del DOM en `awake` usando `ctx.refs`. **No llamar a `getElementById` dentro del loop `update`** (se ejecuta 60 veces por segundo).
-5. **[v4.0 PROHIBIDO] No usar `window`**: El sandbox del motor bloquea `window`. Cualquier acceso a `window.algo` retornará `undefined`. El plugin sólo puede interactuar con el DOM vía `ctx.root`.
-
----
-
-## El Nuevo Prompt Maestro (Optimizado para One-Shot)
-
-> **Copia el siguiente bloque y pégalo en tu asistente. Está diseñado para prevenir los errores detectados en la auditoría v3.2.1.**
+Copia y pega este bloque en tu IA favorita para generar plugins que funcionen a la primera:
 
 ```text
-Actúa como un desarrollador senior de Motion Graphics. Genera un plugin para DVGE v4.1.0 siguiendo estas reglas:
+Actúa como un desarrollador senior de Motion Graphics. Genera un plugin para el motor DVGE v4.1.0 GA siguiendo estas reglas estrictas:
 
-1. TECNOLOGÍA: Usa SOLO HTML/CSS y Vanilla Javascript.
-2. MODULARIDAD: Usa presets ["branding", "motion", "layout"] en manifest.json.
+1. TECNOLOGÍA: Usa SOLO HTML/CSS y Vanilla Javascript. Sin librerías externas.
+2. MODULARIDAD: Usa presets ["branding", "motion", "layout"] en el manifest.json.
 3. API: Usa dvEngine.register({ awake, start, update }).
 4. DOM: Usa ctx.root.getElementById() (Shadow DOM). NUNCA uses 'document'.
-5. POSICIONAMIENTO: No te preocupes por centrar el div principal; el usuario usará la "Alineación Global" del motor.
-6. LIBRERÍAS: Si necesitas GSAP o Three.js, decláralas en "externalScripts" dentro del manifest.json.
-7. ANIMACIÓN: Usa ctx.frame y dvEngine.utils.
+5. ANIMACIÓN: Usa ctx.frame y ctx.timeline. Las animaciones deben ser matemáticas y determinísticas (Frame-Based). Prohibido usar GSAP o requestAnimationFrame.
+6. UTILIDADES: Usa dvEngine.utils para easing (lerp, spring, easeOutCubic).
+7. ESTILOS: El lienzo es 1920x1080. Usa la clase .dv-glass para efectos modernos.
 
-Genera 4 archivos (manifest.json, index.html, style.css, script.js).
+Genera los 4 archivos (manifest.json, index.html, style.css, script.js) en bloques de código separados.
 
-[DESCRIPCIÓN DEL PLUGIN: ...]
-```
-
-El objetivo del plugin es generar un gráfico visual dinámico para producción audiovisual profesional. El plugin debe verse elegante, moderno y de calidad broadcast.
-
----
-
-## ESTRUCTURA REQUERIDA
-
-Debes generar EXACTAMENTE 4 archivos. Si tu plataforma permite crear un archivo .zip, hazlo. Si no, devuelve cada archivo en un bloque de código markdown bien etiquetado con el nombre del archivo en la primera línea.
-
----
-
-## ARCHIVO 1: manifest.json
-
-Schema de propiedades editables. Usa los tipos: "string", "number", "color", "image".
-
-Estructura exacta:
-{
-  "id": "nombre-carpeta-unico",
-  "name": "Nombre Visible en la App",
-  "description": "Una descripción clara.",
-  "version": "1.0.0",
-  "schema": [
-    { "type": "string", "id": "propiedadClave", "label": "Etiqueta UI", "defaultValue": "Valor por Defecto" }
-  ]
-}
-
----
-
-## ARCHIVO 2: index.html
-
-Marcado HTML del gráfico. REGLAS OBLIGATORIAS:
-- Sin etiquetas <html>, <head> ni <body>.
-- Usa siempre un div raíz con id="contenedor-principal" o similar.
-- Todos los elementos que se animen o muestren datos deben tener IDs únicos.
-
----
-
-## ARCHIVO 3: style.css
-
-CSS estándar. REGLAS OBLIGATORIAS:
-- El lienzo es de 1920x1080 píxeles con posicionamiento absoluto.
-- Diseño de calidad broadcast: usa tipografías modernas, gradientes, sombras.
-- Usa variables CSS (var(--color-principal)) para los valores dinámicos del manifest.
-
----
-
-## ARCHIVO 4: script.js
-
-La lógica de animación. REGLAS CRÍTICAS E IRROMPIBLES:
-- SIEMPRE usar dvEngine.register({ awake, start, update }).
-- NUNCA usar document.getElementById(); usar SIEMPRE ctx.root.getElementById().
-- NUNCA usar window.requestAnimationFrame(); el motor usa ctx.frame.
-- Enlazar todos los datos del manifest (ctx.props) dentro del hook UPDATE para reactividad en tiempo real.
-- Las animaciones deben basarse matemáticamente en ctx.frame con funciones de easing.
-- **OPTIMIZACIÓN:** Usa las utilidades nativas en `dvEngine.utils` para animaciones suaves (lerp, clamp, easeOutCubic, easeOutBounce, easeOutElastic, hexToRgb).
-
-Plantilla estricta:
-dvEngine.register({
-  awake: (ctx) => {
-    // Capturar referencias DOM e inicializar estilos estáticos.
-  },
-  start: (ctx) => {
-    // Lógica que se ejecuta al inicio de la reproducción (frame 0).
-  },
-  update: (ctx) => {
-    const { frame, root, props, utils } = ctx;
-
-    // 1. Enlace reactivo de datos (hacer esto siempre primero)
-    const miElemento = root.getElementById('mi-elemento');
-    if (!miElemento) return;
-    miElemento.innerText = props.propiedadClave || 'Valor';
-
-    // 2. Animaciones matemáticas basadas en frame usando utilidades nativas
-    const progreso = Math.min(1, frame / 30);
-    miElemento.style.opacity = utils.easeOutCubic(progreso).toString();
-  }
-});
-
----
-
-## MI DESCRIPCIÓN DEL PLUGIN
-
-[ESCRIBE AQUÍ TU DESCRIPCIÓN. Ejemplo: "Quiero una banda de texto inferior para entrevistas. Debe mostrar el nombre del entrevistado y su cargo. El estilo debe ser minimalista y oscuro con una línea de acento en color naranja. La animación de entrada debe ser un deslizamiento desde abajo."]
+[DESCRIPCIÓN DEL PLUGIN: Escribe aquí qué quieres crear]
 ```
 
 ---
 
-## 🛠️ Paso a Paso para Crear un Plugin con IA (v3.4.0)
+## 🛠️ Paso a Paso: Crear y Probar tu Plugin
 
-Sigue este flujo de trabajo garantizado para generar plugins de alta calidad sin frustraciones:
+1. **Obtén el Código**: Copia el **Prompt Maestro** de arriba, añade la descripción de tu gráfico y pásalo a la IA.
+2. **Crea la Carpeta**: En la app DVGE, ve a **Ayuda → Abrir Carpeta de Plugins**. Crea una carpeta nueva (ej: `mi-grafico-pro`).
+3. **Guarda los Archivos**: Pega el código de la IA en cada uno de los 4 archivos correspondientes.
+4. **Carga en DVGE**: Abre la app, crea un nuevo proyecto y selecciona tu nuevo plugin de la lista.
+5. **Ajusta y Renderiza**: Usa el panel de Branding para subir tu logo y haz clic en **Renderizar**.
 
-1. **Copia el Super Prompt:** Dentro de DVGE, abre cualquier plugin (ej: Master Renderer) y en la sección **AYUDA**, haz clic en el botón **COPIAR**. Ese texto ya contiene todas las reglas técnicas de la v3.4.0. Pégalo en tu asistente de IA (ChatGPT, Claude, etc).
-2. **Describe tu Visión (Saca provecho a los Presets):** Dile a la IA qué quieres, pero no pierdas tiempo describiendo colores o logos.
-   - *Ejemplo Ganador:* "Crea un contador de tiempo circular. Usa los presets **`branding`** (para el color de la barra), **`motion`** (para la velocidad) y **`layout`** (para que yo pueda posicionarlo donde quiera). Quiero que el círculo tenga un efecto `.dv-glass`."
-3. **Crea la Carpeta:** En la app DVGE, ve a **Menú Ayuda → Abrir Carpeta de Plugins**. Crea una nueva carpeta, por ejemplo `mi-contador-circular`.
-4. **Pega los 4 Archivos:** Copia los bloques que te dio la IA (`manifest.json`, `index.html`, `style.css`, y `script.js`) y guárdalos en esa carpeta.
-5. **Configura en DVGE:** Abre la app y selecciona tu nuevo plugin. 
-   - **Branding:** Sube tu logo y elige la esquina; el motor lo posicionará solo.
-   - **Layout:** Elige "Centro" o "Abajo-Derecha" en **Alineación Global**; el motor moverá tu gráfico por ti.
-   - **Animación:** Ajusta los FPS y la duración del video final.
+---
 
-¡Si algo no se ve bien, dile a la IA: *"Usa las utilidades de dvEngine.utils y las variables de branding"*. ¡Ella ya conoce las reglas gracias al Super Prompt!
+## 💡 Consejos para el Éxito
+- **Refs**: Cachea tus elementos del DOM en el hook `awake` usando `ctx.refs`. No busques elementos en `update` (se ejecuta 60 veces por segundo).
+- **Timeline**: Usa `ctx.timeline.introProgress` para animar la entrada. Así el gráfico se adaptará a cualquier duración.
+- **Utils**: No programes funciones de animación desde cero, usa `ctx.utils.spring` para efectos de rebote profesionales.
