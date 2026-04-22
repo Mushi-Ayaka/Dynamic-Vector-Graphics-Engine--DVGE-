@@ -138,3 +138,45 @@
 .manual-container::-webkit-scrollbar-thumb:hover {
     background: #E44C30;
 }
+
+/* Table Styles */
+.manual-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 30px 0;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #333;
+    background: #111;
+}
+
+.manual-content th {
+    background: #E44C30;
+    color: white;
+    text-align: left;
+    padding: 12px 15px;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+}
+
+.manual-content td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #222;
+    color: #bbb;
+}
+
+.manual-content tr:last-child td {
+    border-bottom: none;
+}
+
+.manual-content tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.manual-content td code {
+    background: rgba(255,255,255,0.05) !important;
+    color: #ff7b72 !important;
+    padding: 2px 6px !important;
+}

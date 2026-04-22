@@ -39,6 +39,12 @@
     "directories": {
       "output": "release/${version}"
     },
+    "files": [
+      "**/*",
+      "!**/.cache",
+      "!**/node_modules/.cache",
+      "!src"
+    ],
     "icon": "public/icon_highlight.png",
     "win": {
       "icon": "public/icon_highlight.png",

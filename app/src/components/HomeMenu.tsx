@@ -55,7 +55,7 @@ export const HomeMenu: React.FC = () => {
         <div className="home-menu-container">
             <div className="home-hero">
                 <img src="icon.png" alt="DVGE Logo" className="hero-logo" />
-                <h1>Dynamic Vector Graphics Engine (DVGE)</h1>
+                <h1>Dynamic Vector Graphics Engine</h1>
                 <p>Proyectos de Animación Broadcast</p>
             </div>
 
@@ -122,7 +122,7 @@ export const HomeMenu: React.FC = () => {
 
             <div className="home-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <span><FolderOpen size={14} /> v4.1.0 GA </span>
+                    <span><FolderOpen size={14} /> v4.1.5 GA </span>
                     <span>•</span>
                     <span>Jonatan Barón</span>
                 </div>
@@ -162,7 +162,7 @@ export const HomeMenu: React.FC = () => {
                             <img src="icon.png" alt="DVGE" style={{ width: '48px', height: '48px' }} />
                             <div>
                                 <h2 style={{ margin: 0, fontSize: '18px', color: 'white' }}>Dynamic Vector Graphics Engine</h2>
-                                <span style={{ color: '#E44C30', fontSize: '12px', fontWeight: 'bold' }}>[DVGE]-[v4.1.0]-[GA]-[B210426-2305]</span>
+                                <span style={{ color: '#E44C30', fontSize: '12px', fontWeight: 'bold' }}>[DVGE]-[v4.1.5]-[GA]-[B260422-0430]</span>
                             </div>
                         </div>
 
@@ -176,7 +176,6 @@ export const HomeMenu: React.FC = () => {
                             </div>
 
                             <div style={{ marginTop: '15px', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                                <a href="https://mushi-ayaka.github.io/DVGE-Docs/" target="_blank" rel="noopener" style={{ color: '#E44C30', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', padding: '4px 8px', border: '1px solid #E44C30', borderRadius: '4px' }}>📚 Documentación</a>
                                 <a href="https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-" target="_blank" rel="noopener" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', paddingTop: '5px' }}>GitHub</a>
                                 <a href="https://portafolio-jonatan-baron.vercel.app/" target="_blank" rel="noopener" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', paddingTop: '5px' }}>Portafolio</a>
                                 <a href="https://mail.google.com/mail/?view=cm&fs=1&to=barojonatan8@gmail.com" target="_blank" rel="noopener" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', paddingTop: '5px' }}>Contacto</a>

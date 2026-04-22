@@ -202,7 +202,7 @@ export default function App() {
 
   const handleRenderReal = async () => {
     if (!window.ipcRenderer) {
-      alert('❌ IPC no disponible. ¿Estás corriendo el navegador en vez de Electron?')
+      alert('IPC no disponible. ¿Estás corriendo el navegador en vez de Electron?')
       return
     }
     setRenderState('RENDERING')
@@ -323,7 +323,7 @@ export default function App() {
             textAlign: 'center',
             fontStyle: 'italic'
           }}>
-            {isSaving ? '⏳ Guardando cambios...' : lastSaved ? `✓ Guardado (${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : 'Autoguardado activo'}
+            {isSaving ? 'Guardando cambios...' : lastSaved ? `✓ Guardado (${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : 'Autoguardado activo'}
           </div>
           
           <button 

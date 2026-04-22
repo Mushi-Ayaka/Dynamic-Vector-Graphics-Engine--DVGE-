@@ -163,6 +163,12 @@ function setupMenu() {
       label: 'Ayuda',
       submenu: [
         {
+          label: 'Documentación',
+          click: () => {
+            shell.openExternal('https://mushi-ayaka.github.io/DVGE-Docs/development/quick-start/')
+          }
+        },
+        {
           label: 'Manual',
           click: () => {
             createManualWindow()
