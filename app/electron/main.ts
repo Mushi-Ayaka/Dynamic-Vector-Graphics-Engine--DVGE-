@@ -1,7 +1,21 @@
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
+
+// Parchear ESBUILD_BINARY_PATH ANTES de cualquier import de @remotion.
+// Con asar:true, esbuild no puede encontrar su binario dentro del .asar.
+// Lo apuntamos al .asar.unpacked donde sí existe como archivo real.
+;(function patchEsbuild() {
+  const path = require('node:path')
+  const fs = require('node:fs')
+  const resourcesPath = process.resourcesPath ?? ''
+  const candidate = path.join(resourcesPath, 'app.asar.unpacked', 'node_modules', '@esbuild', 'win32-x64', 'esbuild.exe')
+  if (fs.existsSync(candidate)) {
+    process.env.ESBUILD_BINARY_PATH = candidate
+  }
+})();
 import { app, BrowserWindow, ipcMain, shell, IpcMainEvent, Menu } from 'electron'
 import { join } from 'node:path'
 import * as fs from 'node:fs'
+
 import { PluginManager } from './plugin-manager'
 import { ProjectManager } from './project-manager'
 
@@ -111,9 +125,11 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle('get-doc-content', (_event, docName: string) => {
-    // Seguridad: Asegurar que docName no navegue fuera del scope
-    const safeName = docName.replace(/[^a-zA-Z0-9_\-\.]/g, '');
-    const docPath = join(app.getAppPath(), safeName);
+    const safeName = docName.replace(/[^a-zA-Z0-9_\-\.]/g, '')
+    // Con asar:true los .md están en app.asar.unpacked (asarUnpack)
+    const unpacked = join(process.resourcesPath ?? '', 'app.asar.unpacked')
+    const baseDir = fs.existsSync(unpacked) ? unpacked : app.getAppPath()
+    const docPath = join(baseDir, safeName)
     if (fs.existsSync(docPath)) {
       return fs.readFileSync(docPath, 'utf8')
     }

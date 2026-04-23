@@ -1,16 +1,14 @@
-# Manual de Usuario: Dynamic Vector Graphics Engine (DVGE) v4.1.5 GA
+# Manual de Usuario: Dynamic Vector Graphics Engine (DVGE) v5.0.0 GA
 
 ## Bienvenida
 
-Dynamic Vector Graphics Engine (DVGE) es una herramienta de producción audiovisual diseñada para que editores, productores y realizadores puedan crear, personalizar y exportar gráficos de video de forma rápida y sin necesidad de conocimientos técnicos avanzados.
+Dynamic Vector Graphics Engine (DVGE) es una herramienta de producción audiovisual diseñada para que editores, productores y realizadores puedan crear, personalizar y exportar gráficos de video de forma rápida y sin conocimientos técnicos avanzados.
 
-A partir de la versión **v4.1.5**, el motor incluye un **Smart Engine** con capacidad de auto-rescate, asegurando que tus plantillas funcionen siempre con la máxima estabilidad, incluso si fueron generadas por inteligencia artificial.
+A partir de la versión **v5.0.0**, el motor usa una arquitectura de renderizado de nueva generación que elimina la compilación en tiempo de ejecución, resultando en una instalación más rápida y un arranque más limpio.
 
 ---
 
-## 1. El Flujo de Trabajo
-
-El proceso completo de creación de un gráfico sigue tres pasos simples:
+## 1. Flujo de Trabajo
 
 ```
 Explorar Catálogo → Crear Proyecto → Exportar y Usar
@@ -18,28 +16,27 @@ Explorar Catálogo → Crear Proyecto → Exportar y Usar
 
 ---
 
-## 2. Catálogo de Plugins (🛍️ Novedad)
+## 2. Catálogo de Plugins
 
-Ya no dependes solo de los plugins instalados localmente. Ahora puedes ampliar tu librería gráfica con un clic:
+Amplía tu librería gráfica con un clic:
 
-1. En la pantalla de inicio, haz clic en el botón **"🛍️ Catálogo de Plugins"**.
+1. En la pantalla de inicio, haz clic en **"🛍️ Catálogo de Plugins"**.
 2. Explora la galería de gráficos disponibles en el repositorio oficial.
-3. Haz clic en **"Instalar"** en el gráfico que te guste.
-4. Una vez instalado, aparecerá automáticamente en tu lista de plantillas al crear un nuevo proyecto.
+3. Haz clic en **"Instalar"** en el gráfico que quieras.
+4. Una vez instalado, aparecerá en tu lista de plantillas al crear un nuevo proyecto.
 
-> [!TIP]
-> **Actualizaciones Automáticas**: Si un plugin que ya tienes instalado recibe una mejora, el Catálogo te mostrará un botón de **"Actualizar"** para que siempre tengas la última versión del diseño.
+> **Actualizaciones**: Si un plugin instalado recibe una mejora, el Catálogo mostrará un botón de **"Actualizar"**.
 
 ---
 
-## 3. Pantalla de Inicio y Gestión de Proyectos
+## 3. Pantalla de Inicio y Proyectos
 
 ### 3.1 Proyectos Recientes
-Tus proyectos se guardan en tu carpeta de **Documentos/DVG_Projects**. Cada tarjeta muestra la plantilla utilizada. Haz clic en **"Abrir"** para retomar tu trabajo.
+Tus proyectos se guardan en **Documentos/DVG_Projects**. Haz clic en cualquier tarjeta para retomar tu trabajo.
 
 ### 3.2 Crear un Nuevo Proyecto
 1. Escribe el nombre del proyecto.
-2. Selecciona la **plantilla gráfica** (del sistema o instalada desde el catálogo).
+2. Selecciona la plantilla gráfica.
 3. Haz clic en **"Crear Proyecto"**.
 
 ---
@@ -47,25 +44,24 @@ Tus proyectos se guardan en tu carpeta de **Documentos/DVG_Projects**. Cada tarj
 ## 4. Editor y Previsualización
 
 ### 4.1 Panel de Propiedades
-Modifica textos, colores e imágenes. Los cambios son **instantáneos**. 
+Modifica textos, colores e imágenes. Los cambios se reflejan en tiempo real.
 
-- **Branding (v4.0)**: Si la plantilla lo soporta, verás una sección de "Branding" donde puedes subir tu logo y elegir su posición (ej: Abajo-Derecha) con un solo clic.
-- **Alineación**: Controla la posición global del gráfico sin tocar una sola línea de código.
+- **Branding**: Si la plantilla lo soporta, verás una sección de "Branding" para subir tu logo y elegir su posición.
+- **Alineación**: Controla la posición global del gráfico sin tocar código.
 
-### 4.2 Resiliencia de Datos
-Gracias al sistema de **Guardado Atómico**, tu trabajo está protegido contra cierres inesperados. El indicador de guardado en la esquina inferior izquierda te confirmará cuando el archivo esté seguro en el disco.
+### 4.2 Guardado Automático
+El sistema de **Guardado Atómico** protege tu trabajo contra cierres inesperados. El indicador en la esquina inferior izquierda confirma cuando el archivo está seguro en disco.
 
 ---
 
 ## 5. Exportación Profesional
 
 1. Haz clic en **"Renderizar"**.
-2. El motor generará un video **ProRes 4444 con canal Alfa** (transparencia nativa).
-3. **Drag & Drop**: Una vez terminado, arrastra el archivo directamente desde la aplicación hacia tu línea de tiempo en **DaVinci Resolve, Premiere Pro o After Effects**.
+2. El motor genera un video **ProRes 4444 con canal Alfa** (transparencia nativa).
+3. **Drag & Drop**: Arrastra el archivo directamente desde la app hacia tu línea de tiempo en DaVinci Resolve, Premiere Pro o After Effects.
 
 ---
 
-## 6. Soporte e Identidad
+## 6. Soporte
 
-En el botón **"Acerca de"** de la pantalla de inicio, encontrarás enlaces directos al portafolio del desarrollador, contacto vía Gmail y el repositorio de código para reportar errores o solicitar nuevas funciones.
-donde se almacenan todas las plantillas gráficas instaladas. Útil para instalar un plugin nuevo.
+En el botón **"Acerca de"** de la pantalla de inicio encontrarás enlaces al portafolio del desarrollador, contacto por Gmail y el repositorio de código para reportar errores o solicitar funciones.

@@ -13,7 +13,6 @@ export default defineConfig({
           build: {
             rollupOptions: {
               external: [
-                '@remotion/bundler',
                 '@remotion/renderer',
                 '@remotion/paths',
                 '@rspack/binding',

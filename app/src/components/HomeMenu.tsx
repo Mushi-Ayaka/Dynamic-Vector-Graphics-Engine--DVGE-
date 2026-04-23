@@ -122,7 +122,7 @@ export const HomeMenu: React.FC = () => {
 
             <div className="home-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <span><FolderOpen size={14} /> v4.1.5 GA </span>
+                    <span><FolderOpen size={14} /> v5.0.0 GA </span>
                     <span>•</span>
                     <span>Jonatan Barón</span>
                 </div>
@@ -162,7 +162,7 @@ export const HomeMenu: React.FC = () => {
                             <img src="icon.png" alt="DVGE" style={{ width: '48px', height: '48px' }} />
                             <div>
                                 <h2 style={{ margin: 0, fontSize: '18px', color: 'white' }}>Dynamic Vector Graphics Engine</h2>
-                                <span style={{ color: '#E44C30', fontSize: '12px', fontWeight: 'bold' }}>[DVGE]-[v4.1.5]-[GA]-[B260422-0430]</span>
+                                <span style={{ color: '#E44C30', fontSize: '12px', fontWeight: 'bold' }}>[DVGE]-[v5.0.0]-[GA]-[B260423-0000]</span>
                             </div>
                         </div>
 

@@ -1,12 +1,12 @@
 {
   "name": "dv-web-graphics-engine",
-  "version": "4.1.5",
+  "version": "5.0.0",
   "main": "dist-electron/main.js",
   "description": "Professional Dynamic Vector Graphics Engine for Broadcast Animation",
   "author": "Jonatan Baron",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder",
+    "build": "tsc && vite build && node scripts/bundle-remotion.js && node scripts/run-builder.js",
     "preview": "vite preview",
     "lint": "eslint src electron --ext ts,tsx"
   },
@@ -37,14 +37,28 @@
     "appId": "com.jonatanbaron.dvremotionengine",
     "productName": "Dynamic Vector Graphics Engine (DVGE)",
     "directories": {
-      "output": "release/${version}"
+      "output": "C:/Users/Josue B/Desktop/Josue B/Documents/Jonatan Baron/Releases/DVGE/${version}"
     },
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/@remotion/compositor-win32-x64-msvc/**",
+      "node_modules/@esbuild/**",
+      "node_modules/esbuild/**",
+      "src/remotion/**",
+      "public/**",
+      "remotion-bundle/**",
+      "*.md"
+    ],
     "files": [
-      "**/*",
-      "!**/.cache",
-      "!**/node_modules/.cache",
-      "!src",
-      "src/remotion"
+      "dist/**",
+      "dist-electron/**",
+      "src/remotion/**",
+      "public/**",
+      "remotion-bundle/**",
+      "node_modules/**",
+      "package.json",
+      "EULA.txt",
+      "*.md"
     ],
     "icon": "public/icon_highlight.png",
     "win": {
@@ -60,12 +74,6 @@
       "license": "EULA.txt",
       "artifactName": "DVGE-Setup-${version}.${ext}"
     },
-    "asarUnpack": [
-      "**/*ffmpeg*",
-      "**/@remotion/compositor-*",
-      "**/@esbuild/**/*",
-      "**/esbuild.exe",
-      "src/remotion/**/*"
-    ]
+    "compression": "store"
   }
 }

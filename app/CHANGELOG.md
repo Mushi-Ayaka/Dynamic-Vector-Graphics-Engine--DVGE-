@@ -1,3 +1,11 @@
+## [5.0.0] - 2026-04-23 (GA)
+### 🚀 Motor de Renderizado de Nueva Generación (Zero-Bundle Runtime)
+- **Arquitectura Zero-Bundle**: Eliminación de `@remotion/bundler` del runtime. El entry point de Remotion se pre-compila en tiempo de build, eliminando webpack/rspack/esbuild del instalador.
+- **Instalación Rápida**: El instalador pasa de copiar 12,466 archivos a un único `app.asar`, reduciendo el tiempo de instalación de minutos a segundos.
+- **`binariesDirectory` Explícito**: Los binarios nativos (`remotion.exe`, `ffmpeg.exe`) se resuelven directamente desde `app.asar.unpacked`, eliminando errores `ENOENT` en producción.
+- **CWD Seguro**: El proceso de renderizado redirige el directorio de trabajo a `%TEMP%` antes de ejecutar, evitando errores `EPERM` al intentar escribir en `C:\Program Files`.
+- **Compatibilidad Total**: El render en `npm run dev` y en producción es idéntico. Sin cambios en la API de plugins.
+
 ## [4.1.5] - 2026-04-22 (GA)
 ### 🧠 Smart Engine & Auto-Rescue
 - **Capa de Inteligencia (Auto-Rescate)**: El motor ahora detecta y envuelve automáticamente scripts que no sigan el estándar de registro oficial (p. ej., detectando funciones globales como `update` o `renderDVGE`).
