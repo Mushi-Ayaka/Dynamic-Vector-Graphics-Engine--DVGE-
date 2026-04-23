@@ -23,11 +23,19 @@ export function setupRemotionIPC() {
       })
 
       const comps = await getCompositions(bundled)
+      // Buscamos la composición base, pero sobreescribiremos sus dimensiones
       const composition = comps.find((c) => c.id === 'LowerThirdBasic')
 
       if (!composition) {
         throw new Error('Composición no encontrada.')
       }
+
+      // [v4.1.5] Sincronización de Especificaciones de Video
+      // Extraemos valores del proyecto o usamos fallbacks seguros
+      const renderWidth = props._renderWidth || composition.width;
+      const renderHeight = props._renderHeight || composition.height;
+      const renderFps = props._renderFps || composition.fps;
+      const renderDuration = props._renderDuration || composition.durationInFrames;
 
       let exportDir = 'C:\\OS_TEMP\\dv_engine_renders';
       if (props._projectId) {
@@ -37,20 +45,28 @@ export function setupRemotionIPC() {
       if (!fs.existsSync(exportDir)) {
           fs.mkdirSync(exportDir, { recursive: true });
       }
+      
+      const outputLocation = join(exportDir, `dvge_render_${Date.now()}.mov`);
 
-      const outputLocation = join(exportDir, `lower_third_${Date.now()}.mov`);
-
-      console.log('🎥 Renderizando a:', outputLocation)
+      console.log(`🎥 Renderizando (${renderWidth}x${renderHeight} @ ${renderFps}fps) a:`, outputLocation)
 
       await renderMedia({
-        composition,
+        composition: {
+            ...composition,
+            width: renderWidth,
+            height: renderHeight,
+            fps: renderFps,
+            durationInFrames: renderDuration
+        },
         serveUrl: bundled,
         codec: 'prores',
         proResProfile: '4444',
         outputLocation,
-        inputProps: props,
+        inputProps: {
+            ...props,
+            isExporting: true // Forzamos flag de exportación
+        },
         onProgress: ({ progress }) => {
-          // Stream de progreso hacia React
           event.sender.send('render-progress', progress)
         },
       })

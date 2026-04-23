@@ -205,10 +205,30 @@ export default function App() {
       alert('IPC no disponible. ¿Estás corriendo el navegador en vez de Electron?')
       return
     }
+
+    if (!activePluginFiles) {
+      alert('Error: No hay archivos de plugin cargados.')
+      return
+    }
+
     setRenderState('RENDERING')
     setRenderProgress(0)
+    
     try {
-      const result = await window.ipcRenderer.invoke('start-render', { ...properties, _projectId: activeProject.id })
+      // [v4.1.5] Render Protocol v4: Sincronización Total de Specs
+      const renderPayload = {
+        ...properties,
+        _projectId: activeProject.id,
+        // Inyectamos archivos fuente directamente (Fix: Render Huérfano)
+        activePluginFiles: activePluginFiles,
+        // Especificaciones dinámicas del proyecto (Fix: Hardcoded Specs)
+        _renderWidth: activeProject.width || 1920,
+        _renderHeight: activeProject.height || 1080,
+        _renderFps: activeProject.fps || 60,
+        _renderDuration: activeProject.durationInFrames || 240
+      }
+
+      const result = await window.ipcRenderer.invoke('start-render', renderPayload)
       if (result.success) {
         setRenderState('DONE', undefined, result.path)
       } else {
