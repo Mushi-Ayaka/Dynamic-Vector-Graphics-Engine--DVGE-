@@ -1,8 +1,9 @@
-# Crear Plugins con IA
+# Crear Plugins con IA (DVGEv5.5GA)
 
 Los asistentes de programación con IA pueden generar plugins completos y listos para producción para DVGE. Esta guía muestra la estrategia exacta de prompting para lograrlo al primer intento.
 
 ## Por qué los Plugins Necesitan un Prompt Específico
+
 DVGE tiene reglas estrictas y poco convencionales:
 
 - No se permiten librerías de animación en tiempo real (GSAP, Anime.js, etc.)
@@ -11,10 +12,20 @@ DVGE tiene reglas estrictas y poco convencionales:
 
 Sin instrucciones explícitas, la IA generará código con prácticas web estándar que no funcionarán en el motor.
 
-## Prompt de Generación (v5.0.0 GA)
-A partir de v5.0.0, el motor incluye una Capa de Inteligencia que permite generar plugins con código más simple. La IA no necesita gestionar el registro del plugin; solo define la apariencia y el comportamiento.
+## Knowledge Bridge Nativo (Flujo PDF recomendado)
 
-Copia este bloque en cualquier asistente de IA:
+A partir de **v5.4.0 GA (Artifact Edition)**, el método obsoleto de "copiar y pegar texto" ha sido reemplazado por un flujo de archivos nativo mucho más robusto.
+
+El motor incluye un generador de PDFs maestro en la interfaz (`DVGE Studio Master`).
+
+1. Ve al inspector del motor y busca el campo **DRAG TO AI**.
+2. **Arrastra** ese campo directamente a la ventana de chat de tu inteligencia artificial (Claude, ChatGPT, Gemini). El motor generará dinámicamente al vuelo un archivo `DVGE-Master-Rules.pdf`.
+3. Escribe tu instrucción (ej. *"Crea un lower third elegante con este diseño"*).
+4. La IA leerá el PDF internamente y te entregará código 100% compatible con DVGE en formato HTML, CSS y JS, listo para pegar en el inspector de la app.
+
+## Prompt de Generación Manual
+
+Para que la IA de tu preferencia creé el plugin para DVGE, copia este Promp:
 
 ```text
 Act as a senior Motion Graphics developer. Generate a plugin for the
@@ -45,6 +56,7 @@ PLUGIN DESCRIPTION:
 ```
 
 ## Cómo Funciona el Auto-Rescate
+
 Si la IA comete errores estructurales comunes, el motor los corrige en tiempo de ejecución:
 
 - **Silenciador**: Si la IA usa `requestAnimationFrame`, el motor lo anula para proteger el determinismo.
@@ -54,25 +66,28 @@ Si la IA comete errores estructurales comunes, el motor los corrige en tiempo de
 ## Consejos para Mejores Resultados
 
 ### Sé Específico sobre la Animación
+
 - **Evitar:** "Haz que se anime suavemente"
 - **Ideal:** "Desliza desde la izquierda durante la intro usando `ctx.timeline.introProgress` y `utils.lerp`"
 
 ### Especifica el Layout
+
 - **Evitar:** "Pon el texto en la parte inferior"
 - **Ideal:** "Posiciona la tarjeta en `bottom: 120px; left: 80px` con posicionamiento absoluto"
 
 ### Define los Campos del Schema
+
 - **Evitar:** "Añade campos de texto"
 - **Ideal:** "Incluye estos campos: `name` (string), `role` (string), `accentColor` (color, default: #E44C30)"
 
 ## Validar Código Generado por IA
 
 | Problema | Código Incorrecto | Solución |
-|---|---|---|
+| --- | --- | --- |
 | Acceso al DOM | `document.getElementById('x')` | `ctx.root.getElementById('x')` |
 | Animación en tiempo real | `gsap.to(el, {...})` | `utils.lerp(0, 1, ctx.timeline.introProgress)` |
 | Temporizadores | `setTimeout(fn, 500)` | Lógica basada en `ctx.frame` |
 | Importaciones CSS | `@import url(...)` | Estilos directamente en `style.css` |
 | Scripts externos | `<script src="...">` | Toda la lógica en `script.js` |
 
-> **Flujo Pro**: Pega la salida de la IA directamente en DVGE y revisa la consola de DevTools (Ctrl+Shift+I). El motor registrará cualquier violación del sandbox.
+> **Tip de Flujo**: Pega la salida de la IA directamente en DVGE y revisa la consola de DevTools (Ctrl+Shift+I). El motor registrará cualquier violación del sandbox.

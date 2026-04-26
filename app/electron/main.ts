@@ -50,8 +50,20 @@ function createWindow() {
 
 import { setupRemotionIPC } from './remotion-api'
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   setupRemotionIPC()
+  
+  // Pre-descargar Chrome Headless en background si no existe
+  // Esto evita que el primer render falle por browser no disponible
+  try {
+    const { ensureBrowser } = await import('@remotion/renderer')
+    console.log('[Remotion] Ensuring browser is available...')
+    await ensureBrowser()
+    console.log('[Remotion] Browser ready')
+  } catch (e) {
+    console.warn('[Remotion] Could not ensure browser:', e)
+  }
+  
   setupMenu()
   createWindow()
 
@@ -115,6 +127,26 @@ app.whenReady().then(() => {
     const pPath = join(app.getPath('documents'), 'DVG_Projects', projectId)
     shell.openPath(pPath)
   })
+  
+  ipcMain.handle('update-project', (_event, data: { projectId: string, updates: any }) => {
+    return projectManager.updateProject(data.projectId, data.updates)
+  })
+
+  ipcMain.handle('delete-project', (_event, projectId: string) => {
+    return projectManager.deleteProject(projectId)
+  })
+
+  ipcMain.on('ondragstart', (event, filePath) => {
+    if (fs.existsSync(filePath)) {
+      // Intentamos usar un icono representativo si existe
+      const iconPath = join(app.getAppPath(), 'public', 'icon-drag.png')
+      
+      event.sender.startDrag({
+        file: filePath,
+        icon: fs.existsSync(iconPath) ? iconPath : join(app.getAppPath(), 'public', 'icon.png')
+      })
+    }
+  })
 
   ipcMain.on('log-sync', (_event, data) => {
     if (data._debug) {
@@ -135,6 +167,40 @@ app.whenReady().then(() => {
     }
     return `# Error: Documento no encontrado.\nNo se pudo encontrar el archivo: ${safeName}`
   })
+
+  // [v5.5.0] Generador automático de PDF para arrastrar a IAs
+  ipcMain.handle('generate-rules-pdf', async (_event, rulesText: string) => {
+    return new Promise((resolve) => {
+      const pdfPath = join(app.getPath('temp'), 'DVGE-Master-Rules.pdf')
+      if (fs.existsSync(pdfPath)) {
+        return resolve(pdfPath)
+      }
+      
+      const win = new BrowserWindow({ show: false })
+      const html = `
+        <html>
+          <body style="font-family: sans-serif; padding: 40px; color: #333;">
+            <h1 style="color: #E44C30;">DVGE Master Rules</h1>
+            <pre style="background: #f4f4f4; padding: 20px; border-radius: 8px;">${rulesText}</pre>
+          </body>
+        </html>
+      `
+      win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
+      win.webContents.on('did-finish-load', async () => {
+        try {
+          const pdfData = await win.webContents.printToPDF({ printBackground: true })
+          fs.writeFileSync(pdfPath, pdfData)
+          resolve(pdfPath)
+        } catch (e) {
+          console.error("Error generating PDF:", e)
+          resolve('')
+        } finally {
+          win.destroy()
+        }
+      })
+    })
+  })
+
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

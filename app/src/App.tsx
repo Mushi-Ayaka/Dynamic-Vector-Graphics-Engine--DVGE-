@@ -1,11 +1,15 @@
 import * as React from 'react'
 import { useStore } from './store/useStore'
-import { FormField } from './env'
 import './styles/resolve-theme.css'
 import { PreviewPlayer } from './remotion/PreviewPlayer'
 import { HomeMenu } from './components/HomeMenu'
+import { ProjectConfigPanel } from './components/ProjectConfigPanel'
+import { AspectRatioSelector } from './components/AspectRatioSelector'
+import { InspectorTabs } from './components/InspectorTabs'
+import { RenderStatusPanel } from './components/RenderStatusPanel'
+import { ChevronLeft, Puzzle, Save, Play, Info } from 'lucide-react'
+import { APP_VERSION } from './version'
 
-// [v4.0] Tarea 2.2: Error Boundary para prevenir pantalla blanca por manifiestos corruptos
 class InspectorErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; errorMsg: string }
@@ -20,10 +24,13 @@ class InspectorErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '16px', color: '#E44C30', fontSize: '12px', fontFamily: 'monospace', border: '1px solid #E44C30', borderRadius: '6px', margin: '8px' }}>
-          <strong>⚠ Error en Inspector</strong>
-          <p style={{ marginTop: '4px', opacity: 0.8 }}>{this.state.errorMsg}</p>
-          <p style={{ opacity: 0.6, marginTop: '4px' }}>Revisa el manifest.json del plugin.</p>
+        <div style={{ padding: '16px', color: '#ef4444', fontSize: '11px', fontFamily: 'var(--font-mono)', border: '1px solid #ef4444', borderRadius: '4px', margin: '12px', background: 'rgba(239,68,68,0.05)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <Info size={14} />
+            <strong>ERROR EN INSPECTOR</strong>
+          </div>
+          <p style={{ margin: 0, opacity: 0.8 }}>{this.state.errorMsg}</p>
+          <p style={{ opacity: 0.6, marginTop: '8px', fontSize: '10px' }}>Revisa el manifest.json del plugin activo.</p>
         </div>
       );
     }
@@ -31,157 +38,33 @@ class InspectorErrorBoundary extends React.Component<
   }
 }
 
-// --- Componente: Campo de Formulario Dinámico ---
-const DynamicField: React.FC<{ field: FormField; value: any; onChange: (id: string, val: any) => void }> = ({ field, value, onChange }) => {
-  const labelStyle: React.CSSProperties = { fontSize: '12px', color: 'var(--text-label)', marginBottom: '4px', display: 'block' }
-
-  switch (field.type) {
-    case 'color':
-      return (
-        <div>
-          <label style={labelStyle}>{field.label}</label>
-          <input
-            type="color"
-            className="dv-input"
-            style={{ padding: '0', height: '32px' }}
-            value={value ?? field.defaultValue}
-            onChange={(e) => onChange(field.id, e.target.value)}
-          />
-        </div>
-      )
-    case 'number':
-      return (
-        <div>
-          <label style={labelStyle}>{field.label}</label>
-          <input
-            type="number"
-            className="dv-input"
-            value={value ?? field.defaultValue}
-            onChange={(e) => onChange(field.id, parseFloat(e.target.value) || 0)}
-          />
-        </div>
-      )
-    case 'image':
-      return (
-        <div>
-          <label style={labelStyle}>{field.label}</label>
-          <input
-            type="text"
-            className="dv-input"
-            placeholder="Ruta o URL de imagen..."
-            value={value ?? field.defaultValue}
-            onChange={(e) => onChange(field.id, e.target.value)}
-          />
-        </div>
-      )
-    case 'code':
-      return (
-        <div>
-          <label style={labelStyle}>{field.label}</label>
-          <textarea
-            className="dv-input"
-            style={{ 
-                fontFamily: 'monospace', 
-                height: '160px', 
-                resize: 'vertical',
-                fontSize: '11px',
-                lineHeight: '1.4',
-                background: '#0d0d0d'
-            }}
-            value={value ?? field.defaultValue}
-            onChange={(e) => onChange(field.id, e.target.value)}
-          />
-        </div>
-      )
-    case 'info':
-      return (
-        <div style={{ marginBottom: '10px' }}>
-          <label style={labelStyle}>{field.label}</label>
-          <div style={{ position: 'relative' }}>
-            <textarea
-              readOnly
-              className="dv-input"
-              style={{ 
-                  fontFamily: 'monospace', 
-                  height: '100px', 
-                  fontSize: '10px',
-                  background: 'rgba(228,76,48,0.05)',
-                  border: '1px solid rgba(228,76,48,0.2)',
-                  color: '#aaa',
-                  cursor: 'default'
-              }}
-              value={field.defaultValue}
-            />
-            <button 
-              onClick={() => {
-                navigator.clipboard.writeText(String(field.defaultValue));
-                alert('¡Copiado al portapapeles!');
-              }}
-              style={{
-                position: 'absolute',
-                top: '5px',
-                right: '5px',
-                padding: '2px 8px',
-                fontSize: '9px',
-                background: 'var(--accent)',
-                border: 'none',
-                borderRadius: '3px',
-                color: 'white',
-                cursor: 'pointer'
-              }}
-            >
-              COPIAR
-            </button>
-          </div>
-        </div>
-      )
-    case 'select':
-      return (
-        <div style={{ marginBottom: '10px' }}>
-          <label style={labelStyle}>{field.label}</label>
-          <select
-            className="dv-input"
-            style={{ padding: '5px' }}
-            value={value ?? field.defaultValue}
-            onChange={(e) => onChange(field.id, e.target.value)}
-          >
-            {field.options?.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-      )
-    default: // 'string'
-      return (
-        <div>
-          <label style={labelStyle}>{field.label}</label>
-          <input
-            className="dv-input"
-            value={value ?? field.defaultValue}
-            onChange={(e) => onChange(field.id, e.target.value)}
-          />
-        </div>
-      )
-  }
-}
-
 export default function App() {
-  const {
-    activeProject,
-    activePlugin,
-    activePluginFiles,
-    properties,
-    setProperties,
-    saveProjectState,
-    renderState,
-    renderProgress,
-    renderError,
-    outputPath,
-    setRenderState,
-    setRenderProgress,
-    isSaving,
-    lastSaved
-  } = useStore()
+  const activeProject = useStore(state => state.activeProject)
+  const activePlugin = useStore(state => state.activePlugin)
+  const activePluginFiles = useStore(state => state.activePluginFiles)
+  const properties = useStore(state => state.properties)
+  const setProperties = useStore(state => state.setProperties)
+  const saveProjectState = useStore(state => state.saveProjectState)
+  const renderState = useStore(state => state.renderState)
+  const renderProgress = useStore(state => state.renderProgress)
+  const renderError = useStore(state => state.renderError)
+  const setRenderState = useStore(state => state.setRenderState)
+  const setRenderProgress = useStore(state => state.setRenderProgress)
+  const isSaving = useStore(state => state.isSaving)
+  const lastSaved = useStore(state => state.lastSaved)
+  const clearActiveProject = useStore(state => state.clearActiveProject)
+
+  const uiState = useStore(state => state.uiState)
+
+  const handleRatioSelect = (ratio: string) => {
+    const updateProjectConfig = useStore.getState().updateProjectConfig;
+    if (ratio === '16:9') updateProjectConfig({ width: 1920, height: 1080, aspectRatioMode: ratio });
+    else if (ratio === '9:16') updateProjectConfig({ width: 1080, height: 1920, aspectRatioMode: ratio });
+    else if (ratio === '1:1') updateProjectConfig({ width: 1080, height: 1080, aspectRatioMode: ratio });
+    else if (ratio === '4:3') updateProjectConfig({ width: 1440, height: 1080, aspectRatioMode: ratio });
+    else if (ratio === '21:9') updateProjectConfig({ width: 2520, height: 1080, aspectRatioMode: ratio });
+    else updateProjectConfig({ aspectRatioMode: ratio }); // Para 'custom' u otros
+  };
 
   React.useEffect(() => {
     if (window.ipcRenderer) {
@@ -191,232 +74,289 @@ export default function App() {
     }
   }, [setRenderProgress])
 
-  // Autosave con Debounce 500ms
   React.useEffect(() => {
     if (!activeProject || !window.ipcRenderer) return
     const timer = setTimeout(() => {
       saveProjectState()
-    }, 500)
+    }, 1000)
     return () => clearTimeout(timer)
-  }, [properties, activeProject, saveProjectState])
+  }, [properties, activeProject?.width, activeProject?.height, activeProject?.fps, activeProject?.durationInFrames, activeProject?.aspectRatioMode, saveProjectState])
+
+  const outputPath = useStore(state => state.outputPath)
+
+  const handleVideoDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (renderState === 'DONE' && outputPath) {
+      window.ipcRenderer.startDrag(outputPath);
+    }
+  };
+
+  if (!activeProject) {
+    return <HomeMenu />
+  }
+
+  const handleFieldChange = (id: string, value: any) => {
+    setProperties({ [id]: value })
+
+    // Sincronizar dimensiones con el proyecto si cambian en el inspector
+    const updateProjectConfig = useStore.getState().updateProjectConfig;
+    const numVal = Number(value);
+
+    if (!isNaN(numVal) && numVal > 0) {
+      if (id === 'resolutionWidth' || id === 'width') {
+        updateProjectConfig({ width: numVal });
+      }
+      if (id === 'resolutionHeight' || id === 'height') {
+        updateProjectConfig({ height: numVal });
+      }
+    }
+  }
 
   const handleRenderReal = async () => {
     if (!window.ipcRenderer) {
-      alert('IPC no disponible. ¿Estás corriendo el navegador en vez de Electron?')
-      return
+      console.warn('[DVGE] IPC no disponible para renderizar');
+      return;
     }
 
     if (!activePluginFiles) {
-      alert('Error: No hay archivos de plugin cargados.')
-      return
+      setRenderState('ERROR', 'No hay archivos de plugin cargados para renderizar.');
+      return;
     }
 
     setRenderState('RENDERING')
     setRenderProgress(0)
-    
+
     try {
-      // [v4.1.5] Render Protocol v4: Sincronización Total de Specs
-      const renderPayload = {
-        ...properties,
+      const result = await window.ipcRenderer.renderProject({
         _projectId: activeProject.id,
-        // Inyectamos archivos fuente directamente (Fix: Render Huérfano)
-        activePluginFiles: activePluginFiles,
-        // Especificaciones dinámicas del proyecto (Fix: Hardcoded Specs)
+        pluginId: activeProject.pluginId,
+        properties: properties,
+        files: activePluginFiles,
+        // Enviar config real del proyecto
         _renderWidth: activeProject.width || 1920,
         _renderHeight: activeProject.height || 1080,
         _renderFps: activeProject.fps || 60,
         _renderDuration: activeProject.durationInFrames || 240
-      }
+      })
 
-      const result = await window.ipcRenderer.invoke('start-render', renderPayload)
       if (result.success) {
         setRenderState('DONE', undefined, result.path)
       } else {
         setRenderState('ERROR', result.error)
       }
-    } catch (err) {
-      setRenderState('ERROR', String(err))
+    } catch (e: any) {
+      setRenderState('ERROR', e.message)
     }
   }
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    if (outputPath && window.ipcRenderer) {
-      window.ipcRenderer.startDrag(outputPath)
-    }
-  }
 
-  const handleFieldChange = (id: string, val: any) => {
-    setProperties({ [id]: val })
-  }
-
-  // VISTA: Home (Sin proyecto activo)
-  if (!activeProject) {
-    return <HomeMenu />
-  }
-
-  // Schema del plugin activo (fuente de verdad para el formulario)
-  const schema = activePlugin?.manifest?.schema ?? []
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw' }}>
-
-      {/* Sidebar: Formulario Dinámico */}
-      <div style={{ width: '320px', borderRight: '1px solid var(--border)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px', overflowY: 'auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => window.location.reload()}>
-            ← Volver a Proyectos
-          </h3>
-          <span style={{ fontSize: '12px', color: '#E44C30', fontWeight: 'bold' }}>v5.0.0 GA // {activeProject.name}</span>
-        </div>
-
-        {/* Plugin Badge */}
-        {activePlugin && (
-          <div style={{ padding: '8px 12px', background: 'rgba(228,76,48,0.08)', border: '1px solid rgba(228,76,48,0.2)', borderRadius: '6px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-            <span style={{ color: '#E44C30', fontWeight: 600 }}>Plugin:</span> {activePlugin.manifest.name} <span style={{ opacity: 0.5 }}>v{activePlugin.manifest.version}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary)' }}>
+      {/* TopBar (Fija) */}
+      <div style={{
+        height: '40px',
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 12px',
+        justifyContent: 'space-between',
+        zIndex: 100
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <button
+            className="btn-icon"
+            onClick={clearActiveProject}
+            title="Volver a la galería de proyectos"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'white', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: '"Roboto Mono", monospace', textTransform: 'uppercase' }}>
+              {activeProject.name}
+            </span>
+            <span className="dv-badge" style={{ background: 'var(--accent)', color: 'white', border: 'none' }}>v{APP_VERSION} GA</span>
           </div>
-        )}
-
-        {/* [v4.0] Campos dinámicos protegidos por Error Boundary */}
-        <div style={{ flex: 1, overflowY: 'auto', paddingRight: '10px', margin: '0 -10px', paddingLeft: '10px' }} className="dv-scroll-area">
-          <InspectorErrorBoundary>
-            {(() => {
-              const safeSchema = Array.isArray(schema) ? schema : [];
-              if (safeSchema.length === 0) {
-                return (
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center', padding: '20px 0' }}>
-                    Este plugin no tiene propiedades configurables.
-                  </div>
-                );
-              }
-
-              const groups: Record<string, FormField[]> = {};
-              safeSchema.forEach(field => {
-                const groupName = (field as any).group || 'General';
-                if (!groups[groupName]) groups[groupName] = [];
-                groups[groupName].push(field);
-              });
-
-              return Object.entries(groups).map(([groupName, fields]) => (
-                <details key={groupName} open style={{ marginBottom: '10px', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', overflow: 'hidden', background: 'rgba(255,255,255,0.02)' }}>
-                  <summary style={{ 
-                    padding: '10px', 
-                    background: 'rgba(255,255,255,0.04)', 
-                    cursor: 'pointer', 
-                    fontSize: '11px', 
-                    fontWeight: 'bold', 
-                    color: '#E44C30',
-                    textTransform: 'uppercase',
-                    letterSpacing: '1px',
-                    userSelect: 'none',
-                    borderBottom: '1px solid rgba(255,255,255,0.05)'
-                  }}>
-                    {groupName}
-                  </summary>
-                  <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(0,0,0,0.1)' }}>
-                    {fields.map(field => (
-                      <DynamicField
-                        key={field.id}
-                        field={field}
-                        value={properties[field.id]}
-                        onChange={handleFieldChange}
-                      />
-                    ))}
-                  </div>
-                </details>
-              ));
-            })()}
-          </InspectorErrorBoundary>
         </div>
 
+        <div style={{ display: 'flex', gap: '4px' }}>
+          <button className="tab-btn active" style={{ padding: '6px 12px', height: 'auto' }}>Studio</button>
+          <button disabled className="tab-btn disabled" style={{ padding: '6px 12px', height: 'auto' }} title="Disponible en próximas versiones">Library</button>
+          <button disabled className="tab-btn disabled" style={{ padding: '6px 12px', height: 'auto' }} title="Disponible en próximas versiones">Render</button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}></div>
+      </div>
+
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {/* Sidebar (Inspector) */}
         <div style={{
+          width: '320px',
+          background: 'var(--bg-secondary)',
+          borderRight: '1px solid var(--border)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '8px',
-          padding: '12px',
-          background: 'rgba(255,255,255,0.03)',
-          borderRadius: '6px',
+          zIndex: 50
         }}>
+          {/* Global Config Panel */}
+          <ProjectConfigPanel />
+
+          {/* Plugin Identity Badge */}
           <div style={{
-            fontSize: '11px',
-            color: isSaving ? '#aaa' : 'var(--success)',
-            textAlign: 'center',
-            fontStyle: 'italic'
+            height: '40px',
+            padding: '0 12px',
+            background: 'var(--bg-surface)',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
           }}>
-            {isSaving ? 'Guardando cambios...' : lastSaved ? `✓ Guardado (${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : 'Autoguardado activo'}
+            <div style={{ padding: '6px', background: 'var(--bg-elevated)', borderRadius: '4px', border: '1px solid var(--border)' }}>
+              <Puzzle size={14} color="var(--accent)" />
+            </div>
+            <div>
+              <div style={{ fontSize: '9px', color: 'var(--text-label)', textTransform: 'uppercase', fontWeight: 700 }}>Template Activo</div>
+              <div style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>{activePlugin?.manifest.name || 'Sin plugin'}</div>
+            </div>
           </div>
-          
-          <button 
-            className="dv-btn secondary" 
-            style={{ fontSize: '11px', padding: '6px' }}
-            disabled={isSaving}
-            onClick={() => saveProjectState()}
-          >
-            💾 Guardar Proyecto
-          </button>
+
+          {/* Dynamic Inspector Tabs */}
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            <InspectorErrorBoundary>
+              {activePlugin && (
+                <InspectorTabs
+                  schema={activePlugin.manifest.schema || []}
+                  properties={properties}
+                  onChange={handleFieldChange}
+                />
+              )}
+            </InspectorErrorBoundary>
+          </div>
+
+          {/* Action Footer (Fijo) */}
+          <div style={{ padding: '15px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '10px', color: 'var(--text-label)' }}>
+                {lastSaved ? `Guardado: ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Auto-guardado activo'}
+              </span>
+              <button
+                className="btn-icon"
+                onClick={() => saveProjectState()}
+                disabled={isSaving}
+                title="Forzar guardado ahora"
+              >
+                <Save size={14} color={isSaving ? 'var(--text-disabled)' : 'var(--text-secondary)'} />
+              </button>
+            </div>
+
+            <button
+              className="dv-btn cta"
+              disabled={renderState === 'RENDERING'}
+              onClick={handleRenderReal}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            >
+              {renderState === 'RENDERING' ? (
+                'RENDERIZANDO...'
+              ) : (
+                <>
+                  <Play size={14} fill="currentColor" />
+                  RENDERIZAR VIDEO
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        <button
-          className="dv-btn"
-          disabled={renderState === 'RENDERING'}
-          onClick={handleRenderReal}
-        >
-          {renderState === 'RENDERING' ? `Renderizando... ${Math.round(renderProgress * 100)}%` : '▶ Renderizar'}
-        </button>
-      </div>
+        {/* Main Content Area */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', overflow: 'hidden' }}>
 
-      {/* Main: Preview + Estado de Render */}
-      <div style={{ flex: 1, padding: '40px', display: 'flex', flexDirection: 'column', gap: '20px', justifyContent: 'center', overflowY: 'auto' }}>
-        <>
-          {activePluginFiles ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-              {/*
-                ⚡ KEY basada en el ID del proyecto: obliga a React a destruir
-                y recrear el PreviewPlayer al cambiar de proyecto. Esto garantiza
-                el "Hard Reset" del Shadow DOM y el Bridge de Remotion.
-              */}
-              <PreviewPlayer key={activeProject.id} />
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-              Selecciona un plugin para comenzar...
-            </div>
-          )}
+          {/* Preview Panel Container */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-elevated)' }}>
 
-          <div style={{ minHeight: '150px', display: 'flex', flexDirection: 'column' }}>
-            {renderState === 'RENDERING' && (
-              <div style={{ textAlign: 'center' }}>
-                <h2 style={{ color: 'var(--accent)' }}>Procesando ProRes 4444...</h2>
-                <div style={{ width: '100%', height: '4px', background: 'var(--bg-elevated)', borderRadius: '2px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${renderProgress * 100}%`, background: 'var(--accent)', transition: 'width 0.2s' }} />
+            {/* Panel Header (Toolbar) */}
+            <div style={{
+              height: '40px',
+              padding: '0 20px',
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(0,0,0,0.2)',
+              borderBottom: '1px solid var(--border)',
+              gap: '16px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '1.5px', textTransform: 'uppercase' }}>Preview</span>
+              </div>
+
+              {/* Condensed Info Display */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '10px', color: 'var(--text-disabled)', marginLeft: 'auto', background: 'rgba(0,0,0,0.2)', padding: '4px 12px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{activeProject.width || 1920}×{activeProject.height || 1080}</span>
+                </div>
+                <span style={{ width: '1px', height: '10px', background: 'var(--border)' }} />
+                <span>{activeProject.fps || 60} FPS</span>
+                <span style={{ width: '1px', height: '10px', background: 'var(--border)' }} />
+                <span>{activeProject.durationInFrames || 240}f</span>
+                <span style={{ width: '1px', height: '10px', background: 'var(--border)' }} />
+                <span style={{ color: 'var(--accent)', fontWeight: 600 }}>
+                  {((activeProject.durationInFrames || 240) / (activeProject.fps || 60)).toFixed(1)}s
+                </span>
+                <span style={{ width: '1px', height: '10px', background: 'var(--border)' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-secondary)' }}>
+                  <span style={{ fontSize: '8px', opacity: 0.6 }}>EST.</span>
+                  <span style={{ fontWeight: 600 }}>
+                    {(((activeProject.durationInFrames || 240) / (activeProject.fps || 60)) * ((activeProject.width || 1920) * (activeProject.height || 1080) * 0.0000012)).toFixed(1)} MB
+                  </span>
                 </div>
               </div>
-            )}
 
-            {renderState === 'DONE' && (
-              <div className="drag-box" draggable onDragStart={handleDragStart}>
-                <div style={{ fontSize: '48px', marginBottom: '10px' }}>🎥</div>
-                <strong style={{ fontSize: '18px', color: 'var(--text-primary)' }}>¡Renderizado Completo!</strong>
-                <p style={{ color: 'var(--success)', fontWeight: 'bold' }}>Arrastra el archivo a tu editor de video o haz clic abajo.</p>
-                <button
-                  className="dv-btn secondary"
-                  style={{ width: '100%', marginTop: '10px' }}
-                  onClick={() => window.ipcRenderer.openProjectFolder(activeProject.id)}
-                >
-                  Abrir Carpeta del Proyecto
-                </button>
-              </div>
-            )}
+              <AspectRatioSelector selected={uiState.aspectRatioMode} onSelect={handleRatioSelect} />
+            </div>
 
-            {renderState === 'ERROR' && (
-              <div style={{ padding: '20px', background: 'rgba(255,0,0,0.1)', border: '1px solid red', borderRadius: '4px' }}>
-                <strong style={{ color: 'red' }}>Error de Renderizado:</strong>
-                <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{renderError || 'Fallo desconocido'}</p>
+            {/* Preview Viewport - High Visibility Area */}
+            <div style={{
+              flex: 1,
+              padding: '40px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              position: 'relative',
+              background: '#0a0a0a'
+            }}>
+              <div style={{
+                flex: 1,
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+                minHeight: 0
+              }}>
+                {activePluginFiles ? (
+                  <PreviewPlayer key={activeProject.id} />
+                ) : (
+                  <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-disabled)', fontSize: '12px' }}>Cargando player...</div>
+                )}
               </div>
-            )}
+
+              {/* Render Status Overlay */}
+              <div style={{ width: '100%', maxWidth: '800px', marginTop: '10px' }}>
+
+                <RenderStatusPanel
+                  renderState={renderState}
+                  renderProgress={renderProgress}
+                  renderError={renderError}
+                  onOpenFolder={() => window.ipcRenderer.openProjectFolder(activeProject.id)}
+                  onDragStart={handleVideoDrag}
+                />
+              </div>
+            </div>
           </div>
-        </>
+        </div>
       </div>
-    </div>
+    </div >
   )
 }

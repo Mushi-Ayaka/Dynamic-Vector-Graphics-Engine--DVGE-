@@ -10,6 +10,12 @@ export interface DVProject {
   updatedAt: number;
   pluginId: string; // The plugin this project is associated with
   properties: Record<string, any>; // Saved state of the properties pane
+  // [v5.6] Metadata persistente
+  width?: number;
+  height?: number;
+  fps?: number;
+  durationInFrames?: number;
+  aspectRatioMode?: string;
 }
 
 const PROJECTS_DIR_NAME = 'DVG_Projects';
@@ -85,7 +91,7 @@ export class ProjectManager {
     return projectData;
   }
 
-  public async saveProjectProperties(projectId: string, properties: Record<string, any>): Promise<boolean> {
+  public async saveProjectProperties(projectId: string, payload: any): Promise<boolean> {
     const projectPath = path.join(this.baseDir, projectId);
     const metadataPath = path.join(projectPath, 'project.json');
     const tmpPath = metadataPath + '.tmp';
@@ -96,19 +102,24 @@ export class ProjectManager {
     }
 
     try {
-        // Leer actual de forma asíncrona (no bloquea el hilo)
         const raw = await fsPromises.readFile(metadataPath, 'utf8');
         const data = JSON.parse(raw);
-        data.properties = properties;
+        
+        // Si payload contiene 'properties', lo tratamos como el objeto principal de props
+        // Pero también permitimos que el payload contenga campos de la raíz del proyecto (metadata)
+        if (payload.properties) {
+          Object.assign(data, payload);
+        } else {
+          // Si no, asumimos que el payload SON las properties (retrocompatibilidad)
+          data.properties = payload;
+        }
+        
         data.updatedAt = Date.now();
 
-        // Escritura Atómica: escribe en .tmp primero, luego rename
-        // Si el proceso muere en medio de la escritura, .tmp queda incompleto
-        // pero el project.json original permanece intacto.
         await fsPromises.writeFile(tmpPath, JSON.stringify(data, null, 2), 'utf8');
         await fsPromises.rename(tmpPath, metadataPath);
 
-        console.log(`[ProjectManager] ✅ Saved (atomic) for: ${projectId} - Props: ${Object.keys(properties).length}`);
+        console.log(`[ProjectManager] ✅ Saved (metadata+props) for: ${projectId}`);
         return true;
     } catch(e) {
         console.error(`[ProjectManager] ❌ Failed atomic save for ${projectId}:`, e);
@@ -122,5 +133,40 @@ export class ProjectManager {
     const dir = path.join(this.baseDir, projectId, 'Exports');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     return dir;
+  }
+
+  public async updateProject(projectId: string, updates: Partial<DVProject>): Promise<boolean> {
+    const projectPath = path.join(this.baseDir, projectId);
+    const metadataPath = path.join(projectPath, 'project.json');
+
+    if (!fs.existsSync(metadataPath)) return false;
+
+    try {
+      const raw = await fsPromises.readFile(metadataPath, 'utf8');
+      const data = JSON.parse(raw);
+      
+      Object.assign(data, updates);
+      data.updatedAt = Date.now();
+
+      await fsPromises.writeFile(metadataPath, JSON.stringify(data, null, 2), 'utf8');
+      return true;
+    } catch (e) {
+      console.error(`[ProjectManager] Error updating project ${projectId}:`, e);
+      return false;
+    }
+  }
+
+  public async deleteProject(projectId: string): Promise<boolean> {
+    const projectPath = path.join(this.baseDir, projectId);
+    if (!fs.existsSync(projectPath)) return false;
+
+    try {
+      // Eliminar recursivamente (fs.rmSync requiere Node 14.14+)
+      fs.rmSync(projectPath, { recursive: true, force: true });
+      return true;
+    } catch (e) {
+      console.error(`[ProjectManager] Error deleting project ${projectId}:`, e);
+      return false;
+    }
   }
 }

@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { DVPlugin } from '../env'
-import { expandManifestFields } from './presets'
 
 // --- Tipo del Store ---
 type StoreState = {
@@ -13,6 +12,7 @@ type StoreState = {
 
   initialize: () => Promise<void>       // Cargar plugins al iniciar la app
   loadProject: (project: any) => Promise<void>
+  clearActiveProject: () => void
   saveProjectState: () => Promise<void>
   isSaving: boolean
   lastSaved: Date | null
@@ -33,6 +33,20 @@ type StoreState = {
   activePluginId: string | null
   setRenderProgress: (progress: number) => void
   setRenderState: (state: StoreState['renderState'], error?: string, path?: string) => void
+
+  // Project Creation State (Global to survive re-renders)
+  isCreatingProject: boolean
+  setIsCreatingProject: (val: boolean) => void
+  newProjectName: string
+  setNewProjectName: (val: string) => void
+  newProjectPluginId: string
+  setNewProjectPluginId: (val: string) => void
+  updateProjectConfig: (patch: Partial<{ width: number; height: number; fps: number; durationInFrames: number; aspectRatioMode: string }>) => void
+
+  uiState: { aspectRatioMode: string; advancedDuration: boolean }
+  setUiState: (patch: Partial<StoreState['uiState']>) => void
+  updateProjectName: (name: string) => Promise<void>
+  deleteProject: () => Promise<void>
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -48,6 +62,8 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   isSaving: false,
   lastSaved: null,
+  uiState: { aspectRatioMode: '16:9', advancedDuration: false },
+  setUiState: (patch) => set((state) => ({ uiState: { ...state.uiState, ...patch } })),
 
   // Carga todos los plugins disponibles (llamar al arrancar la app)
   initialize: async () => {
@@ -66,18 +82,23 @@ export const useStore = create<StoreState>((set, get) => ({
     
     let activePlugin = null
     if (rawPlugin) {
-        // [v3.4.0] Resolución Proactiva de Presets
-        const expandedSchema = expandManifestFields(rawPlugin.manifest.presets, rawPlugin.manifest.schema);
         activePlugin = {
             ...rawPlugin,
             manifest: {
-                ...rawPlugin.manifest,
-                schema: expandedSchema
+                ...rawPlugin.manifest
             }
         };
     }
 
-    set({ activeProject: project, properties: project.properties || {}, activePlugin })
+    set({ 
+      activeProject: project, 
+      properties: project.properties || {}, 
+      activePlugin,
+      uiState: { 
+        aspectRatioMode: project.aspectRatioMode || 'custom', 
+        advancedDuration: false 
+      }
+    })
     try {
       const files = await window.ipcRenderer.getPluginFiles(project.pluginId)
       set({ activePluginFiles: files })
@@ -86,11 +107,25 @@ export const useStore = create<StoreState>((set, get) => ({
     }
   },
 
+  clearActiveProject: () => set({
+    activeProject: null,
+    activePlugin: null,
+    activePluginFiles: null,
+    properties: {},
+    renderState: 'IDLE',
+    renderProgress: 0,
+    renderError: undefined,
+    outputPath: undefined
+  }),
+
   saveProjectState: async () => {
-    const { activeProject, properties } = get()
+    const { activeProject } = get()
     if (!activeProject || !window.ipcRenderer) return
     set({ isSaving: true })
-    await window.ipcRenderer.saveProjectProps(activeProject.id, properties)
+    
+    // Mandamos el objeto completo para persistir metadata (width, height, etc.) junto con props
+    await window.ipcRenderer.saveProjectProps(activeProject.id, activeProject)
+    
     set({ isSaving: false, lastSaved: new Date() })
   },
 
@@ -124,5 +159,47 @@ export const useStore = create<StoreState>((set, get) => ({
     renderState: newState,
     renderError: error,
     outputPath: path || state.outputPath
-  }))
+  })),
+
+  isCreatingProject: false,
+  setIsCreatingProject: (val) => set({ isCreatingProject: val }),
+  newProjectName: '',
+  setNewProjectName: (val) => set({ newProjectName: val }),
+  newProjectPluginId: '',
+  setNewProjectPluginId: (val) => set({ newProjectPluginId: val }),
+  updateProjectConfig: (patch) => set((state) => {
+    const nextProject = state.activeProject ? { ...state.activeProject, ...patch } : null;
+    const nextUiState = patch.aspectRatioMode 
+      ? { ...state.uiState, aspectRatioMode: patch.aspectRatioMode }
+      : state.uiState;
+
+    return {
+      activeProject: nextProject,
+      uiState: nextUiState
+    };
+  }),
+
+  updateProjectName: async (name) => {
+    const { activeProject } = get();
+    if (!activeProject || !window.ipcRenderer) return;
+
+    // @ts-ignore
+    const success = await window.ipcRenderer.updateProject(activeProject.id, { name });
+    if (success) {
+      set({ activeProject: { ...activeProject, name } });
+    }
+  },
+
+  deleteProject: async () => {
+    const { activeProject, clearActiveProject } = get();
+    if (!activeProject || !window.ipcRenderer) return;
+
+    if (confirm(`¿Estás seguro de que deseas eliminar el proyecto "${activeProject.name}"? Esta acción no se puede deshacer.`)) {
+      // @ts-ignore
+      const success = await window.ipcRenderer.deleteProject(activeProject.id);
+      if (success) {
+        clearActiveProject();
+      }
+    }
+  }
 }))

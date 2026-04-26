@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
         ipcRenderer.on(channel, (_event, ...args) => func(...args))
     }
   },
+  renderProject: (data: any) => ipcRenderer.invoke('start-render', data),
   startDrag: (filePath: string) => ipcRenderer.send('ondragstart', filePath),
   openFolder: (dirPath: string) => ipcRenderer.send('open-folder', dirPath),
   getPlugins: () => ipcRenderer.invoke('get-plugins'),
@@ -30,6 +31,7 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   getPluginFiles: (pluginId: string) => ipcRenderer.invoke('get-plugin-files', pluginId),
   installPlugin: (pluginId: string, files: any) => ipcRenderer.invoke('install-plugin', { pluginId, files }),
   deletePlugin: (pluginId: string) => ipcRenderer.invoke('delete-plugin', pluginId),
+  generateRulesPdf: (rulesText: string) => ipcRenderer.invoke('generate-rules-pdf', rulesText),
   logSync: (data: any) => ipcRenderer.send('log-sync', data),
   
   // Workspace / Proyectos
@@ -37,4 +39,6 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   createProject: (name: string, pluginId: string, defaultProps: any) => ipcRenderer.invoke('create-project', { name, pluginId, defaultProps }),
   saveProjectProps: (projectId: string, props: any) => ipcRenderer.invoke('save-project-props', { projectId, props }),
   openProjectFolder: (projectId: string) => ipcRenderer.send('open-project-folder', projectId),
+  updateProject: (projectId: string, updates: any) => ipcRenderer.invoke('update-project', { projectId, updates }),
+  deleteProject: (projectId: string) => ipcRenderer.invoke('delete-project', projectId),
 })

@@ -1,8 +1,8 @@
-# Documentación Técnica: Dynamic Vector Graphics Engine (DVGE) v5.0.0 GA
+# Documentación Técnica: Dynamic Vector Graphics Engine v5.6.0 GA
 
 ## Introducción
 
-El **Dynamic Vector Graphics Engine (DVGE)** es una aplicación de escritorio diseñada para la creación, previsualización y exportación de gráficos dinámicos de tipo broadcast (como bandas de texto, títulos y callouts). Su objetivo es integrarse sin fricciones al flujo de trabajo de cualquier productor o editor audiovisual, generando archivos de video con canal Alfa (transparencia) listos para ser usados sobre cualquier material de video.
+El **Dynamic Vector Graphics Engine v5.6** es una aplicación de escritorio diseñada para la creación, previsualización y exportación de gráficos dinámicos de tipo broadcast (como bandas de texto, títulos y callouts). Su objetivo es integrarse sin fricciones al flujo de trabajo de cualquier productor o editor audiovisual, generando archivos de video con canal Alfa (transparencia) listos para ser usados sobre cualquier material de video.
 
 ---
 
@@ -20,7 +20,7 @@ La aplicación se basa en una arquitectura híbrida de doble proceso separados p
 │   PROCESO PRINCIPAL (Backend)                     │
 │   Node.js → PluginManager + ProjectManager        │
 │           → Renderizador de Video (sin ventana)   │
-└──────────────────────────────────────────────────┘
+└──────────────────┘
 ```
 
 ### 1.1 Proceso del Renderizador (Frontend)
@@ -62,13 +62,12 @@ Documentos/
             └── graphic.mov     ← Video exportado (ProRes 4444 con Alfa)
 ```
 
-### 2.2 El Archivo `project.json`
+### 2.2 Operaciones de Ciclo de Vida (v5.6.0)
 
-Este archivo actúa como la memoria permanente del proyecto. Contiene:
-- El identificador del plugin utilizado para renderizar el gráfico.
-- El nombre del proyecto.
-- Las propiedades editables actuales (texto, colores, etc.).
-- La fecha de última modificación.
+La versión 5.6 introduce capacidades CRUD completas a través del IPC:
+- **`update-project`**: Permite renombrar proyectos sin romper la integridad de las rutas de exportación.
+- **`delete-project`**: Eliminación recursiva y segura de directorios de proyecto desde la interfaz.
+- **`Integrity Check`**: Capa de validación en el arranque de sesión que impide la carga de proyectos si el plugin requerido no está presente en el sistema.
 
 ### 2.3 Persistencia Atómica Asíncrona (Resiliencia)
 
@@ -120,9 +119,11 @@ Ejemplo de `manifest.json`:
 
 Cuando el motor carga un plugin para su previsualización, inyecta el HTML y el CSS del plugin dentro de un Shadow Root adjunto a un contenedor interno. Esta tecnología nativa del navegador garantiza el **aislamiento total de estilos**: ninguna regla CSS de la interfaz del motor afecta al gráfico del plugin, y viceversa.
 
-### 3.3 El Ciclo de Vida v3 (Lifecycle)
+### 3.4 El Ciclo de Vida v3 (Lifecycle)
 
 El corazón de la API del motor es el objeto de registro que el plugin debe entregar mediante `dvEngine.register()`. Este objeto define tres ganchos (hooks) de ciclo de vida correspondientes a distintas etapas de la animación:
+
+**[v5.4.0] Engine Compatibility**: El motor ahora incluye un polyfill de `getElementById` inyectado en el objeto `ctx.root`. Esto permite que plugins que utilicen esta función clásica (solo disponible en `document`) funcionen correctamente dentro del entorno aislado del Shadow Root.
 
 ```javascript
 dvEngine.register({
@@ -144,7 +145,7 @@ dvEngine.register({
 });
 ```
 
-### 3.4 El Objeto de Contexto (`ctx`)
+### 3.5 El Objeto de Contexto (`ctx`)
 
 Cada hook recibe el mismo objeto de contexto con las siguientes propiedades:
 
@@ -152,25 +153,21 @@ Cada hook recibe el mismo objeto de contexto con las siguientes propiedades:
 |---|---|---|
 | `ctx.frame` | `number` | Fotograma actual de la animación (empieza en 0). |
 | `ctx.timeline`| `object` | **[v4.0]** Tiempos normalizados (`progress`, `introProgress`, `outroProgress`). |
-| `ctx.root` | `ShadowRoot` | Referencia al Shadow Root que contiene el HTML del plugin. |
-| `ctx.props` | `object` | Las propiedades actuales definidas en el `manifest.json`. |
+| `ctx.root` | `ShadowRoot` | Referencia al Shadow Root (con polyfill de `getElementById`). |
+| `ctx.props` | `object` | Las propiedades actuales inyectadas vía **Data Probe**. |
 | `ctx.refs` | `object` | **[v4.0]** Caché oficial para referencias del DOM (persistente). |
 | `ctx.state` | `object` | **[v4.0]** Almacén de estado interno persistente para el plugin. |
 | `ctx.utils` | `object` | Librería nativa de easing y matemáticas (`lerp`, `clamp`, etc.). |
 | `ctx.settings`| `object` | Metadatos globales: `fps`, `duration`, `resolution`, `width`, `height`. |
 
-### 3.5 Inteligencia de Rescate (v4.1.5)
+### 3.6 Inteligencia de Rescate (v4.1.5)
 
 El motor implementa un **Auto-Bridge** que garantiza la ejecución de plugins incluso si no siguen el estándar oficial:
 - **Detección Global**: Si el script define `window.renderDVGE`, `window.update` o `window.draw`, el motor lo detecta y lo registra automáticamente.
 - **Neutralización**: El Sandbox intercepta `requestAnimationFrame` y lo anula para forzar el determinismo.
 - **Utils v4.1.5**: Se añade `ctx.utils.loop(frame, duration)` que retorna un valor normalizado [0-1] para ciclos perfectos.
 
-### 3.6 Determinismo vs Tiempo Real
-
-DVGE v4.0 prohíbe el uso de librerías basadas en `requestAnimationFrame` (como GSAP) para garantizar la coherencia cuadro a cuadro durante la exportación a ProRes 4444. La animación debe ser puramente matemática basada en el `ctx.frame` o el `ctx.timeline`.
-
-### 3.5 Enlace Reactivo de Datos
+### 3.7 Enlace Reactivo de Datos
 
 La propiedad `ctx.props` se actualiza en cada fotograma con los valores más recientes del formulario. Para lograr reactividad visual inmediata (ej: que el texto del gráfico cambie mientras el usuario escribe), las asignaciones de datos al DOM **deben realizarse dentro del hook `update`**, no en `start` ni en `awake`.
 
@@ -182,28 +179,11 @@ update: (ctx) => {
 }
 ```
 
-### 3.6 Librería de Utilidades (`dvEngine.utils`)
+### 3.8 Knowledge Bridge Nativo (v5.5.0 GA)
 
-El motor inyecta automáticamente un conjunto de funciones matemáticas y de formato para simplificar el desarrollo de los plugins:
+La versión 5.5 introduce el **Knowledge Bridge**, un sistema de inyección de contexto diseñado específicamente para integrar la creación de animaciones y plugins con IAs.
 
-| Función | Descripción |
-|---|---|
-| `utils.lerp(a, b, t)` | Interpolación lineal simple. |
-| `utils.clamp(val, min, max)` | Restringe un valor a un rango. |
-| `utils.easeOutCubic(t)` | Función de suavizado de entrada/salida. |
-| `utils.easeInOutCubic(t)` | Suavizado más pronunciado. |
-| `utils.easeOutBounce(t)` | Efecto de rebote elástico. |
-| `utils.easeOutElastic(t)` | Efecto de muelle/elástico. |
-| `utils.hexToRgb(hex)` | Convierte un color Hex a "r, g, b" (útil para variables CSS con opacidad). |
-
-Ejemplo de uso:
-```javascript
-update: (ctx) => {
-  const { utils, frame } = ctx;
-  const opacity = utils.easeOutCubic(Math.min(1, frame / 30));
-  // ...
-}
-```
+- **Mecanismo PDF**: El motor compila silenciosamente todas sus reglas arquitectónicas (Sandbox, variables, limitaciones de Shadow DOM y Utils) en un archivo físico `.pdf` almacenado en caché.
 
 ---
 
@@ -212,16 +192,21 @@ update: (ctx) => {
 ### 4.1 Autoguardado Inteligente
 La aplicación implementa un sistema de persistencia automática con feedback visual en el panel lateral. Cada modificación en los campos de texto o color activa un **debounce de 500ms**, tras lo cual los datos se sincronizan con el archivo `project.json` de forma segura.
 
-### 4.2 Proceso de Renderizado (Headless) — Arquitectura v5.0
-El proceso de renderizado se ejecuta de forma **headless** usando un bundle pre-compilado:
+### 4.2 Transparency Transformer (v5.4.0)
+El motor de exportación utiliza una serie de técnicas avanzadas para garantizar el canal Alfa:
+1. **Flags de Transparencia**: Uso de `--transparent-background-color=0` en el proceso headless de Chrome.
+2. **Inyección JS Directa**: Uso de `evaluatePage` para forzar `background-color: transparent` en el DOM real segundos antes del renderizado.
+3. **Pixel Format**: Exportación en `yuva444p10le` (10-bit) o `yuva444p` (8-bit) para máxima compatibilidad con DaVinci Resolve.
 
-1. El usuario inicia la exportación desde la interfaz.
-2. El proceso principal recibe la solicitud junto con las propiedades del proyecto.
-3. **[v5.0]** Se usa el bundle pre-compilado en `remotion-bundle/` — sin compilación en runtime.
-4. `getCompositions()` y `renderMedia()` apuntan a `binariesDirectory` en `app.asar.unpacked/`.
+### 4.3 Zero-Bundle Runtime (v5.0)
+El entry point de Remotion se pre-compila durante el build, eliminando la necesidad de empaquetadores en runtime.
+
+### 4.4 Data Probe Hydration (v5.4.0)
+Para evitar la pérdida de datos en plugins complejos (especialmente en Windows con rutas largas), el motor implementa un sistema de **Sonda de Datos**:
+1. El proceso principal levanta un servidor HTTP interno temporal.
+2. Los datos del proyecto (props, html, css, js) se sirven vía un endpoint virtual `/props.json`.
+3. El motor de renderizado realiza un **Fetch Local** para hidratar su estado.
+4. **Fix v5.6.0 (Stability)**: Se ha corregido el ciclo de vida de `delayRender` en el `RenderWrapper.tsx`. Anteriormente, el motor capturaba el frame 0 antes de completar el fetch de datos. Ahora, el renderizado se pausa explícitamente durante la hidratación sincrónica, garantizando que el primer frame exportado contenga la animación correcta y no un fondo transparente.
 5. El renderizador procesa los fotogramas y los codifica en formato **ProRes 4444** con canal Alfa a resolución **1920×1080**.
 6. El archivo `.mov` resultante se guarda en `DVG_Projects/[id]/Exports/`.
 7. El usuario puede arrastrarlo directamente a su editor de video preferido.
-
-### 4.3 Zero-Bundle Runtime (v5.0)
-A partir de v5.0, `@remotion/bundler` ya no se ejecuta en producción. El entry point de Remotion (`src/remotion/index.ts`) se pre-compila durante el build con `node scripts/bundle-remotion.js`, generando `remotion-bundle/` que se incluye en `app.asar.unpacked`. Esto elimina webpack, rspack y esbuild del instalador final.

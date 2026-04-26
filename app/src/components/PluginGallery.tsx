@@ -24,6 +24,7 @@ export const PluginGallery: React.FC = () => {
     const [remotePlugins, setRemotePlugins] = useState<GalleryPlugin[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchRegistry();
@@ -47,18 +48,16 @@ export const PluginGallery: React.FC = () => {
         if (!window.ipcRenderer) return;
         const success = await window.ipcRenderer.installPlugin(p.id, p.files);
         if (success) {
-            alert(`Plugin "${p.name}" instalado correctamente.`);
             initialize(); // Recargar plugins locales
         }
     };
 
-    const handleDelete = async (pluginId: string) => {
+    const handleDeleteConfirm = async (pluginId: string) => {
         if (!window.ipcRenderer) return;
-        if (confirm('¿Estás seguro de que quieres eliminar este plugin?')) {
-            const success = await window.ipcRenderer.deletePlugin(pluginId);
-            if (success) {
-                initialize();
-            }
+        const success = await window.ipcRenderer.deletePlugin(pluginId);
+        if (success) {
+            setConfirmingId(null);
+            initialize();
         }
     };
 
@@ -79,7 +78,7 @@ export const PluginGallery: React.FC = () => {
                     <div>
                         <h2 style={{ margin: 0, color: 'white' }}>Catálogo de Plugins</h2>
                         <p style={{ margin: '5px 0 0', fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
-                            Descubre y descarga nuevos gráficos para tu motor.
+                            Descubre y descarga nuevos plugins.
                         </p>
                     </div>
                     <button className="btn-icon" onClick={toggleGallery} style={{ padding: '10px' }}>
@@ -135,14 +134,25 @@ export const PluginGallery: React.FC = () => {
                                                     ✓ Instalado
                                                 </div>
                                             )}
-                                            <button 
-                                                className="dv-btn secondary" 
-                                                style={{ padding: '8px', minWidth: '40px' }} 
-                                                onClick={() => handleDelete(p.id)}
-                                                title="Borrar plugin local"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                            {confirmingId === p.id ? (
+                                                <div style={{ display: 'flex', gap: '5px', flex: 1 }}>
+                                                    <button className="dv-btn" style={{ flex: 1, padding: '8px', background: '#E44C30', color: 'white', border: 'none' }} onClick={() => handleDeleteConfirm(p.id)}>
+                                                        Sí
+                                                    </button>
+                                                    <button className="dv-btn secondary" style={{ flex: 1, padding: '8px' }} onClick={() => setConfirmingId(null)}>
+                                                        No
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button 
+                                                    className="dv-btn secondary" 
+                                                    style={{ padding: '8px', minWidth: '40px' }} 
+                                                    onClick={() => setConfirmingId(p.id)}
+                                                    title="Borrar plugin local"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
                                         </>
                                     )}
                                 </div>

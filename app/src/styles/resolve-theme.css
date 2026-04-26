@@ -2,36 +2,37 @@
    resolve-theme.css — DV-Remotion Graphics Engine (V2)
    Design tokens inspirados en la estética nativa de DaVinci Resolve.
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-primary:    #141414;
-  --bg-secondary:  #1E1E1E;
-  --bg-surface:    #2A2A2A;
-  --bg-elevated:   #333333;
-  --bg-input:      #1A1A1A;
+  --bg-primary:    #000000; /* OLED Black */
+  --bg-secondary:  #0A0A0A;
+  --bg-surface:    #111111;
+  --bg-elevated:   #1A1A1A;
+  --bg-input:      #050505;
 
-  --text-primary:  #D4D4D4;
-  --text-secondary:#8A8A8A;
-  --text-disabled: #555555;
-  --text-label:    #A0A0A0;
+  --text-primary:  #E2E8F0;
+  --text-secondary:#94A3B8;
+  --text-disabled: #475569;
+  --text-label:    #64748B;
 
-  --accent:        #E44C30;
-  --accent-hover:  #FF5F43;
+  --accent:        #E8503A; /* Rojo-Coral DVGE */
+  --accent-hover:  #ED715F;
 
-  --border:        #3C3C3C;
-  --border-focus:  #5A5A5A;
+  --border:        #1E293B;
+  --border-focus:  #334155;
   
-  --success:       #4CAF50;
+  --success:       #22C55E;
 
-  --radius-sm:     3px;
+  --radius-sm:     2px;
   --radius:        4px;
-  --font:          'Inter', system-ui, sans-serif;
+  --font-body:     'Fira Sans', sans-serif;
+  --font-mono:     'Fira Code', monospace;
 }
 
 body {
   margin: 0;
-  font-family: var(--font);
+  font-family: var(--font-body);
   background: var(--bg-primary);
   color: var(--text-primary);
   overflow: hidden;
@@ -44,9 +45,10 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  padding: 6px 8px;
+  padding: 4px 8px;
   outline: none;
-  font-family: var(--font);
+  font-family: var(--font-mono);
+  font-size: 12px;
   box-sizing: border-box;
 }
 .dv-input:focus { border-color: var(--border-focus); }
@@ -150,4 +152,57 @@ body {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--bg-surface) var(--bg-primary);
+}
+/* ============================================================
+   DVGE v5.6 Component Styles
+   ============================================================ */
+
+.dv-panel {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.dv-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  user-select: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.dv-panel-content {
+  background: var(--bg-primary);
+}
+
+.dv-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dv-field label {
+  font-size: 10px;
+  color: var(--text-label);
+  text-transform: uppercase;
+  font-weight: 600;
+  font-family: var(--font-body);
+}
+
+.dv-badge {
+  padding: 2px 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+.dv-btn.cta {
+  background: var(--accent);
+}
+.dv-btn.cta:hover {
+  background: var(--accent-hover);
 }

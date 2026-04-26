@@ -3,7 +3,7 @@
 export {}
 
 export interface FormField {
-  type: 'string' | 'color' | 'number' | 'image' | 'code' | 'info' | 'select'
+  type: 'string' | 'color' | 'number' | 'image' | 'code' | 'info' | 'select' | 'artifact' | 'prompt'
   id: string
   label: string
   defaultValue: string | number
@@ -61,6 +61,7 @@ export interface DVPlugin {
 declare global {
   interface Window {
     ipcRenderer: {
+      renderProject: any
       send: (channel: string, data?: any) => void;
       on: (channel: string, func: (...args: any[]) => void) => void;
       invoke: (channel: string, ...args: any[]) => Promise<any>;
@@ -74,6 +75,7 @@ declare global {
       deletePlugin: (pluginId: string) => Promise<boolean>;
       logSync: (data: any) => void;
       getDocContent: (docName: string) => Promise<string>;
+      generateRulesPdf: (rulesText: string) => Promise<string>;
       
       // Workspace / Proyectos
       getProjects: () => Promise<any[]>;

@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron/simple'
 import path from 'node:path'
+import packageJson from './package.json'
 
 export default defineConfig({
   plugins: [
@@ -28,4 +29,8 @@ export default defineConfig({
       renderer: {},
     }),
   ],
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
+    'import.meta.env.VITE_BUILD_DATE': JSON.stringify(new Date().toISOString().split('T')[0].replace(/-/g,''))
+  }
 })

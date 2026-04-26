@@ -10,6 +10,9 @@ export const GLOBAL_PLUGIN_CSS = `
     --bg-panel: rgba(0,0,0,0.85);
     --border: rgba(255,255,255,0.1);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    /* [v5.4.0] Optimización de Renderizado: Forzar contexto de apilado para mix-blend-mode */
+    will-change: transform;
+    contain: paint;
 }
 
 .dv-safe-area {
