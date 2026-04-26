@@ -3,8 +3,8 @@
 **Dynamic Vector Graphics Engine (DVGE)** es un software de escritorio de alto rendimiento diseñado para gráficos de transmisión profesionales. Construido con React, Electron y Remotion, permite a los productores y editores crear, personalizar y exportar gráficos dinámicos (lower thirds, títulos, callouts) con retroalimentación en tiempo real y soporte nativo para ProRes 4444 + Alpha.
 
 > [!IMPORTANT]
-> **Open Source Status**: Este proyecto es actualmente **Open Source** bajo la **MIT License**. Estamos en desarrollo activo (Etapa GA).
-> **Nota de Instalación**: Los instaladores actuales no están firmados digitalmente. En Windows, al recibir la alerta de SmartScreen, haz clic en "Más información" y luego en "Ejecutar de todos modos". La adquisición de firmas digitales se gestionará a medida que el proyecto avance hacia un modelo de monetización sostenible.
+> **Estado del Proyecto**: DVGE es actualmente un proyecto **Open Source** impulsado por un único desarrollador independiente bajo la **MIT License**. Estamos en desarrollo activo (Etapa GA).
+> **Compromiso de Seguridad**: Los instaladores actuales no están firmados digitalmente debido a los costes de certificación para desarrolladores independientes. Como proyecto Open Source, priorizamos la transparencia: el código es totalmente auditable. Para instalar sin avisos, simplemente haz clic en "Más información" -> "Ejecutar de todos modos".
 
 ## ✨ Key Features
 

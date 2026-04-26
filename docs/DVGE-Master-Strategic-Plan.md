@@ -280,7 +280,7 @@ Esta política fomenta que los creadores de plugins promocionen DVGE para vender
 
 | Ítem | Descripción | Versión objetivo |
 | ------ | ------------- | ----------------- |
-| Rebranding | Nuevos iconos, logotipo y sistema de identidad visual. Guía de marca completa. | v5.6 |
+| Rebranding | Nuevos iconos, logotipo y sistema de identidad visual. Guía de marca completa. | v5.7 |
 | Multi-ventana | Separación real de Studio, Library y Render. Estado en Main Process. | v5.6 |
 | Auto-Fetch deps | Descarga autónoma de Chromium y FFmpeg en `%APPDATA%` en primer inicio. | v5.6 |
 | Manifest v5.x | Campo `type` obligatorio, validación de `permissions`, rechazo estricto. | v5.7 |

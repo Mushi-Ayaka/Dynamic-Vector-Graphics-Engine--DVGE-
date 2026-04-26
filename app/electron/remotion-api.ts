@@ -3,6 +3,7 @@ import { getCompositions, renderMedia } from '@remotion/renderer'
 import { join } from 'node:path'
 import * as fs from 'node:fs'
 import * as http from 'node:http'
+import { dependencyManager } from './dependency-manager'
 
 /**
  * [CRÍTICO] setupRemotionIPC - Orquestador de Renderizado Nativo.
@@ -55,8 +56,13 @@ export function setupRemotionIPC() {
 
       console.log('[Remotion] isPackaged:', isPackaged, '| binariesDirectory:', binariesDirectory)
 
+      // [CRÍTICO] Forzar directorio .remotion en TEMP para evitar EPERM en Program Files
+      const dotRemotionDir = join(app.getPath('temp'), '.remotion-dvge');
+      if (!fs.existsSync(dotRemotionDir)) fs.mkdirSync(dotRemotionDir, { recursive: true });
+
       const comps = await getCompositions(bundleDir, {
         ...(binariesDirectory ? { binariesDirectory } : {}),
+        dotRemotionDir,
       } as any)
       
       const composition = comps.find((c: any) => c.id === 'lower-third-basic') || 
@@ -89,6 +95,7 @@ export function setupRemotionIPC() {
       log('--------------------------------------------------');
       log(`🚀 INICIANDO RENDER: ${composition.id}`);
       log(`📂 Bundle: ${bundleDir}`);
+      log(`📁 Cache Dir: ${dotRemotionDir}`);
 
       // [v5.3.0] SERVIDOR NATIVO CON LOGS FÍSICOS
       const server = http.createServer((req: any, res: any) => {
@@ -129,9 +136,10 @@ export function setupRemotionIPC() {
           outputLocation,
           inputProps: { ...props, isExporting: true },
           ...(binariesDirectory ? { binariesDirectory } : {}),
+          dotRemotionDir,
           logLevel: 'verbose',
           concurrency: 1,
-          browserExecutable: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+          browserExecutable: await dependencyManager.ensureChromium() || dependencyManager.getSystemChromePath(),
           // [CRÍTICO] Flags para forzar renderizado estable en Windows
           chromiumFlags: [
             '--headless=new',

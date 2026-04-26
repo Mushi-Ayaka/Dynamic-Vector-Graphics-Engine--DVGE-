@@ -16,8 +16,15 @@ import { app, BrowserWindow, ipcMain, shell, IpcMainEvent, Menu } from 'electron
 import { join } from 'node:path'
 import * as fs from 'node:fs'
 
+// [CRÍTICO] Forzar directorio .remotion global para evitar EPERM en Program Files
+process.env.REMOTION_DOT_REMOTION_DIR = join(app.getPath('userData'), '.remotion-cache');
+if (!fs.existsSync(process.env.REMOTION_DOT_REMOTION_DIR)) {
+  fs.mkdirSync(process.env.REMOTION_DOT_REMOTION_DIR, { recursive: true });
+}
+
 import { PluginManager } from './plugin-manager'
 import { ProjectManager } from './project-manager'
+import { dependencyManager } from './dependency-manager'
 
 const pluginManager = new PluginManager()
 const projectManager = new ProjectManager()
@@ -53,15 +60,12 @@ import { setupRemotionIPC } from './remotion-api'
 app.whenReady().then(async () => {
   setupRemotionIPC()
   
-  // Pre-descargar Chrome Headless en background si no existe
-  // Esto evita que el primer render falle por browser no disponible
+  // [v5.6.0] Auto-Fetch Dependencies
   try {
-    const { ensureBrowser } = await import('@remotion/renderer')
-    console.log('[Remotion] Ensuring browser is available...')
-    await ensureBrowser()
-    console.log('[Remotion] Browser ready')
+    await dependencyManager.ensureChromium();
+    console.log('[Main] Dependencies verified and ready.');
   } catch (e) {
-    console.warn('[Remotion] Could not ensure browser:', e)
+    console.error('[Main] Critical dependency failure:', e);
   }
   
   setupMenu()
