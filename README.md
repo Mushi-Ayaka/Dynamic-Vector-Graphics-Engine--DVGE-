@@ -1,15 +1,22 @@
-# 🚀 Dynamic Vector Graphics Engine (DVGE) v4.1.5 GA
-**Dynamic Vector Graphics Engine (DVGE)** is a high-performance desktop application designed for professional broadcast graphics. Built with React, Electron, and Remotion, it allows producers and editors to create, customize, and export dynamic graphics (lower thirds, titles, callouts) with real-time feedback and native ProRes 4444 + Alpha support.
+# Dynamic Vector Graphics Engine (DVGE) v5.6.0 GA
+
+**Dynamic Vector Graphics Engine (DVGE)** es un software de escritorio de alto rendimiento diseñado para gráficos de transmisión profesionales. Construido con React, Electron y Remotion, permite a los productores y editores crear, personalizar y exportar gráficos dinámicos (lower thirds, títulos, callouts) con retroalimentación en tiempo real y soporte nativo para ProRes 4444 + Alpha.
+
+> [!IMPORTANT]
+> **Open Source Status**: Este proyecto es actualmente **Open Source** bajo la **MIT License**. Estamos en desarrollo activo (Etapa GA).
+> **Nota de Instalación**: Los instaladores actuales no están firmados digitalmente. En Windows, al recibir la alerta de SmartScreen, haz clic en "Más información" y luego en "Ejecutar de todos modos". La adquisición de firmas digitales se gestionará a medida que el proyecto avance hacia un modelo de monetización sostenible.
 
 ## ✨ Key Features
 
-- **Smart Engine (v4.1.5)**: Intelligence layer that automatically wraps and fixes structural errors in AI-generated scripts (Auto-Rescue).
-- **Catálogo de Plugins (v4.1)**: Discover, install, and update graphics directly from the official GitHub registry.
-- **Security Sandbox**: Isolated plugin execution via Shadow DOM and `fakeWindow` to prevent system interference.
-- **Atomic Async I/O**: Resilient project persistence using atomic file operations to prevent data corruption.
-- **Live 60FPS Preview**: Real-time rendering with deterministic frame-based animation (`ctx.timeline`).
-- **AI-Ready Workflow**: Comprehensive guides to generate full plugins using LLMs.
-- **Professional Export**: Native ProRes 4444 (.mov) support with transparent background.
+- **Knowledge Bridge (v5.6)**: Inyección nativa de reglas para asistentes de IA. Genera reglas maestras en PDF para alimentar LLMs (Claude/Gemini/GPT) para la generación de plugins 100% compatibles.
+- **Transparency Transformer**: Capa de estabilidad avanzada para exportaciones ProRes 4444, asegurando una captura perfecta del canal Alpha desde el primer fotograma (Solución para el bug del fotograma 0).
+- **Gestión de Proyectos**: Galería integrada para renombrar, eliminar y gestionar tus activos de transmisión directamente desde el menú de inicio.
+- **Integrity Check**: Capa de seguridad automatizada que evita la carga de proyectos con plugins faltantes o eliminados.
+- **Smart Engine**: Capa de inteligencia que envuelve y corrige automáticamente errores estructurales en scripts generados por IA (Auto-Rescue).
+- **Catálogo de Plugins**: Descubre, instala y actualiza gráficos directamente desde el registro oficial de GitHub.
+- **Security Sandbox**: Ejecución de plugins aislada a través de Shadow DOM y `fakeWindow` para prevenir interferencias en el sistema.
+- **Atomic Async I/O**: Persistencia de proyectos resiliente utilizando operaciones de archivos atómicos para prevenir la corrupción de datos.
+- **Live 60FPS Preview**: Renderizado en tiempo real con animación determinística basada en fotogramas (`ctx.timeline`).
 
 ## Technical Stack
 
@@ -25,14 +32,15 @@
 
 - [Node.js](https://nodejs.org/) (Version 18 or higher recommended)
 - [NPM](https://www.npmjs.com/)
+- **Google Chrome** (System-wide installation for headless rendering)
 
 ### Installation
 
 1. Clone the repository:
 
    ```bash
-   git clone [repository-url]
-   cd dv-web-graphics-engine/app
+   git clone https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-.git
+   cd "Dynamic Vector Graphics Engine"/app
    ```
 
 2. Install dependencies:
@@ -54,9 +62,10 @@ To generate the installer (.exe) for Windows:
 ```bash
 npm run build
 ```
-The output will be located in the `release/4.1.0` folder.
 
-## Project Structure
+Los artefactos se generarán en la carpeta `Releases` (configurada en `package.json`).
+
+## Estructura del Proyecto
 
 ```text
 app/
@@ -72,9 +81,9 @@ app/
 
 ## Documentation
 
-- **[Technical Manual](app/TECHNICAL.md)**: Deep dive into the architecture, lifecycle, and IPC bridge.
-- **[AI Plugin Guide](app/AI_PLUGIN_GUIDE.md)**: Step-by-step tutorial on generating production-ready plugins using AI.
-- **[User Manual](app/USER_MANUAL.md)**: Simple guide for editors and producers.
+- **[Technical Manual](app/TECHNICAL.md)**: Análisis profundo de la arquitectura, ciclo de vida y puente IPC.
+- **[AI Plugin Guide](app/AI_PLUGIN_GUIDE.md)**: Tutorial paso a paso para generar plugins listos para producción usando IA.
+- **[User Manual](app/USER_MANUAL.md)**: Guía sencilla para editores y productores.
 
 ## License
 
