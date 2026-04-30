@@ -68,6 +68,7 @@ export const RenderWrapper: React.FC<any> = (passedProps) => {
             })
             .catch(err => {
                 console.error('❌ FATAL: Failed to fetch props from server', err);
+                setIsReady(true); // [v5.8.4] Evitar bloqueo infinito
                 if (fetchHandle !== null) continueRender(fetchHandle);
             });
     }, [passedProps.activePluginFiles, passedProps.files, fetchHandle]);
@@ -85,12 +86,77 @@ export const RenderWrapper: React.FC<any> = (passedProps) => {
         ? passedProps 
         : (passedProps.properties || dynamicProps?.properties || {});
 
-    // [DEBUG LOGS]
-    console.log(`[DEBUG-RenderWrapper] Render Frame: ${frame}, isPreview: ${isPreview}, isReady: ${isReady}`);
-    if (frame === 0) {
-        console.log(`[DEBUG-RenderWrapper] passedProps keys: ${Object.keys(passedProps).join(', ')}`);
-        console.log(`[DEBUG-RenderWrapper] activePluginFiles exists: ${!!activePluginFiles}, html length: ${activePluginFiles?.html?.length}`);
+    // [BUGFIX] Normalizar SOLO activos (imágenes/videos) para Headless Chromium
+    const normalizedProps = { ...actualProps };
+    if (!isPreview) {
+        Object.keys(normalizedProps).forEach(key => {
+            // Ignorar código fuente y metadatos
+            if (['htmlCode', 'cssCode', 'jsCode', 'promptHelper'].includes(key)) return;
+
+            let val = normalizedProps[key];
+            if (typeof val === 'string' && val.length > 0) {
+                let cleanPath = val;
+
+                // 1. Detectar si es una ruta local (file://, media:// o C:\)
+                const isMedia = val.startsWith('media:///');
+                const isFile = val.startsWith('file://');
+                const isAbsPath = val.match(/^[A-Za-z]:[\\/]/);
+
+                if (isMedia || isFile || isAbsPath) {
+                    // Extraer ruta pura
+                    if (isMedia) cleanPath = val.substring(9);
+                    else if (isFile) cleanPath = val.substring(7);
+                    
+                    // Normalizar slashes para Windows
+                    cleanPath = cleanPath.replace(/\\/g, '/');
+                    if (cleanPath.startsWith('/') && cleanPath.match(/^\/[A-Za-z]:/)) {
+                        cleanPath = cleanPath.substring(1);
+                    }
+
+                    const proxyUrl = `http://127.0.0.1:5555/media-proxy?path=${encodeURIComponent(cleanPath)}`;
+                    console.error(`[PROXY-FIX] ${key} -> ${proxyUrl.substring(0, 80)}...`);
+                    normalizedProps[key] = proxyUrl;
+                }
+            }
+        });
     }
+
+    // [DEBUG LOGS]
+    const ENGINE_VERSION = "v5.8.3-PROBE";
+    console.log(`[${ENGINE_VERSION}] Frame: ${frame}, Ready: ${isReady}, Preview: ${isPreview}`);
+    if (frame === 0) {
+        console.log(`[${ENGINE_VERSION}] passedProps keys: ${Object.keys(passedProps).join(', ')}`);
+        console.log(`[${ENGINE_VERSION}] activePluginFiles exists: ${!!activePluginFiles}, html length: ${activePluginFiles?.html?.length}`);
+    }
+
+    // [v5.8.5] DIAGNÓSTICO RUIDOSO
+    useLayoutEffect(() => {
+        const handleError = (e: ErrorEvent) => {
+            if (e.target instanceof HTMLImageElement) {
+                console.error(`[IMAGE-FATAL] Error cargando: ${e.target.src}`);
+            }
+        };
+        window.addEventListener('error', handleError, true);
+
+        const shouldLog = !isPreview && isReady && (frame === 5 || frame === 15);
+        if (shouldLog) {
+            const root = rootRef.current;
+            console.error(`╔════════════ [AUDIT FRAME ${frame}] ════════════╗`);
+            if (root) {
+                const images = root.querySelectorAll('img');
+                console.error(`> Imágenes: ${images.length}`);
+                images.forEach((img, idx) => {
+                    console.error(`  [IMG ${idx}] ID: ${img.id} | Src: ${img.src.substring(0, 60)}...`);
+                });
+            }
+            console.error("> SAMPLE PROPS (First 3):");
+            Object.keys(normalizedProps).slice(0, 3).forEach(k => {
+                console.error(`  ${k}: ${String(normalizedProps[k]).substring(0, 50)}...`);
+            });
+            console.error(`╚════════════════════════════════════════════════╝`);
+        }
+        return () => window.removeEventListener('error', handleError, true);
+    }, [frame, isReady, isPreview, normalizedProps]);
 
     useLayoutEffect(() => {
         if (!rootRef.current || !activePluginFiles || !isReady) {
@@ -114,11 +180,36 @@ export const RenderWrapper: React.FC<any> = (passedProps) => {
         styleEl.textContent = GLOBAL_PLUGIN_CSS.replace(/:host/g, '#dv-render-root') + (activePluginFiles.css || '');
         node.appendChild(styleEl);
 
-        const wrapper = document.createElement('div');
-        wrapper.id = 'plugin-root';
-        wrapper.style.cssText = 'width:100%;height:100%;position:relative;z-index:1;';
-        wrapper.innerHTML = activePluginFiles.html || '';
-        node.appendChild(wrapper);
+        const container = document.createElement('div');
+        container.id = 'plugin-root';
+        container.style.cssText = `width:100%;height:100%;position:relative;z-index:1;background-color:${normalizedProps.bgColor || '#000000'};`;
+        container.innerHTML = activePluginFiles.html || '';
+        node.appendChild(container);
+
+        // [v5.8.8] AGGRESSIVE BACKDROP
+        // Aplicar el fondo también al masterCanvas para que las imágenes mezclen bien
+        const masterCanvas = node.querySelector('#dv-master-canvas') as HTMLElement;
+        if (masterCanvas) {
+            masterCanvas.style.backgroundColor = normalizedProps.bgColor || '#000000';
+            
+            const canvasW = parseInt(masterCanvas.style.width) || 1920;
+            const canvasH = parseInt(masterCanvas.style.height) || 1080;
+            
+            if (canvasW !== width || canvasH !== height) {
+                const scaleX = width / canvasW;
+                const scaleY = height / canvasH;
+                const scale = Math.min(scaleX, scaleY);
+                
+                masterCanvas.style.transformOrigin = 'top left';
+                masterCanvas.style.transform = `scale(${scale})`;
+                
+                const offsetX = (width - (canvasW * scale)) / 2;
+                const offsetY = (height - (canvasH * scale)) / 2;
+                masterCanvas.style.position = 'absolute';
+                masterCanvas.style.left = `${offsetX}px`;
+                masterCanvas.style.top = `${offsetY}px`;
+            }
+        }
 
         console.log(`[DEBUG-RenderWrapper] DOM inyectado. Nodos hijos: ${node.childNodes.length}`);
 
@@ -130,18 +221,23 @@ export const RenderWrapper: React.FC<any> = (passedProps) => {
         contextRef.current = {
             root: rootNode,
             frame,
-            props: actualProps,
+            props: normalizedProps,
             utils: dvUtils,
             timeline: calculateTimeline(frame, fps, durationInFrames),
             state: {},
             refs: {},
-            env: { isExporting: !isPreview, resolution: { width, height } },
+            env: { 
+                isExporting: !isPreview, 
+                resolution: { width, height },
+                aspectRatio: width / height,
+                isPortrait: height > width
+            },
             global: {}
         };
 
         try {
             console.log(`[DEBUG-RenderWrapper] Ejecutando Plugin Sandbox...`);
-            executePluginSandbox(activePluginFiles.js, contextRef.current, (lc) => {
+            executePluginSandbox(activePluginFiles.js, contextRef.current!, (lc) => {
                 console.log(`[DEBUG-RenderWrapper] Sandbox ejecutado, lifecycle recibido.`);
                 lifecycleRef.current = lc;
             });
@@ -162,7 +258,7 @@ export const RenderWrapper: React.FC<any> = (passedProps) => {
 
         try {
             ctx.frame = frame;
-            ctx.props = actualProps;
+            ctx.props = normalizedProps;
             ctx.timeline = calculateTimeline(frame, fps, durationInFrames);
             
             if (!statusRef.current.hasAwoken && lc.awake) {
@@ -183,29 +279,47 @@ export const RenderWrapper: React.FC<any> = (passedProps) => {
         } catch (err) {
             console.error(`[RenderWrapper] ❌ Runtime error at frame ${frame}:`, err);
         }
-    }); 
+    });
 
     if (!activePluginFiles || !isReady) {
         return <div style={{ width: width || 1920, height: height || 1080, background: 'transparent' }} />;
     }
 
     return (
-        <div
-            id="dv-render-root"
-            ref={rootRef}
-            style={{
-                width: width || 1920,
-                height: height || 1080,
-                position: 'relative',
-                overflow: 'hidden',
-                backgroundColor: 'transparent',
-            }}
-        >
+        <>
             <style>{`
-                html, body, #video-container, #__remotion-studio-container {
+                html, body {
+                    background-color: ${normalizedProps.bgColor || '#000000'} !important;
+                    margin: 0;
+                    padding: 0;
+                    overflow: hidden;
+                }
+                #video-container, #__remotion-studio-container {
                     background-color: transparent !important;
                 }
+                .dv-artifact {
+                    will-change: opacity, transform;
+                }
             `}</style>
-        </div>
+            <div
+                id="dv-render-root"
+                ref={rootRef}
+                style={{
+                    width: width || 1920,
+                    height: height || 1080,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    backgroundColor: normalizedProps.bgColor || '#000000',
+                    ...Object.entries(normalizedProps || {}).reduce((acc: any, [key, val]) => {
+                        if (typeof val === 'string' || typeof val === 'number') {
+                            acc[`--${key}`] = val;
+                        }
+                        return acc;
+                    }, {})
+                } as React.CSSProperties}
+            >
+                {/* El contenido se inyecta vía rootRef.current en useLayoutEffect */}
+            </div>
+        </>
     );
 };

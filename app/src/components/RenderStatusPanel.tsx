@@ -9,12 +9,12 @@ interface RenderStatusPanelProps {
     onDragStart: (e: React.DragEvent) => void;
 }
 
-export const RenderStatusPanel: React.FC<RenderStatusPanelProps> = ({ 
-    renderState, 
-    renderProgress, 
-    renderError, 
+export const RenderStatusPanel: React.FC<RenderStatusPanelProps> = ({
+    renderState,
+    renderProgress,
+    renderError,
     onOpenFolder,
-    onDragStart 
+    onDragStart
 }) => {
     if (renderState === 'IDLE') return null;
 
@@ -24,7 +24,7 @@ export const RenderStatusPanel: React.FC<RenderStatusPanelProps> = ({
                 <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(59,130,246,0.05)', borderRadius: '6px', border: '1px solid var(--border)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '15px' }}>
                         <Loader2 className="animate-spin" size={20} color="var(--accent)" />
-                        <h3 style={{ margin: 0, color: 'var(--accent)', fontSize: '14px' }}>Procesando ProRes 4444...</h3>
+                        <h3 style={{ margin: 0, color: 'var(--accent)', fontSize: '14px' }}>Procesando...</h3>
                     </div>
                     <div style={{ width: '100%', height: '6px', background: 'var(--bg-elevated)', borderRadius: '3px', overflow: 'hidden' }}>
                         <div style={{ height: '100%', width: `${renderProgress * 100}%`, background: 'var(--accent)', transition: 'width 0.2s' }} />
@@ -57,8 +57,10 @@ export const RenderStatusPanel: React.FC<RenderStatusPanelProps> = ({
                     <AlertCircle size={20} color="#ef4444" style={{ flexShrink: 0 }} />
                     <div>
                         <strong style={{ color: '#ef4444', fontSize: '13px' }}>Error de Renderizado:</strong>
-                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '4px 0 0', fontFamily: 'var(--font-mono)' }}>
-                            {renderError || 'Fallo desconocido en el proceso de Remotion'}
+                        <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', margin: '8px 0 0', lineHeight: '1.4' }}>
+                            {renderError?.includes('FPS for a GIF cannot be higher than 50')
+                                ? '⚠️ Tu proyecto tiene demasiados FPS para un GIF. Los GIFs solo soportan hasta 50 FPS. Por favor, baja los FPS en el canvas.'
+                                : renderError || 'Fallo desconocido en el proceso de Remotion'}
                         </p>
                     </div>
                 </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { X } from 'lucide-react';
 import { FormField } from '../env';
 
@@ -17,7 +18,7 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({ initialValue, 
         onChange(newValue);
     };
 
-    return (
+    return ReactDOM.createPortal(
         <div style={{
             position: 'fixed',
             top: 0,
@@ -26,7 +27,7 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({ initialValue, 
             bottom: 0,
             background: 'rgba(0,0,0,0.85)',
             backdropFilter: 'blur(4px)',
-            zIndex: 9999,
+            zIndex: 99999,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -51,7 +52,11 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({ initialValue, 
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    background: 'var(--bg-primary)'
+                    background: 'var(--bg-primary)',
+                    flexShrink: 0,
+                    height: '50px',
+                    minHeight: '50px',
+                    boxSizing: 'border-box'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{
@@ -63,16 +68,29 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({ initialValue, 
                     </div>
                     <button
                         onClick={onClose}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--text-disabled)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        style={{ 
+                            background: 'transparent', 
+                            border: 'none', 
+                            color: 'var(--text-primary)', 
+                            cursor: 'pointer', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '8px',
+                            padding: '4px',
+                            opacity: 0.7,
+                            transition: 'opacity 0.2s'
+                        }}
                         title="Cerrar y volver al inspector"
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
                     >
-                        <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-primary)', textTransform: 'uppercase' }}>ESC para cerrar</span>
-                        <X size={18} />
+                        <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', opacity: 0.8 }}>ESC para cerrar</span>
+                        <X size={16} />
                     </button>
                 </div>
 
                 {/* Editor Area */}
-                <div style={{ flex: 1, position: 'relative', background: '#000' }}>
+                <div style={{ flex: 1, minHeight: 0, position: 'relative', background: '#000' }}>
                     <textarea
                         autoFocus
                         style={{
@@ -82,6 +100,8 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({ initialValue, 
                             color: '#e0e0e0',
                             border: 'none',
                             padding: '20px',
+                            overflow: 'auto',
+                            boxSizing: 'border-box',
                             fontFamily: 'var(--font-mono)',
                             fontSize: '13px',
                             lineHeight: '1.6',
@@ -111,6 +131,7 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({ initialValue, 
                     />
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

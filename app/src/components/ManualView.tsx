@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Components } from 'react-markdown'
 import './ManualView.css'
+import { TitleBar } from './TitleBar'
 
 // Componente de bloque de código con botón de copiar
 const CodeBlock: React.FC<{ children?: React.ReactNode; className?: string }> = ({ children, className }) => {
@@ -92,7 +93,6 @@ const CodeBlock: React.FC<{ children?: React.ReactNode; className?: string }> = 
 const DOCS = [
     { id: 'USER_MANUAL.md', label: 'Manual de Usuario' },
     { id: 'TECHNICAL.md', label: 'Documentación Técnica' },
-    { id: 'AI_PLUGIN_GUIDE.md', label: 'Guía de Plugins' },
     { id: 'PLUGIN_POLICY.md', label: 'Política de Plugins' },
     { id: 'LEGAL.md', label: 'Aviso Legal' },
 ]
@@ -134,37 +134,41 @@ export const ManualView: React.FC = () => {
     }, [activeDoc])
 
     return (
-        <div style={{ display: 'flex', height: '100vh', width: '100vw', background: '#0a0a0a', color: 'white', fontFamily: 'Inter, sans-serif' }}>
-            {/* Sidebar de navegación */}
-            <div style={{ width: '240px', background: '#111', borderRight: '1px solid #222', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0 }}>
-                {DOCS.map(doc => (
-                    <button
-                        key={doc.id}
-                        onClick={() => setActiveDoc(doc.id)}
-                        style={{
-                            background: activeDoc === doc.id ? '#1e1e1e' : 'transparent',
-                            color: activeDoc === doc.id ? '#E44C30' : '#aaa',
-                            border: activeDoc === doc.id ? '1px solid #333' : '1px solid transparent',
-                            padding: '10px 14px',
-                            textAlign: 'left',
-                            cursor: 'pointer',
-                            borderRadius: '6px',
-                            fontSize: '13px',
-                            fontWeight: activeDoc === doc.id ? '600' : '400',
-                            transition: 'all 0.2s',
-                        }}
-                    >
-                        {doc.label}
-                    </button>
-                ))}
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: '#0a0a0a', color: 'white', fontFamily: 'Inter, sans-serif', paddingTop: '32px', boxSizing: 'border-box' }}>
+            <TitleBar />
 
-            {/* Área de contenido */}
-            <div className="manual-container" style={{ flex: 1, overflowY: 'auto' }}>
-                <div className="manual-content">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-                        {content}
-                    </ReactMarkdown>
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                {/* Sidebar de navegación */}
+                <div style={{ width: '240px', background: '#111', borderRight: '1px solid #222', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0 }}>
+                    {DOCS.map(doc => (
+                        <button
+                            key={doc.id}
+                            onClick={() => setActiveDoc(doc.id)}
+                            style={{
+                                background: activeDoc === doc.id ? '#1e1e1e' : 'transparent',
+                                color: activeDoc === doc.id ? '#E44C30' : '#aaa',
+                                border: activeDoc === doc.id ? '1px solid #333' : '1px solid transparent',
+                                padding: '10px 14px',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                borderRadius: '6px',
+                                fontSize: '13px',
+                                fontWeight: activeDoc === doc.id ? '600' : '400',
+                                transition: 'all 0.2s',
+                            }}
+                        >
+                            {doc.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Área de contenido */}
+                <div className="manual-container" style={{ flex: 1, overflowY: 'auto' }}>
+                    <div className="manual-content">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                            {content}
+                        </ReactMarkdown>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,152 +1,329 @@
+/* ─── HomeMenu v5.7 — DVGE Design System "Obsidian & Ember" ────────────────── */
+
 .home-menu-container {
   position: fixed;
   inset: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
+  background: radial-gradient(circle at center, #1a1a1a 0%, #050505 100%);
   color: white;
   z-index: 1000;
-  padding: 2rem;
-  overflow-y: auto;
+  overflow: hidden;
+  padding-top: 48px; /* Bajado para no solapar y dar aire */
 }
 
-.home-hero {
-  text-align: center;
-  margin-bottom: 3rem;
-  animation: fadeInDown 0.8s ease-out;
+/* ─── Toolbar ──────────────────────────────────────────────────────────────── */
+
+.home-toolbar {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-}
-
-.hero-logo {
-  width: 120px;
-  height: auto;
-  filter: drop-shadow(0 0 15px rgba(228, 76, 48, 0.3));
-}
-
-.home-hero h1 {
-  font-size: 3.5rem;
-  font-weight: 800;
-  margin: 0;
-  background: linear-gradient(135deg, #fff 0%, #888 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -1px;
-}
-
-.home-hero p {
-  font-size: 1.1rem;
-  color: #888;
-  margin-top: 1rem;
-}
-
-.workspace-layout {
-  display: flex;
-  width: 100%;
-  max-width: 800px;
-  animation: fadeInUp 1s ease-out 0.2s both;
-}
-
-.projects-panel {
-  width: 100%;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 2rem;
-  backdrop-filter: blur(10px);
-}
-
-.panel-header {
-  display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  padding-bottom: 15px;
+  gap: 12px;
+  padding: 16px 24px 12px;
+  border-bottom: 1px solid var(--border, #1E293B);
+  flex-shrink: 0;
+  animation: fadeIn 0.4s ease-out;
 }
 
-.panel-header h2 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 600;
+.home-search {
+  position: relative;
+  flex: 1;
+  max-width: 420px;
 }
+
+.home-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-disabled, #475569);
+  pointer-events: none;
+}
+
+.home-search-input {
+  width: 100%;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border, #1E293B);
+  border-radius: 6px;
+  color: var(--text-primary, #E2E8F0);
+  font-family: var(--font-body, 'Fira Sans', sans-serif);
+  font-size: 13px;
+  padding: 0 12px 0 32px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  box-sizing: border-box;
+}
+
+.home-search-input::placeholder {
+  color: var(--text-disabled, #475569);
+}
+
+.home-search-input:focus {
+  border-color: var(--accent, #E44C30);
+  background: rgba(228, 76, 48, 0.04);
+}
+
+.home-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-view-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border, #1E293B);
+  border-radius: 5px;
+  color: var(--text-disabled, #475569);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.home-view-btn:hover,
+.home-view-btn[aria-pressed="true"] {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary, #E2E8F0);
+}
+
+/* ─── Create Project Form ──────────────────────────────────────────────────── */
 
 .create-project-card {
-  background: rgba(0, 0, 0, 0.4);
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  border: 1px solid #E44C30;
+  background: rgba(228, 76, 48, 0.04);
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(228, 76, 48, 0.15);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex-shrink: 0;
+  animation: slideDown 0.2s ease-out;
 }
 
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Projects List (modo lista) ───────────────────────────────────────────── */
+
 .projects-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
+}
+
+/* ─── Projects Grid (modo cuadrícula) ──────────────────────────────────────── */
+
+.projects-list.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  align-content: start;
+  padding: 24px;
 }
 
 .project-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 15px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 8px;
+  gap: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0;
   cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.2s;
+  transition: background 0.18s, border-color 0.18s;
+  overflow: hidden;
+}
+
+/* En modo cuadrícula recupera el aspecto de tarjeta pero con puntas rectas */
+.projects-grid .project-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border, #1E293B);
+  border-radius: 0;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .project-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.projects-grid .project-item:hover {
+  background: rgba(228, 76, 48, 0.05);
+  border-color: rgba(228, 76, 48, 0.35);
+  transform: translateY(-2px);
+}
+
+/* ─── Thumbnail Logic ─────────────────────────────────────────────────────── */
+.project-thumb-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: none; /* Oculto por defecto en modo lista */
+}
+
+.projects-grid .project-thumb-container {
+  display: block; /* Visible en modo cuadrícula */
+}
+
+.project-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.project-item:hover .project-thumb-img {
+  transform: scale(1.05);
+}
+
+.project-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.project-item:hover .project-thumb-overlay {
+  opacity: 1;
+}
+
+.project-thumb-play {
+  width: 48px;
+  height: 48px;
+  background: var(--accent, #E44C30);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(0.8);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.project-item:hover .project-thumb-play {
+  transform: scale(1);
 }
 
 .project-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 3px;
+  padding: 12px 14px;
+  min-width: 0;
+}
+
+.project-info strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #E2E8F0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .project-meta {
-  font-size: 0.8rem;
-  color: #888;
+  font-size: 11px;
+  color: var(--text-disabled, #475569);
+  font-family: var(--font-mono, 'Fira Code', monospace);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+.project-missing-badge {
+  font-size: 9px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+/* ─── Project Actions (visibles en hover) ──────────────────────────────────── */
+
+.project-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 10px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.project-item:hover .project-actions {
+  opacity: 1;
+}
+
+/* ─── Empty State ──────────────────────────────────────────────────────────── */
 
 .empty-state {
   text-align: center;
-  color: #888;
-  padding: 20px;
+  color: var(--text-disabled, #475569);
+  padding: 48px 20px;
+  font-size: 13px;
+  font-family: var(--font-mono, 'Fira Code', monospace);
 }
 
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+/* ─── Footer ───────────────────────────────────────────────────────────────── */
 
 .home-footer {
-  margin-top: 5rem;
-  color: #444;
-  font-size: 0.85rem;
-  display: flex;
-  gap: 2rem;
-}
-
-.home-footer span {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-top: 1px solid var(--border, #1E293B);
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.home-footer-meta {
+  font-size: 11px;
+  color: var(--text-disabled, #475569);
+  font-family: var(--font-mono, 'Fira Code', monospace);
+}
+
+/* ─── Scrollbar ────────────────────────────────────────────────────────────── */
+
+.projects-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.projects-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.projects-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+
+.projects-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(228, 76, 48, 0.3);
+}
+
+/* ─── Animations ───────────────────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }

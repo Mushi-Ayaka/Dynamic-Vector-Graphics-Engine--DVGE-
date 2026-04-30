@@ -24,8 +24,9 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
     const { fps, width, height, durationInFrames } = useVideoConfig();
 
     const store = useStore();
-    const activePluginFiles = passedProps.activePluginFiles || store.activePluginFiles;
-    const properties = passedProps.presets ? passedProps : store.properties;
+    // [BUGFIX] Durante el renderizado headless, el store está vacío. Debemos priorizar passedProps.
+    const activePluginFiles = passedProps.files || passedProps.activePluginFiles || store.activePluginFiles;
+    const properties = passedProps.properties || (passedProps.presets ? passedProps : store.properties);
 
     const [shadow, setShadow] = useState<ShadowRoot | null>(null);
     const lifecycleRef = useRef<DVLifecycle | null>(null);
@@ -102,6 +103,8 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
             env: {
                 isExporting: false,
                 resolution: { width, height },
+                aspectRatio: width / height,
+                isPortrait: height > width,
                 safeArea: store.globalConfig.safeArea
             },
             global: store.globalConfig
@@ -142,13 +145,35 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
         }
     }); // Sin dependencias para que corra en cada tick de frame del Player
 
+    /**
+     * [AUDITORÍA DE ESTABILIZACIÓN v6.7.2 - SISTEMA DE ESCALADO UNIVERSAL]
+     * 
+     * MOTIVO: Los plugins asumen un espacio de 1920x1080. Cualquier resolución con ancho < 1920 
+     * (Portrait, Square, Standard 4:3) provoca recortes laterales ("cutoff").
+     * 
+     * SOLUCIÓN UNIVERSAL: 
+     * 1. Calculamos el factor de escala necesario para que un canvas de 1920x1080 quepa (Contain) 
+     *    en la resolución de salida actual.
+     * 2. Solo escalamos hacia abajo (scale < 1) para preservar la nitidez nativa en resoluciones mayores.
+     * 3. El contenedor padre (flex) garantiza el centrado absoluto en X e Y.
+     */
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+    const scaleX = width / baseWidth;
+    const scaleY = height / baseHeight;
+    const scale = Math.min(scaleX, scaleY, 1); 
+
     return (
         <div style={{ 
             width, 
             height, 
             position: 'relative',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',       // Centrado Vertical Universal
+            justifyContent: 'center',    // Centrado Horizontal Universal
+            background: 'transparent',  // [BUGFIX] Remotion necesita transparent para exportar Alpha
             ...(passedProps._isPreview ? {
-                background: '#111',
                 backgroundImage: `
                     linear-gradient(45deg, #1a1a1a 25%, transparent 25%), 
                     linear-gradient(-45deg, #1a1a1a 25%, transparent 25%), 
@@ -163,12 +188,27 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
                 id="plugin-host-root"
                 ref={containerCallback}
                 style={{
-                    width: '100%',
-                    height: '100%',
+                    width: baseWidth,           // Siempre base para permitir centrado en Cinematic
+                    height: baseHeight,         // Siempre base para permitir centrado en Portrait
                     position: 'relative',
                     background: 'transparent',
-                    overflow: 'hidden'
-                }}
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transform: `scale(${scale})`, // El scale maneja el encaje
+                    transformOrigin: 'center center',
+                    flexShrink: 0,
+                    // Variables de entorno para compatibilidad con el Protocolo Responsivo
+                    // @ts-ignore
+                    '--dv-w': `${width}px`,
+                    '--dv-h': `${height}px`,
+                    '--dv-vw': `${width / 100}px`,
+                    '--dv-vh': `${height / 100}px`,
+                    // [BUGFIX] Inyectar TODAS las propiedades como variables CSS para que el AI use var(--nombre)
+                    ...Object.entries(properties || {}).reduce((acc: any, [key, val]) => {
+                        acc[`--${key}`] = val;
+                        return acc;
+                    }, {})
+                } as any}
             />
             {/* Overlay visual para enmarcar el área exacta del video en el preview */}
             {passedProps._isPreview && (

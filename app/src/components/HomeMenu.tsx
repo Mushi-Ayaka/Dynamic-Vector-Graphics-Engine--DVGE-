@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
-import { FolderOpen, Plus, ShoppingBag, Settings, Trash2, Edit3, X } from 'lucide-react';
+import { FolderOpen, Plus, ShoppingBag, Settings, Trash2, Edit3, X, Search, LayoutGrid, List } from 'lucide-react';
 import './HomeMenu.css';
 import { PluginGallery } from './PluginGallery';
-import { APP_VERSION, BUILD_DATE } from '../version';
+import { APP_VERSION } from '../version';
 
 const ProjectSettingsModal: React.FC<{
     project: any,
@@ -139,8 +139,9 @@ export const HomeMenu: React.FC = () => {
     const newProjectPluginId = useStore(state => state.newProjectPluginId);
     const setNewProjectPluginId = useStore(state => state.setNewProjectPluginId);
     const [projects, setProjects] = useState<any[]>([]);
-    const [isAboutOpen, setIsAboutOpen] = useState(false);
     const [settingsProject, setSettingsProject] = useState<any | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
     useEffect(() => {
         fetchProjects();
@@ -202,54 +203,84 @@ export const HomeMenu: React.FC = () => {
 
     return (
         <div className="home-menu-container">
-            <div className="home-hero">
-                <img src="icon.png" alt="DVGE Logo" className="hero-logo" />
-                <h1>Dynamic Vector Graphics Engine</h1>
-                <p>Proyectos de Animación Broadcast</p>
+
+            {/* Toolbar: Búsqueda + Acciones */}
+            <div className="home-toolbar">
+                <div className="home-search">
+                    <Search size={14} className="home-search-icon" />
+                    <input
+                        className="home-search-input"
+                        type="text"
+                        placeholder="Buscar proyecto..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        autoComplete="off"
+                    />
+                </div>
+
+                <div className="home-toolbar-actions">
+                    <button
+                        className="home-view-btn"
+                        onClick={() => setViewMode('list')}
+                        title="Vista lista"
+                        aria-pressed={viewMode === 'list'}
+                    >
+                        <List size={15} />
+                    </button>
+                    <button
+                        className="home-view-btn"
+                        onClick={() => setViewMode('grid')}
+                        title="Vista cuadrícula"
+                        aria-pressed={viewMode === 'grid'}
+                    >
+                        <LayoutGrid size={15} />
+                    </button>
+                    <button
+                        className="dv-btn"
+                        onClick={() => setIsCreatingProject(!isCreatingProject)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                        <Plus size={14} /> Nuevo Proyecto
+                    </button>
+                </div>
             </div>
 
-            <div className="workspace-layout">
-                {/* Left Column: Recent Projects */}
-                <div className="projects-panel">
-                    <div className="panel-header">
-                        <h2>Proyectos y Borradores</h2>
-                        <button className="dv-btn-small" onClick={() => setIsCreatingProject(!isCreatingProject)}>
-                            <Plus size={14} /> Nuevo Proyecto
-                        </button>
+            {/* Form de creación */}
+            {isCreatingProject && (
+                <form className="create-project-card" onSubmit={handleCreateProject}>
+                    <input
+                        className="dv-input"
+                        placeholder="Nombre del proyecto..."
+                        value={newProjectName}
+                        onChange={e => setNewProjectName(e.target.value)}
+                        autoFocus
+                        required
+                    />
+                    <select
+                        className="dv-input"
+                        value={newProjectPluginId}
+                        onChange={e => setNewProjectPluginId(e.target.value)}
+                        required
+                    >
+                        <option value="" disabled>Selecciona un plugin base...</option>
+                        {plugins.map(p => (
+                            <option key={p.manifest.id} value={p.manifest.id}>
+                                {p.manifest.name}
+                            </option>
+                        ))}
+                    </select>
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                        <button type="submit" className="dv-btn">Crear y Abrir</button>
+                        <button type="button" className="dv-btn secondary" onClick={() => setIsCreatingProject(false)}>Cancelar</button>
                     </div>
+                </form>
+            )}
 
-                    {isCreatingProject && (
-                        <form className="create-project-card" onSubmit={handleCreateProject}>
-                            <input
-                                className="dv-input"
-                                placeholder="Nombre del proyecto..."
-                                value={newProjectName}
-                                onChange={e => setNewProjectName(e.target.value)}
-                                autoFocus
-                                required
-                            />
-                            <select
-                                className="dv-input"
-                                value={newProjectPluginId}
-                                onChange={e => setNewProjectPluginId(e.target.value)}
-                                required
-                            >
-                                <option value="" disabled>Selecciona un plugin base...</option>
-                                {plugins.map(p => (
-                                    <option key={p.manifest.id} value={p.manifest.id}>
-                                        {p.manifest.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                                <button type="submit" className="dv-btn">Crear y Abrir</button>
-                                <button type="button" className="dv-btn secondary" onClick={() => setIsCreatingProject(false)}>Cancelar</button>
-                            </div>
-                        </form>
-                    )}
-
-                    <div className="projects-list">
-                        {projects.map(proj => (
+            {/* Proyecto list / grid */}
+            <div className={`projects-list ${viewMode === 'grid' ? 'projects-grid' : ''}`}>
+                {projects
+                    .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map(proj => (
                             <div key={proj.id} className="project-item" onClick={() => handleProjectClick(proj)}>
                                 <div className="project-info">
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -270,11 +301,11 @@ export const HomeMenu: React.FC = () => {
                                 </div>
                             </div>
                         ))}
-                        {projects.length === 0 && !isCreatingProject && (
-                            <div className="empty-state">No hay proyectos recientes. Crea uno nuevo para comenzar.</div>
-                        )}
+                {projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && !isCreatingProject && (
+                    <div className="empty-state">
+                        {searchQuery ? `Sin resultados para "${searchQuery}"` : 'No hay proyectos. Crea uno nuevo para comenzar.'}
                     </div>
-                </div>
+                )}
             </div>
 
             {settingsProject && (
@@ -285,78 +316,20 @@ export const HomeMenu: React.FC = () => {
                 />
             )}
 
-            <div className="home-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <span> v{APP_VERSION} </span>
-                    <span>•</span>
-                    <span>Jonatan Barón</span>
-                </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                        className="dv-btn-small"
-                        style={{ background: 'rgba(232,80,58,0.15)', color: 'var(--accent)', border: '1px solid rgba(232,80,58,0.3)' }}
-                        onClick={toggleGallery}
-                    >
-                        <ShoppingBag size={14} style={{ marginRight: '5px' }} /> Catálogo de Plugins
-                    </button>
-                    <button
-                        className="dv-btn-small secondary"
-                        onClick={() => setIsAboutOpen(true)}
-                    >
-                        <svg width="14" height="14" style={{ marginRight: '4px', marginBottom: '-2px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg> Acerca de DVGE
-                    </button>
-                </div>
+            <div className="home-footer">
+                <button
+                    className="dv-btn-small"
+                    style={{ background: 'rgba(228,76,48,0.12)', color: 'var(--accent)', border: '1px solid rgba(228,76,48,0.25)' }}
+                    onClick={toggleGallery}
+                >
+                    <ShoppingBag size={13} style={{ marginRight: '5px' }} /> Catálogo de Plugins
+                </button>
+                <span className="home-footer-meta">v{APP_VERSION}</span>
             </div>
 
             {isGalleryOpen && <PluginGallery />}
 
-            {/* Modal "Acerca de" */}
-            {isAboutOpen && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center', zIndex: 9999
-                }}>
-                    <div style={{
-                        background: 'var(--bg-elevated)', padding: '30px',
-                        borderRadius: '8px', maxWidth: '500px', width: '100%',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        display: 'flex', flexDirection: 'column', gap: '15px'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '15px' }}>
-                            <img src="icon.png" alt="DVGE" style={{ width: '48px', height: '48px' }} />
-                            <div>
-                                <h2 style={{ margin: 0, fontSize: '18px', color: 'white' }}>Dynamic Vector Graphics Engine</h2>
-                                <span style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: 'bold' }}>[DVGE]-[v{APP_VERSION}]-[Build {BUILD_DATE}]</span>
-                            </div>
-                        </div>
-
-                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                            <p>Motor de generación de gráficos broadcast dinámicos, impulsado por arquitecturas <strong>Standalone Client-Host</strong> y tecnología de inyección <strong>Shadow DOM</strong>.</p>
-
-                            <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(0,0,0,0.2)', borderRadius: '6px' }}>
-                                <strong style={{ color: 'white' }}>Desarrollador:</strong> Jonatan Barón<br />
-                                <strong style={{ color: 'white' }}>Arquitectura:</strong> Standalone Client-Host (Sandbox Aislado)<br />
-                                <strong style={{ color: 'white' }}>Motor:</strong> Remotion v4 + Electron<br />
-                            </div>
-
-                            <div style={{ marginTop: '15px', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                                <a href="https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-" target="_blank" rel="noopener" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', paddingTop: '5px' }}>GitHub</a>
-                                <a href="https://portafolio-jonatan-baron.vercel.app/" target="_blank" rel="noopener" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', paddingTop: '5px' }}>Portafolio</a>
-                                <a href="https://mail.google.com/mail/?view=cm&fs=1&to=barojonatan8@gmail.com" target="_blank" rel="noopener" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', paddingTop: '5px' }}>Contacto</a>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-                            <button className="dv-btn" onClick={() => setIsAboutOpen(false)}>Cerrar</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Modal "Acerca de" se maneja globalmente en App.tsx */}
         </div>
     );
 };

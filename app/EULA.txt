@@ -1,28 +1,37 @@
-ACUERDO DE LICENCIA DE USUARIO FINAL (EULA) - DVGE v4.1.5
+ACUERDO DE LICENCIA DE USUARIO (EULA) - DVGE v5.8.0
 
-Por favor, lea atentamente este Acuerdo de Licencia antes de instalar y utilizar el software Dynamic Vector Graphics Engine (DVGE). Al proceder con la instalación, usted acepta quedar vinculado por los términos de este acuerdo.
+Por favor, lea atentamente este Acuerdo de Licencia antes de instalar y utilizar el software Dynamic Vector Graphics Engine (DVGE). Al proceder con la instalacion, usted acepta quedar vinculado por los terminos de este acuerdo.
 
-1. LICENCIA DE SOFTWARE
------------------------
-El núcleo de Dynamic Vector Graphics Engine (DVGE) se distribuye bajo la Licencia MIT. Se concede permiso, de forma gratuita, a cualquier persona que obtenga una copia de este software y de los archivos de documentación asociados para utilizar, copiar, modificar, fusionar, publicar, distribuir, sublicenciar y/o vender copias del Software, sujeto a las condiciones de la Licencia MIT original adjunta en la documentación del código.
+1. LICENCIA DE SOFTWARE Y PROPIEDAD INTELECTUAL
+---------------------------------------------
+El codigo fuente original de Dynamic Vector Graphics Engine (DVGE), incluyendo su interfaz, logica de gestión de plugins y wrappers de integración, se distribuye bajo la Licencia MIT. Jonatan Baron mantiene la propiedad intelectual sobre estas implementaciones originales.
 
-2. EXENCIÓN DE GARANTÍAS ("AS IS")
+2. COMPONENTES DE TERCEROS (REMOTION)
+-------------------------------------
+DVGE utiliza Remotion (https://www.remotion.dev) como motor de renderizado base. Remotion NO es software de dominio publico ni MIT; esta sujeto a su propia licencia ("Remotion License"). 
+
+Al utilizar DVGE, usted acepta que:
+a) El uso de los componentes de Remotion integrados en este software esta sujeto a los terminos de Remotion.
+b) Si usted es una empresa con mas de 3 empleados, o utiliza este software para fines comerciales que excedan los limites de la version gratuita de Remotion, es SU responsabilidad obtener la licencia comercial correspondiente directamente de Remotion.
+c) Jonatan Baron no otorga, ni pretende otorgar, ninguna sublicencia sobre el nucleo de Remotion que contravenga sus terminos originales.
+
+3. EXENCION DE GARANTIAS ("AS IS")
 ----------------------------------
-EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O IMPLÍCITA, INCLUYENDO PERO NO LIMITADO A LAS GARANTÍAS DE COMERCIABILIDAD, IDONEIDAD PARA UN PROPÓSITO PARTICULAR Y NO INFRACCIÓN. 
+EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTIA DE NINGUN TIPO, EXPRESA O IMPLICITA, INCLUYENDO PERO NO LIMITADO A LAS GARANTIAS DE COMERCIABILIDAD, IDONEIDAD PARA UN PROPOSITO PARTICULAR Y NO INFRACCION. 
 
-Como desarrollador independiente, Jonatan Barón no garantiza que el software funcione sin interrupciones o esté libre de errores, especialmente en entornos de producción crítica o transmisiones en vivo.
+Como desarrollador independiente, Jonatan Baron no garantiza que el software funcione sin interrupciones o este libre de errores, especialmente en entornos de produccion critica o transmisiones en vivo.
 
-3. LIMITACIÓN DE RESPONSABILIDAD
+4. LIMITACION DE RESPONSABILIDAD
 --------------------------------
-EN NINGÚN CASO EL AUTOR (JONATAN BARÓN) SERÁ RESPONSABLE POR CUALQUIER RECLAMACIÓN, DAÑO U OTRA RESPONSABILIDAD, YA SEA EN UNA ACCIÓN DE CONTRATO, AGRAVIO O DE OTRO TIPO, QUE SURJA DE, FUERA DE O EN CONEXIÓN CON EL SOFTWARE O EL USO U OTROS TRATOS EN EL SOFTWARE. EL USUARIO ASUME TODA LA RESPONSABILIDAD POR LOS RIESGOS DERIVADOS DEL USO DE DVGE EN FLUJOS DE TRABAJO PROFESIONALES.
+EN NINGUN CASO EL AUTOR (JONATAN BARON) SERA RESPONSABLE POR CUALQUIER RECLAMACION, DAÑO U OTRA RESPONSABILIDAD, YA SEA EN UNA ACCION DE CONTRATO, AGRAVIO O DE OTRO TIPO, QUE SURJA DE, FUERA DE O EN CONEXION CON EL SOFTWARE O EL USO U OTROS TRATOS EN EL SOFTWARE. EL USUARIO ASUME TODA LA RESPONSABILIDAD POR LOS RIESGOS DERIVADOS DEL USO DE DVGE EN FLUJOS DE TRABAJO PROFESIONALES.
 
-4. PRIVACIDAD Y DATOS
+5. PRIVACIDAD Y DATOS
 ---------------------
-DVGE es una aplicación local. No recopilamos, almacenamos ni transmitimos datos personales a servidores externos sin su consentimiento explícito. Las configuraciones y proyectos se almacenan localmente en su dispositivo.
+DVGE es una aplicacion local. No recopilamos, almacenamos ni transmitimos datos personales a servidores externos sin su consentimiento explicito. Las configuraciones y proyectos se almacenan localmente en su dispositivo.
 
-5. CONTACTO
+6. CONTACTO
 -----------
-Para consultas legales, notificaciones de infracción o dudas sobre licencias, por favor contactar a: barojonatan8@gmail.com
+Para consultas legales, notificaciones de infraccion o dudas sobre licencias, por favor contactar a: barojonatan8@gmail.com
 
 -------------------------------------------------------------------------
 Copyright (c) 2026 Jonatan Baron

@@ -1,84 +1,63 @@
-# Manual de Usuario: Dynamic Vector Graphics Engine v5.6.0 GA
+# Manual de Usuario: DVGE v5.8
 
 ## Bienvenida
 
-Dynamic Vector Graphics Engine (DVGE) es una herramienta de producción audiovisual diseñada para que editores, productores y realizadores puedan crear, personalizar y exportar gráficos de video de forma rápida y sin conocimientos técnicos avanzados.
-
-A partir de la versión **v5.6.0**, el motor introduce mejoras críticas de estabilidad en el renderizado y un sistema de gestión de proyectos simplificado desde la pantalla principal.
+Dynamic Vector Graphics Engine (DVGE) es un motor de producción broadcast. Esta versión **v5.8** consolida la estabilidad del sistema y simplifica la creación de gráficos profesionales mediante un flujo de trabajo optimizado.
 
 ---
 
-## 1. Flujo de Trabajo
+## 1. El Catálogo de Plugins
 
-```
-Explorar Catálogo → Crear Proyecto → Exportar y Usar
-```
+Amplía tu biblioteca de gráficos instantáneamente:
 
----
-
-## 2. Catálogo de Plugins
-
-Amplía tu librería gráfica con un clic:
-
-1. En la pantalla de inicio, haz clic en **Catálogo de Plugins**.
-2. Explora la galería de gráficos disponibles en el repositorio oficial.
-3. Haz clic en **Instalar** en el gráfico que quieras.
-4. Una vez instalado, aparecerá en tu lista de plantillas al crear un nuevo proyecto.
-
-> **Actualizaciones**: Si un plugin instalado recibe una mejora, el Catálogo mostrará un botón de **Actualizar**.
+1. En la pantalla de inicio, accede al **Catálogo de Plugins**.
+2. Explora los diseños profesionales disponibles.
+3. Haz clic en **Instalar**. El plugin aparecerá en tu lista de plantillas al crear un nuevo proyecto.
 
 ---
 
-## 3. Pantalla de Inicio y Proyectos
+## 2. Gestión de Proyectos
 
-### 3.1 Proyectos Recientes
-Tus proyectos se guardan en **Documentos/DVG_Projects**. Haz clic en cualquier tarjeta para retomar tu trabajo.
+DVGE organiza tu trabajo de forma segura y eficiente:
 
-### 3.2 Gestión de Proyectos (v5.6+)
-Ahora puedes gestionar tus proyectos directamente desde la galería:
-- **Renombrar**: Haz clic en el icono del **engranaje** de un proyecto para cambiar su nombre.
-- **Eliminar**: Desde el mismo menú de ajustes, puedes eliminar proyectos que ya no necesites.
-- **Abrir Carpeta**: El icono de la **carpeta** abre directamente la ubicación del proyecto en el Explorador de Archivos.
-
-### 3.3 Control de Integridad
-Si un proyecto depende de un plugin que ha sido eliminado o movido, aparecerá un aviso de **MISSING PLUGIN**. El motor impedirá la apertura del proyecto para evitar errores, indicándote exactamente qué plugin necesitas reinstalar.
-
-### 3.4 Crear un Nuevo Proyecto
-1. Escribe el nombre del proyecto.
-2. Selecciona la plantilla gráfica.
-3. Haz clic en **"Crear y Abrir"**.
+- **Creación**: Elige un nombre y una plantilla (Plugin) para comenzar.
+- **Configuración**: Permite renombrar o eliminar proyectos de forma segura desde la galería.
+- **Integridad**: El sistema detecta automáticamente si falta un plugin (`MISSING PLUGIN`) para evitar errores de carga.
 
 ---
 
-## 4. Editor y Previsualización
+## 3. El Studio (Interfaz de Trabajo)
 
-### 4.1 Panel de Propiedades
-Modifica textos, colores e imágenes. Los cambios se reflejan en tiempo real.
+### 3.1 Panel de Control (Izquierda)
 
-- **Branding**: Si la plantilla lo soporta, verás una sección de "Branding" para subir tu logo y elegir su posición.
-- **Alineación**: Controla la posición global del gráfico sin tocar código.
+Define la identidad de tu gráfico. Aquí ajustas dimensiones, FPS y variables globales del diseño.
 
-### 4.2 Guardado Automático
-El sistema de **Guardado Atómico** protege tu trabajo contra cierres inesperados. El indicador en la esquina inferior izquierda confirma cuando el archivo está seguro en disco.
+### 3.2 Preview (Centro)
+
+Visualiza cambios en tiempo real.
+
+### 3.3 Inspector & Artefactos (Derecha)
+
+- **Inspector**: Ajusta valores específicos de la animación de forma dinámica.
+- **Artefactos**: Gestiona assets externos (imágenes, JSONs, textos) que alimentan la lógica del plugin.
 
 ---
 
-## 5. Exportación Profesional
+## 4. Guía Rápida
 
-1. Haz clic en **Renderizar**.
-2. El motor genera un video **ProRes 4444 con canal Alfa** (transparencia nativa).
-3. **Drag & Drop**: Arrastra el archivo directamente desde la app hacia tu línea de tiempo en DaVinci Resolve, Premiere Pro o After Effects.
+Si tienes dudas sobre el funcionamiento de los paneles, usa el botón **GUÍA RÁPIDA** en la barra superior. Un asistente visual te mostrará los puntos clave del flujo de trabajo en menos de 2 minutos.
 
-> **Estabilidad v5.6**: Se ha corregido un error crítico que causaba videos transparentes o congelados al exportar en sistemas Windows con alta carga de trabajo. El motor ahora garantiza la captura correcta del primer fotograma.
+---
 
-### 5.1 Transparencia en DaVinci Resolve
-Si al importar el video ves un fondo negro, sigue estos pasos para activar el canal Alfa:
-1. Haz clic derecho sobre el clip en el **Media Pool**.
-2. Selecciona **"Clip Attributes"**.
-3. En la pestaña Video, cambia **Alpha Mode** de "None" a **"Straight"** o **"Premultiplied"**.
+## 5. Exportación y Uso
+
+DVGE exporta archivos `.mov` con transparencia real. Para usarlos en tu editor:
+
+- **DaVinci Resolve**: Si ves fondo negro, ve a *Clip Attributes* -> *Alpha Mode* -> *Straight*.
+- **Premiere Pro / After Effects**: La transparencia se reconoce automáticamente por el códec ProRes 4444.
 
 ---
 
 ## 6. Soporte
 
-En el botón **Acerca de** de la pantalla de inicio encontrarás enlaces al portafolio del desarrollador, contacto por Gmail y el repositorio de código para reportar errores o solicitar funciones.
+Accede a la documentación completa y reporta errores al desarrollador buscando su contacto en el portafolio desde el panel **Acerca de** en la pantalla principal.

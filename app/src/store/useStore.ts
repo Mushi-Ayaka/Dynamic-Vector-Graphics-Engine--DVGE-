@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { DVPlugin } from '../env'
+import { DVPlugin, FormField } from '../env'
 
 // --- Tipo del Store ---
 type StoreState = {
@@ -29,6 +29,10 @@ type StoreState = {
   togglePluginManager: () => void
   isGalleryOpen: boolean
   toggleGallery: () => void
+  isAboutOpen: boolean
+  toggleAbout: () => void
+  isRenderModalOpen: boolean
+  toggleRenderModal: () => void
 
   activePluginId: string | null
   setRenderProgress: (progress: number) => void
@@ -41,12 +45,17 @@ type StoreState = {
   setNewProjectName: (val: string) => void
   newProjectPluginId: string
   setNewProjectPluginId: (val: string) => void
-  updateProjectConfig: (patch: Partial<{ width: number; height: number; fps: number; durationInFrames: number; aspectRatioMode: string }>) => void
+  updateProjectConfig: (patch: Partial<{ width: number; height: number; fps: number; durationInFrames: number; aspectRatioMode: string; creativeBrief: string }>) => void
 
   uiState: { aspectRatioMode: string; advancedDuration: boolean }
   setUiState: (patch: Partial<StoreState['uiState']>) => void
+  artifactFields: FormField[]
+  addArtifactField: (field: FormField) => void
+  removeArtifactField: (id: string) => void
+  updateArtifactField: (id: string, patch: Partial<FormField>) => void
   updateProjectName: (name: string) => Promise<void>
   deleteProject: () => Promise<void>
+  getProjectContext: () => { name: string; artifacts: any[] }
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -55,6 +64,28 @@ export const useStore = create<StoreState>((set, get) => ({
   plugins: [],
   activePluginFiles: null,
   properties: {},
+  artifactFields: [],
+  addArtifactField: (field) => set(state => {
+    const nextFields = [...state.artifactFields, field];
+    return { 
+      artifactFields: nextFields,
+      activeProject: state.activeProject ? { ...state.activeProject, artifactFields: nextFields } : null
+    };
+  }),
+  removeArtifactField: (id) => set(state => {
+    const nextFields = state.artifactFields.filter(f => f.id !== id);
+    return { 
+      artifactFields: nextFields,
+      activeProject: state.activeProject ? { ...state.activeProject, artifactFields: nextFields } : null
+    };
+  }),
+  updateArtifactField: (id, patch) => set(state => {
+    const nextFields = state.artifactFields.map(f => f.id === id ? { ...f, ...patch } : f);
+    return {
+      artifactFields: nextFields,
+      activeProject: state.activeProject ? { ...state.activeProject, artifactFields: nextFields } : null
+    };
+  }),
   isExporting: false,
   globalConfig: {
       safeArea: 60, // Valor por defecto
@@ -70,7 +101,14 @@ export const useStore = create<StoreState>((set, get) => ({
     if (!window.ipcRenderer) return
     try {
       const list = await window.ipcRenderer.getPlugins()
-      set({ plugins: list })
+      const { activeProject } = get()
+      
+      let activePlugin = null
+      if (activeProject) {
+        activePlugin = list.find(p => p.manifest.id === activeProject.pluginId) || null
+      }
+
+      set({ plugins: list, activePlugin })
     } catch (e) {
       console.error('[Store] Error al inicializar plugins:', e)
     }
@@ -80,19 +118,13 @@ export const useStore = create<StoreState>((set, get) => ({
     const { plugins } = get()
     const rawPlugin = plugins.find(p => p.manifest.id === project.pluginId) || null
     
-    let activePlugin = null
-    if (rawPlugin) {
-        activePlugin = {
-            ...rawPlugin,
-            manifest: {
-                ...rawPlugin.manifest
-            }
-        };
-    }
+    let activePlugin = rawPlugin;
+
 
     set({ 
       activeProject: project, 
       properties: project.properties || {}, 
+      artifactFields: project.artifactFields || [],
       activePlugin,
       uiState: { 
         aspectRatioMode: project.aspectRatioMode || 'custom', 
@@ -131,9 +163,34 @@ export const useStore = create<StoreState>((set, get) => ({
 
   setProperties: (props) => set((state) => {
     const nextProps = { ...state.properties, ...props };
-    // Sincronización proactiva con el objeto del proyecto activo
+
+    // [FIX BUG-03/04] Mapeo de campos de sistema: cuando el Inspector cambia
+    // fps, resolutionWidth, resolutionHeight o totalDuration, sincronizar
+    // activeProject para que PreviewPlayer los refleje inmediatamente.
+    const systemFieldMap: Record<string, string> = {
+      fps: 'fps',
+      resolutionWidth: 'width',
+      resolutionHeight: 'height',
+      totalDuration: 'durationInFrames',
+    };
+    const projectPatch: Record<string, number> = {};
+    for (const [fieldId, projectKey] of Object.entries(systemFieldMap)) {
+      if (props[fieldId] !== undefined) {
+        const raw = Number(props[fieldId]);
+        if (!isNaN(raw) && raw > 0) {
+          // totalDuration viene en segundos → convertir a frames usando fps actual
+          if (fieldId === 'totalDuration') {
+            const fps = nextProps['fps'] ?? state.activeProject?.fps ?? 60;
+            projectPatch[projectKey] = Math.round(raw * fps);
+          } else {
+            projectPatch[projectKey] = raw;
+          }
+        }
+      }
+    }
+
     const nextProject = state.activeProject 
-      ? { ...state.activeProject, properties: nextProps } 
+      ? { ...state.activeProject, ...projectPatch, properties: nextProps, artifactFields: state.artifactFields } 
       : null;
       
     return { 
@@ -151,6 +208,10 @@ export const useStore = create<StoreState>((set, get) => ({
   togglePluginManager: () => set((state) => ({ isPluginManagerOpen: !state.isPluginManagerOpen })),
   isGalleryOpen: false,
   toggleGallery: () => set((state) => ({ isGalleryOpen: !state.isGalleryOpen })),
+  isAboutOpen: false,
+  toggleAbout: () => set((state) => ({ isAboutOpen: !state.isAboutOpen })),
+  isRenderModalOpen: false,
+  toggleRenderModal: () => set((state) => ({ isRenderModalOpen: !state.isRenderModalOpen })),
 
   activePluginId: null,
 
@@ -201,5 +262,26 @@ export const useStore = create<StoreState>((set, get) => ({
         clearActiveProject();
       }
     }
+  },
+
+  getProjectContext: () => {
+    const { activeProject, artifactFields } = get();
+    return {
+      id: activeProject?.id,
+      pluginId: activeProject?.pluginId,
+      name: activeProject?.name || 'Untitled Project',
+      updatedAt: activeProject?.updatedAt,
+      width: activeProject?.width,
+      height: activeProject?.height,
+      fps: activeProject?.fps,
+      durationInFrames: activeProject?.durationInFrames,
+      creativeBrief: activeProject?.creativeBrief || "Diseño premium, minimalista y corporativo. Priorizar fluidez visual mediante interpolaciones suaves (lerp) y transiciones sutiles (opacidad/escala). El ritmo de animación debe ser determinista y solemne, atado estrictamente a ctx.timeline. \n\nPROHIBIDO: Uso de colores neón, desenfoques de movimiento excesivos (motion blur), o animaciones con rebotes elásticos (spring) que resten seriedad al gráfico.",
+      artifacts: artifactFields.map(f => ({
+        id: f.id,
+        label: f.label,
+        type: f.type,
+        description: f.description || ''
+      }))
+    };
   }
 }))

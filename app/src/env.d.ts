@@ -3,12 +3,21 @@
 export {}
 
 export interface FormField {
-  type: 'string' | 'color' | 'number' | 'image' | 'code' | 'info' | 'select' | 'artifact' | 'prompt'
+  type: 'string' | 'color' | 'number' | 'image' | 'code' | 'info'
+      | 'select' | 'artifact' | 'prompt' | 'boolean' | 'slider' | 'button'
+      | 'file-ref' | 'file'
+      | 'image-ref'
+      | 'alignment' | 'easing' | 'range-dual' | 'icon' | 'gradient' | 'font'
   id: string
   label: string
-  defaultValue: string | number
-  group?: string // Opcional: para agrupar campos en la UI
+  defaultValue: string | number | boolean
+  description?: string
+  group?: string
   options?: { label: string, value: string }[]
+  accept?: string[]
+  min?: number
+  max?: number
+  step?: number
 }
 
 /**
@@ -75,13 +84,45 @@ declare global {
       deletePlugin: (pluginId: string) => Promise<boolean>;
       logSync: (data: any) => void;
       getDocContent: (docName: string) => Promise<string>;
-      generateRulesPdf: (rulesText: string) => Promise<string>;
+      generateRulesPdf: (data: { rulesText: string, projectContext?: any }) => Promise<string>;
+
+      // [INS-02/03] File Dialog — IPC nativo para selector de archivos
+      showOpenDialog: (options: {
+        filters?: { name: string; extensions: string[] }[];
+        properties?: Array<'openFile' | 'multiSelections'>;
+      }) => Promise<{ canceled: boolean; filePaths: string[] }>;
+
+      // [INS-02] Lectura segura de archivos locales (proceso principal)
+      readFileUtf8: (filePath: string) => Promise<{
+        content: string;
+        sizeBytes: number;
+        error?: string;
+      }>;
       
       // Workspace / Proyectos
       getProjects: () => Promise<any[]>;
       createProject: (name: string, pluginId: string, defaultProps: any) => Promise<any>;
       saveProjectProps: (projectId: string, props: any) => Promise<boolean>;
       openProjectFolder: (projectId: string) => void;
+      updateProject: (projectId: string, updates: any) => Promise<boolean>;
+      deleteProject: (projectId: string) => Promise<boolean>;
+
+      // [Window Controls] Frameless window
+      windowMinimize: () => void;
+      windowMaximize: () => void;
+      windowClose: () => void;
+      windowIsMaximized: () => Promise<boolean>;
+      windowNew: () => void;
+      windowZoomIn: () => void;
+      windowZoomOut: () => void;
+      windowZoomReset: () => void;
+      windowOpenExternal: (url: string) => void;
+      windowOpenManual: () => void;
+      getMachineId: () => Promise<string>;
+      saveArtifact: (data: { projectId: string, fileName: string, base64Data: string }) => Promise<{ success: boolean, filePath?: string, error?: string }>;
+      copyToProject: (data: { projectId: string, sourcePath: string }) => Promise<{ success: boolean, filePath?: string, error?: string }>;
+      listAssets: (projectId: string) => Promise<{ name: string, path: string }[]>;
+      indexAsset: (data: { projectId: string, assetPath: string }) => Promise<{ success: boolean, filePath?: string, error?: string }>;
     }
   }
 }

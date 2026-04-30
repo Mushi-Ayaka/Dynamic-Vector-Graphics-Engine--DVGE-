@@ -17,8 +17,6 @@ interface GalleryPlugin {
     };
 }
 
-const REGISTRY_URL = 'https://raw.githubusercontent.com/Mushi-Ayaka/Dynamic-Vector-Engine-Plugins/main/registry.json';
-
 export const PluginGallery: React.FC = () => {
     const { toggleGallery, plugins, initialize } = useStore();
     const [remotePlugins, setRemotePlugins] = useState<GalleryPlugin[]>([]);
@@ -32,13 +30,22 @@ export const PluginGallery: React.FC = () => {
 
     const fetchRegistry = async () => {
         setLoading(true);
+        setError(null);
+        
         try {
-            const resp = await fetch(REGISTRY_URL);
-            if (!resp.ok) throw new Error('No se pudo cargar el registro de plugins.');
-            const data = await resp.json();
-            setRemotePlugins(data.plugins || []);
+            console.log('[PluginGallery] Solicitando registro al Main Process...');
+            // @ts-ignore
+            const result = await window.ipcRenderer.fetchRemoteRegistry();
+            
+            if (result && result.success) {
+                console.log('[PluginGallery] Registro recibido del Main Process.');
+                setRemotePlugins(result.data.plugins || []);
+            } else {
+                throw new Error(result.error);
+            }
         } catch (err: any) {
-            setError(err.message);
+            console.error('[PluginGallery] Error al obtener registro:', err);
+            setError(`Error de catálogo: ${err.message}`);
         } finally {
             setLoading(false);
         }

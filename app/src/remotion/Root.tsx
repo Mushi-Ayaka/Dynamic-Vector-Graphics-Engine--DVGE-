@@ -11,23 +11,13 @@ import { RenderWrapper } from './RenderWrapper'
  *
  * Los plugins son 100% compatibles con ambos — misma API (ctx, dvEngine.register, etc.)
  */
-import { TestPink } from './TestPink'
 
 export const RemotionRoot: React.FC = () => {
   return (
     <>
       <Composition
-        id="lower-third-basic"
+        id="dvge-render-engine"
         component={RenderWrapper}
-        durationInFrames={240}
-        fps={60}
-        width={1920}
-        height={1080}
-        defaultProps={{}}
-      />
-      <Composition
-        id="debug-pink"
-        component={TestPink}
         durationInFrames={240}
         fps={60}
         width={1920}

@@ -41,4 +41,30 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   openProjectFolder: (projectId: string) => ipcRenderer.send('open-project-folder', projectId),
   updateProject: (projectId: string, updates: any) => ipcRenderer.invoke('update-project', { projectId, updates }),
   deleteProject: (projectId: string) => ipcRenderer.invoke('delete-project', projectId),
+
+  // [Window Controls] Frameless window
+  windowMinimize: () => ipcRenderer.send('window-minimize'),
+  windowMaximize: () => ipcRenderer.send('window-maximize'),
+  windowClose: () => ipcRenderer.send('window-close'),
+  windowIsMaximized: () => ipcRenderer.invoke('window-is-maximized'),
+  windowNew: () => ipcRenderer.send('window-new'),
+  windowZoomIn: () => ipcRenderer.send('window-zoom-in'),
+  windowZoomOut: () => ipcRenderer.send('window-zoom-out'),
+  windowZoomReset: () => ipcRenderer.send('window-zoom-reset'),
+  windowOpenExternal: (url: string) => ipcRenderer.send('open-external', url),
+  windowOpenManual: () => ipcRenderer.send('open-manual'),
+  getMachineId: () => ipcRenderer.invoke('get-machine-id'),
+  getGpuInfo: () => ipcRenderer.invoke('get-gpu-info'),
+
+  // [INS-02/03] File Dialog & File Reading
+  showOpenDialog: (options: {
+    filters?: { name: string; extensions: string[] }[];
+    properties?: Array<'openFile' | 'multiSelections'>;
+  }) => ipcRenderer.invoke('show-open-dialog', options),
+  readFileUtf8: (filePath: string) => ipcRenderer.invoke('read-file-utf8', filePath),
+  saveArtifact: (data: { projectId: string, fileName: string, base64Data: string }) => ipcRenderer.invoke('save-artifact', data),
+  copyToProject: (data: { projectId: string, sourcePath: string }) => ipcRenderer.invoke('copy-to-project', data),
+  listAssets: (projectId: string) => ipcRenderer.invoke('list-assets', projectId),
+  indexAsset: (data: { projectId: string, assetPath: string }) => ipcRenderer.invoke('index-asset', data),
+  fetchRemoteRegistry: () => ipcRenderer.invoke('fetch-remote-registry'),
 })

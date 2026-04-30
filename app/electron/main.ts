@@ -3,7 +3,7 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 // Parchear ESBUILD_BINARY_PATH ANTES de cualquier import de @remotion.
 // Con asar:true, esbuild no puede encontrar su binario dentro del .asar.
 // Lo apuntamos al .asar.unpacked donde sí existe como archivo real.
-;(function patchEsbuild() {
+; (function patchEsbuild() {
   const path = require('node:path')
   const fs = require('node:fs')
   const resourcesPath = process.resourcesPath ?? ''
@@ -12,8 +12,10 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
     process.env.ESBUILD_BINARY_PATH = candidate
   }
 })();
-import { app, BrowserWindow, ipcMain, shell, IpcMainEvent, Menu } from 'electron'
-import { join } from 'node:path'
+import { app, BrowserWindow, ipcMain, shell, IpcMainEvent, Menu, dialog, protocol } from 'electron'
+
+import 'dotenv/config'
+import { join, basename } from 'node:path'
 import * as fs from 'node:fs'
 
 // [CRÍTICO] Forzar directorio .remotion global para evitar EPERM en Program Files
@@ -25,6 +27,9 @@ if (!fs.existsSync(process.env.REMOTION_DOT_REMOTION_DIR)) {
 import { PluginManager } from './plugin-manager'
 import { ProjectManager } from './project-manager'
 import { dependencyManager } from './dependency-manager'
+import { TelemetryHub } from './telemetry/TelemetryHub'
+import { MachineIdentityProvider } from './telemetry/MachineIdentityProvider'
+import { HardwareScanner } from './telemetry/HardwareScanner'
 
 const pluginManager = new PluginManager()
 const projectManager = new ProjectManager()
@@ -33,18 +38,30 @@ let mainWindow: BrowserWindow | null = null
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1424,
-    height: 1068,
+    width: 1080,
+    height: 680,
+    minWidth: 1024,
+    minHeight: 700,
+    frame: false,
+    thickFrame: false,
     title: 'DV Graphics Engine',
     icon: join(__dirname, '../public/icon.png'),
-    backgroundColor: '#141414',
+    backgroundColor: '#050505',
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
-      // Node integration debe estar en false por seguridad en Electron >12
       nodeIntegration: false,
       contextIsolation: true,
+      webSecurity: false, // Permitir carga de archivos locales durante desarrollo
     },
   })
+
+  // [Seguridad/UX] Abrir enlaces externos (target="_blank") en el navegador del sistema
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http')) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
 
   // Dependiendo de si estamos en DEV (Vite dev server) o PROD (archivo compilado)
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -58,8 +75,23 @@ function createWindow() {
 import { setupRemotionIPC } from './remotion-api'
 
 app.whenReady().then(async () => {
+  // [v5.8.4] Restaurar protocolo media para compatibilidad con artefactos
+  protocol.handle('media', async (request) => {
+    try {
+      const filePath = decodeURIComponent(request.url.replace(/^media:\/\/\/?/, ''));
+      const data = await fs.promises.readFile(filePath);
+      return new Response(data);
+    } catch (err) {
+      console.error('[Protocol] Error reading media file:', err);
+      return new Response('File Not Found', { status: 404 });
+    }
+  });
+
+  // Inicializar Telemetría y Salud (v5.7) - No bloqueante
+  TelemetryHub.initialize();
+
   setupRemotionIPC()
-  
+
   // [v5.6.0] Auto-Fetch Dependencies
   try {
     await dependencyManager.ensureChromium();
@@ -67,7 +99,7 @@ app.whenReady().then(async () => {
   } catch (e) {
     console.error('[Main] Critical dependency failure:', e);
   }
-  
+
   setupMenu()
   createWindow()
 
@@ -80,7 +112,7 @@ app.whenReady().then(async () => {
   // Handler para el Drag and Drop Nativo al OS / DaVinci Resolve
   ipcMain.on('ondragstart', (event: IpcMainEvent, filePath: string) => {
     console.log(`[IPC] ondragstart: ${filePath}`)
-    const iconPath = join(__dirname, '../public/icon-drag.png')
+    const iconPath = join(__dirname, '../public/icon.png')
     const iconExists = fs.existsSync(iconPath)
 
     event.sender.startDrag({
@@ -131,7 +163,7 @@ app.whenReady().then(async () => {
     const pPath = join(app.getPath('documents'), 'DVG_Projects', projectId)
     shell.openPath(pPath)
   })
-  
+
   ipcMain.handle('update-project', (_event, data: { projectId: string, updates: any }) => {
     return projectManager.updateProject(data.projectId, data.updates)
   })
@@ -140,21 +172,40 @@ app.whenReady().then(async () => {
     return projectManager.deleteProject(projectId)
   })
 
-  ipcMain.on('ondragstart', (event, filePath) => {
-    if (fs.existsSync(filePath)) {
-      // Intentamos usar un icono representativo si existe
-      const iconPath = join(app.getAppPath(), 'public', 'icon-drag.png')
-      
-      event.sender.startDrag({
-        file: filePath,
-        icon: fs.existsSync(iconPath) ? iconPath : join(app.getAppPath(), 'public', 'icon.png')
-      })
+  // [Telemetría] Puentes de Identidad y Hardware - Registro Defensivo
+  ipcMain.removeHandler('get-machine-id')
+  ipcMain.handle('get-machine-id', () => {
+    const id = MachineIdentityProvider.getAnonymousId();
+    console.log('[Telemetry-IPC] get-machine-id requested:', id);
+    return id;
+  })
+
+  ipcMain.removeHandler('get-gpu-info')
+  ipcMain.handle('get-gpu-info', async () => {
+    try {
+      console.log('[Telemetry-IPC] get-gpu-info requested...');
+      const summary = await HardwareScanner.getHardwareSummary();
+      if (summary?.gpu && summary.gpu.length > 0) {
+        const gpuStr = summary.gpu.map(g => `${g.vendor} ${g.model} (${g.vram}MB)`).join(', ');
+        console.log('[Telemetry-IPC] GPU detected via HardwareScanner:', gpuStr);
+        return gpuStr;
+      }
+
+      // Fallback a API nativa de Electron si systeminformation falla
+      const gpuInfo = (await app.getGPUInfo('basic')) as any;
+      const adapter = gpuInfo.gpuDevice?.[0];
+      const fallbackGpu = adapter ? `${adapter.vendorId || ''} ${adapter.renderer || 'GPU'}` : 'N/A';
+      console.log('[Telemetry-IPC] GPU detected via Native Fallback:', fallbackGpu);
+      return fallbackGpu;
+    } catch (e) {
+      console.error('[Telemetry] GPU Info fallback failed:', e);
+      return 'N/A';
     }
   })
 
   ipcMain.on('log-sync', (_event, data) => {
     if (data._debug) {
-      console.log(`🔬 [DEBUG] ${data._debug}:`, JSON.stringify(data))
+      console.log(`[DEBUG] ${data._debug}:`, JSON.stringify(data))
     } else {
       console.log(`>> [SOFT-SYNC] Bridge: ${data.hasCallback ? 'CONN' : 'DISC'} | Props:`, JSON.stringify(data.props))
     }
@@ -172,27 +223,198 @@ app.whenReady().then(async () => {
     return `# Error: Documento no encontrado.\nNo se pudo encontrar el archivo: ${safeName}`
   })
 
-  // [v5.5.0] Generador automático de PDF para arrastrar a IAs
-  ipcMain.handle('generate-rules-pdf', async (_event, rulesText: string) => {
-    return new Promise((resolve) => {
-      const pdfPath = join(app.getPath('temp'), 'DVGE-Master-Rules.pdf')
-      if (fs.existsSync(pdfPath)) {
-        return resolve(pdfPath)
+  // [v5.7.5] Cargador dinámico de la Constitución Maestra de DVGE (Resiliente)
+  const getMasterRules = () => {
+    try {
+      // Intentar varias rutas comunes (dist, resources, y source dev)
+      const possiblePaths = [
+        join(__dirname, 'resources/MASTER_PROMPT.md'),
+        join(app.getAppPath(), 'electron/resources/MASTER_PROMPT.md'),
+        join(process.cwd(), 'electron/resources/MASTER_PROMPT.md')
+      ];
+
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          console.log(`[Main] Master Rules cargadas desde: ${p}`);
+          return fs.readFileSync(p, 'utf8');
+        }
       }
-      
+    } catch (e) {
+      console.error('[Main] Error loading MASTER_PROMPT.md:', e);
+    }
+    return "# DVGE MASTER RULES\nExpert system for broadcast. Use props.[id] and getArtifact(ID).";
+  };
+
+  // [v5.7.0] Generador de PDF Modular con Contexto de Proyecto para IAs
+  ipcMain.handle('generate-rules-pdf', async (_event, data: { rulesText: string, projectContext?: any }) => {
+    return new Promise((resolve) => {
+      // Si el texto es el placeholder por defecto o el ID coincide, inyectamos las reglas del archivo .md
+      const finalRules = (data.rulesText === 'Reglas' || data.rulesText.length < 20)
+        ? getMasterRules()
+        : data.rulesText;
+
+      const pdfPath = join(app.getPath('temp'), `DVGE-Context-${Date.now()}.pdf`)
+
       const win = new BrowserWindow({ show: false })
+
+      // Construir el bloque de contexto si existe
+      let contextHtml = '';
+      if (data.projectContext) {
+        const { name, pluginId = 'Desconocido', updatedAt, artifacts, width = 1920, height = 1080, fps = 60, durationInFrames = 240, creativeBrief } = data.projectContext;
+        const seconds = (durationInFrames / fps).toFixed(1);
+        const versionDate = updatedAt ? new Date(updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+
+        contextHtml = `
+          <div style="background: #1a1a1a; color: #eee; padding: 30px; border-radius: 12px; margin-bottom: 40px; border: 1px solid #E44C30;">
+            <h1 style="color: #fff; margin-top: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px;">DVGE PROJECT CONTEXT — ${name}</h1>
+            
+            <div style="background: #E44C30; color: #fff; padding: 10px 15px; border-radius: 6px; font-family: monospace; font-size: 13px; font-weight: bold; margin-bottom: 25px; display: inline-block;">
+              VERSIÓN: ${versionDate} | PLUGIN: ${pluginId} | ESTADO: PROYECTO ACTIVO
+            </div>
+
+            <p style="font-size: 14px; color: #aaa; margin-bottom: 25px; border-left: 3px solid #E44C30; padding-left: 10px;">
+              Este documento contiene el contexto vivo del proyecto y su configuración. La IA debe basarse <b>estrictamente</b> en estos valores para generar el código.
+            </p>
+            
+            <h3 style="color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px;">⚙️ Configuración del Canvas (Video)</h3>
+            <div style="display: flex; gap: 20px; font-size: 13px; font-family: monospace; background: #252525; padding: 15px; border-radius: 6px; border: 1px solid #333;">
+              <div><strong>Resolución:</strong> <span style="color: #4CAF50;">${width}x${height}</span></div>
+              <div><strong>Framerate:</strong> <span style="color: #4CAF50;">${fps} FPS</span></div>
+              <div><strong>Duración Total:</strong> <span style="color: #4CAF50;">${durationInFrames} frames (${seconds}s)</span></div>
+            </div>
+
+            ${creativeBrief ? `
+            <h3 style="color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 25px;">🎨 Brief Creativo</h3>
+            <div style="background: rgba(228, 76, 48, 0.1); padding: 15px; border-radius: 6px; border: 1px solid #E44C30; font-size: 14px; line-height: 1.6; color: #fff; white-space: pre-wrap; font-family: 'Georgia', serif; font-style: italic;">
+              ${creativeBrief}
+            </div>
+            ` : ''}
+            
+            <h3 style="color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px;">🎨 Artefactos Disponibles</h3>
+            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">A continuación se listan los artefactos inyectados para este proyecto y el código exacto necesario para implementarlos. <b>NO inventes otros IDs ni uses getArtifact().</b></p>
+            
+            ${artifacts.length > 0 ? artifacts.map((a: any) => `
+              <div style="background: #252525; border: 1px solid #333; border-radius: 6px; margin-bottom: 20px; overflow: hidden;">
+                <div style="background: #333; padding: 10px 15px; font-weight: bold; color: #fff; display: flex; justify-content: space-between;">
+                  <span>${a.label} <span style="font-size: 11px; font-weight: normal; color: #aaa;">(${a.description || 'Imagen'})</span></span>
+                  <span style="color: #E44C30; font-family: monospace;">${a.id}</span>
+                </div>
+                <div style="padding: 15px;">
+                  <div style="font-family: monospace; font-size: 12px; color: #4CAF50; margin-bottom: 5px;">[HTML]</div>
+                  <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>&lt;div class="artifact-wrapper"&gt;
+  &lt;img id="el_${a.id}" class="dv-artifact" src="" alt="${a.label}"&gt;
+&lt;/div&gt;</code></pre>
+                  
+                  <div style="font-family: monospace; font-size: 12px; color: #2196F3; margin-bottom: 5px; margin-top: 15px;">[CSS]</div>
+                  <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>#el_${a.id} {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0; /* Aparece tras cargar */
+  transition: opacity 0.3s ease;
+}</code></pre>
+
+                  <div style="font-family: monospace; font-size: 12px; color: #FFC107; margin-bottom: 5px; margin-top: 15px;">[JAVASCRIPT]</div>
+                  <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>const img_${a.id} = document.getElementById('el_${a.id}');
+const src_${a.id} = props['${a.id}'];
+
+if (img_${a.id} && src_${a.id} && img_${a.id}.getAttribute('src') !== src_${a.id}) {
+  img_${a.id}.src = src_${a.id};
+  img_${a.id}.style.opacity = "1";
+}</code></pre>
+                </div>
+              </div>
+            `).join('') : '<div style="padding: 15px; color: #888; font-style: italic;">No hay artefactos definidos en este proyecto.</div>'}
+          </div>
+
+          <!-- [INYECCIÓN] ESQUEMA DE PROPIEDADES DEL INSPECTOR -->
+          <div style="background: #1e1e1e; padding: 25px; border-radius: 12px; border-left: 4px solid #E44C30; margin-bottom: 30px;">
+            <h3 style="color: #fff; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">🎛️ Esquema de Propiedades del Inspector (Props Schema)</h3>
+            
+            <p style="color: #ffcccc; font-size: 14px; font-weight: bold; margin-bottom: 15px;">DIRECTIVA OBLIGATORIA: Absolutamente TODO lo que pueda ser personalizable (textos, colores, posiciones, escalas, opacidades, fuentes, velocidades, etc.) DEBE ser expuesto en el Inspector mediante comentarios @dv-prop.</p>
+            <p style="color: #aaa; font-size: 13px; margin-bottom: 20px;">Los campos deben estar estrictamente ordenados en grupos lógicos utilizando la propiedad <code style="color: #fff; background: #333; padding: 2px 5px; border-radius: 3px;">"group"</code> para organizar la interfaz del usuario.</p>
+            
+            <h4 style="color: #ccc; border-bottom: 1px solid #333; padding-bottom: 5px;">Tipos de Variables Disponibles y Ejemplos</h4>
+            
+            <ul style="color: #ddd; font-size: 13px; line-height: 1.6; padding-left: 20px;">
+              <li style="margin-bottom: 15px;"><b>1. string</b> (Textos cortos, Títulos, URLs)
+                <pre style="background: #111; color: #4CAF50; padding: 8px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; border: 1px solid #222;"><code>&lt;!-- @dv-prop { "id": "mainTitle", "type": "string", "group": "Contenido", "label": "Título Principal", "defaultValue": "Bienvenidos" } --&gt;</code></pre>
+              </li>
+              <li style="margin-bottom: 15px;"><b>2. number</b> (Dimensiones, Posiciones X/Y, Velocidades)
+                <pre style="background: #111; color: #2196F3; padding: 8px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; border: 1px solid #222;"><code>/* @dv-prop { "id": "logoScale", "type": "number", "group": "Transformaciones", "label": "Escala del Logo", "defaultValue": 1.5, "min": 0.5, "max": 3.0, "step": 0.1 } */</code></pre>
+              </li>
+              <li style="margin-bottom: 15px;"><b>3. color</b> (Fondos, Textos, Bordes)
+                <pre style="background: #111; color: #2196F3; padding: 8px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; border: 1px solid #222;"><code>/* @dv-prop { "id": "accentColor", "type": "color", "group": "Apariencia", "label": "Color de Acento", "defaultValue": "#E44C30" } */</code></pre>
+              </li>
+              <li style="margin-bottom: 15px;"><b>4. boolean</b> (Switches On/Off)
+                <pre style="background: #111; color: #FFC107; padding: 8px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; border: 1px solid #222;"><code>// @dv-prop { "id": "showParticles", "type": "boolean", "group": "Efectos", "label": "Mostrar Partículas", "defaultValue": true }</code></pre>
+              </li>
+              <li style="margin-bottom: 15px;"><b>5. select</b> (Listas Desplegables)
+                <pre style="background: #111; color: #FFC107; padding: 8px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; border: 1px solid #222;"><code>// @dv-prop { "id": "themeVariant", "type": "select", "group": "Apariencia", "label": "Variante Visual", "options": [{"value": "dark", "label": "Oscuro"}, {"value": "light", "label": "Claro"}], "defaultValue": "dark" }</code></pre>
+              </li>
+              <li style="margin-bottom: 15px;"><b>6. image-ref</b> (Imágenes Personalizadas URL libre)
+                <pre style="background: #111; color: #FFC107; padding: 8px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; border: 1px solid #222;"><code>// @dv-prop { "id": "customWatermark", "type": "image-ref", "group": "Medios", "label": "Marca de Agua", "defaultValue": "https://via.placeholder.com/150" }</code></pre>
+              </li>
+              <li style="margin-bottom: 15px;"><b>7. alignment</b> (Grilla 3x3 de Posicionamiento) - <i>Su uso óptimo es inyectándolo en place-items (CSS Grid).</i>
+                <pre style="background: #111; color: #2196F3; padding: 8px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; border: 1px solid #222;"><code>/* @dv-prop { "id": "logoPos", "type": "alignment", "group": "Layout", "label": "Posición del Logo", "defaultValue": "center center" } */
+.logo-container { display: grid; place-items: var(--logoPos); }</code></pre>
+              </li>
+            </ul>
+            
+            <div style="background: #2a2a2a; padding: 15px; border-radius: 6px; border-left: 4px solid #ffcc00; margin-top: 20px;">
+              <p style="color: #eee; font-size: 13px; margin: 0 0 5px 0;"><b>REGLAS DE GENERACIÓN:</b></p>
+              <ul style="color: #aaa; font-size: 13px; margin: 0; padding-left: 20px;">
+                <li>Si el estado del proyecto es <code>Producción</code>, NO inventes variables que no estén explícitamente en el HTML/CSS/JS.</li>
+                <li>Si el estado es <code>Borrador</code>, DEBES generar todas las variables necesarias (y agruparlas) para hacer el template 100% paramétrico.</li>
+              </ul>
+            </div>
+          </div>
+          ${(() => {
+            // [v5.7.2] Inyección de KNOWLEDGE.md
+            try {
+              const projectId = data.projectContext.id;
+              if (!projectId) return '';
+              const knowledgePath = join(app.getPath('documents'), 'DVG_Projects', projectId, 'KNOWLEDGE.md');
+
+              if (fs.existsSync(knowledgePath)) {
+                const content = fs.readFileSync(knowledgePath, 'utf8');
+                return `
+                  <div style="background: #0f172a; color: #cbd5e1; padding: 30px; border-radius: 12px; margin-bottom: 40px; border: 1px solid #38bdf8;">
+                    <h2 style="color: #38bdf8; margin-top: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">📚 Project Knowledge (KNOWLEDGE.md)</h2>
+                    <div style="font-size: 13px; line-height: 1.6; white-space: pre-wrap;">${content}</div>
+                  </div>
+                  <div style="page-break-after: always;"></div>
+                `;
+              }
+            } catch (e) {
+              console.error('[PDF] Error reading knowledge.md:', e);
+            }
+            return '';
+          })()}
+
+          </div>
+          <div style="page-break-after: always;"></div>
+        `;
+      }
+
       const html = `
         <html>
-          <body style="font-family: sans-serif; padding: 40px; color: #333;">
-            <h1 style="color: #E44C30;">DVGE Master Rules</h1>
-            <pre style="background: #f4f4f4; padding: 20px; border-radius: 8px;">${rulesText}</pre>
+          <body style="font-family: 'Inter', sans-serif; padding: 0; margin: 0; background: #0a0a0a; color: #ccc;">
+            <div style="padding: 40px;">
+              ${contextHtml}
+              <h1 style="color: #E44C30; font-size: 28px; text-transform: uppercase; letter-spacing: 4px; border-bottom: 2px solid #E44C30; padding-bottom: 10px;">Master Rules & Logic</h1>
+              <pre style="background: #111; padding: 25px; border-radius: 8px; font-family: 'Fira Code', monospace; font-size: 12px; line-height: 1.6; border: 1px solid #222; white-space: pre-wrap;">${finalRules.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+            </div>
           </body>
         </html>
       `
       win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
       win.webContents.on('did-finish-load', async () => {
         try {
-          const pdfData = await win.webContents.printToPDF({ printBackground: true })
+          const pdfData = await win.webContents.printToPDF({
+            printBackground: true,
+            pageSize: 'A4'
+          })
           fs.writeFileSync(pdfPath, pdfData)
           resolve(pdfPath)
         } catch (e) {
@@ -205,6 +427,165 @@ app.whenReady().then(async () => {
     })
   })
 
+  // [v5.7.1] Bypass nativo para descargar el catálogo de plugins (Evita 'Failed to fetch' en el frontend)
+  ipcMain.handle('fetch-remote-registry', async () => {
+    const https = require('https');
+    const branches = ['main', 'master'];
+
+    for (const branch of branches) {
+      try {
+        const url = `https://raw.githubusercontent.com/Mushi-Ayaka/Dynamic-Vector-Engine-Plugins/${branch}/registry.json?t=${Date.now()}`;
+        console.log(`[Main] Intentando descargar registro (rama ${branch})...`);
+
+        const data = await new Promise((resolve, reject) => {
+          https.get(url, (res: any) => {
+            if (res.statusCode !== 200) {
+              reject(new Error(`Status: ${res.statusCode}`));
+              return;
+            }
+            let body = '';
+            res.on('data', (chunk: any) => body += chunk);
+            res.on('end', () => resolve(JSON.parse(body)));
+          }).on('error', reject);
+        });
+
+        console.log(`[Main] Registro descargado con éxito desde ${branch}`);
+        return { success: true, data };
+      } catch (e: any) {
+        console.warn(`[Main] Error en rama ${branch}:`, e.message);
+      }
+    }
+    return { success: false, error: 'No se pudo conectar con GitHub desde el Proceso Principal.' };
+  })
+
+
+  // [Window Controls] Handlers para ventana frameless
+  ipcMain.on('window-minimize', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.minimize()
+  })
+  ipcMain.on('window-maximize', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (win?.isMaximized()) win.restore()
+    else win?.maximize()
+  })
+  ipcMain.on('window-close', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.close()
+  })
+  ipcMain.handle('window-is-maximized', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    return win?.isMaximized() ?? false
+  })
+  ipcMain.on('window-new', () => createWindow())
+  ipcMain.on('window-zoom-in', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.webContents.setZoomLevel((win.webContents.getZoomLevel() || 0) + 0.5)
+  })
+  ipcMain.on('window-zoom-out', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.webContents.setZoomLevel((win.webContents.getZoomLevel() || 0) - 0.5)
+  })
+  ipcMain.on('window-zoom-reset', (event) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+    win?.webContents.setZoomLevel(0)
+  })
+  ipcMain.on('open-external', (_event, url) => shell.openExternal(url))
+  ipcMain.on('open-manual', () => createManualWindow())
+
+
+  // [INS-02/03] File Dialog — Selector nativo del OS para file-ref e image-ref
+  ipcMain.handle('show-open-dialog', async (_event, options: {
+    filters?: { name: string; extensions: string[] }[]
+    properties?: Array<'openFile' | 'multiSelections'>
+  }) => {
+    const result = await dialog.showOpenDialog({
+      properties: options.properties ?? ['openFile'],
+      filters: options.filters ?? [],
+    })
+    return { canceled: result.canceled, filePaths: result.filePaths }
+  })
+
+  // [INS-02] Lectura segura de archivos locales — proceso principal (no renderer)
+  ipcMain.handle('read-file-utf8', (_event, filePath: string) => {
+    try {
+      const buffer = fs.readFileSync(filePath)
+      const content = buffer.toString('utf-8')
+      return { content, sizeBytes: buffer.byteLength }
+    } catch (err: any) {
+      return { content: '', sizeBytes: 0, error: err?.message ?? 'Error al leer el archivo' }
+    }
+  })
+
+  // [v5.7.0] Guardar artefactos generados (ej. recortes de imagen)
+  ipcMain.handle('save-artifact', (_event, data: { projectId: string, fileName: string, base64Data: string }) => {
+    try {
+      const pPath = join(app.getPath('documents'), 'DVG_Projects', data.projectId, 'artifacts')
+      if (!fs.existsSync(pPath)) fs.mkdirSync(pPath, { recursive: true })
+
+      const filePath = join(pPath, data.fileName)
+      const base64 = data.base64Data.split(';base64,').pop()
+      if (!base64) throw new Error('Invalid base64 data')
+
+      fs.writeFileSync(filePath, Buffer.from(base64, 'base64'))
+      return { success: true, filePath: `media:///${filePath.replace(/\\/g, '/')}` }
+    } catch (err: any) {
+      console.error('[IPC] Error saving artifact:', err)
+      return { success: false, error: err.message }
+    }
+  })
+
+  // [v5.7.0] Copiar archivo externo al directorio de ASSETS del proyecto
+  ipcMain.handle('copy-to-project', (_event, data: { projectId: string, sourcePath: string }) => {
+    try {
+      const pPath = join(app.getPath('documents'), 'DVG_Projects', data.projectId, 'assets')
+      if (!fs.existsSync(pPath)) fs.mkdirSync(pPath, { recursive: true })
+
+      const fileName = `${Date.now()}_${basename(data.sourcePath)}`
+      const targetPath = join(pPath, fileName)
+
+      fs.copyFileSync(data.sourcePath, targetPath)
+      return { success: true, filePath: targetPath }
+    } catch (err: any) {
+      console.error('[IPC] Error copying to assets:', err)
+      return { success: false, error: err.message }
+    }
+  })
+
+  // [v5.7.0] Mover un asset al directorio de ARTEFACTOS (Indexación)
+  ipcMain.handle('index-asset', (_event, data: { projectId: string, assetPath: string }) => {
+    try {
+      const artPath = join(app.getPath('documents'), 'DVG_Projects', data.projectId, 'artifacts')
+      if (!fs.existsSync(artPath)) fs.mkdirSync(artPath, { recursive: true })
+
+      const fileName = basename(data.assetPath)
+      const targetPath = join(artPath, fileName)
+
+      fs.renameSync(data.assetPath, targetPath) // Mover archivo
+      return { success: true, filePath: `media:///${targetPath.replace(/\\/g, '/')}` }
+    } catch (err: any) {
+      console.error('[IPC] Error indexing asset:', err)
+      return { success: false, error: err.message }
+    }
+  })
+
+  // [v5.7.0] Listar archivos físicos en la carpeta de ASSETS (sin indexar)
+  ipcMain.handle('list-assets', (_event, projectId: string) => {
+    try {
+      const pPath = join(app.getPath('documents'), 'DVG_Projects', projectId, 'assets')
+      if (!fs.existsSync(pPath)) return []
+
+      return fs.readdirSync(pPath)
+        .filter(f => fs.lstatSync(join(pPath, f)).isFile())
+        .map(f => ({
+          name: f,
+          path: join(pPath, f)
+        }))
+    } catch (err) {
+      console.error('[IPC] Error listing assets:', err)
+      return []
+    }
+  })
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -212,75 +593,21 @@ app.whenReady().then(async () => {
 })
 
 function setupMenu() {
-  const template: Electron.MenuItemConstructorOptions[] = [
-    {
-      label: 'Archivo',
-      submenu: [
-        { label: 'Nueva Ventana', click: () => createWindow() },
-        { type: 'separator' },
-        { role: 'quit', label: 'Salir' }
-      ]
-    },
-    {
-      label: 'Editar',
-      submenu: [
-        { role: 'undo', label: 'Deshacer' },
-        { role: 'redo', label: 'Rehacer' },
-        { type: 'separator' },
-        { role: 'cut', label: 'Cortar' },
-        { role: 'copy', label: 'Copiar' },
-        { role: 'paste', label: 'Pegar' }
-      ]
-    },
-    {
-      label: 'Vista',
-      submenu: [
-        { role: 'reload', label: 'Reiniciar' },
-        { role: 'toggleDevTools', label: 'Herramientas de Desarrollador' },
-        { type: 'separator' },
-        { role: 'resetZoom', label: 'Zoom Normal' },
-        { role: 'zoomIn', label: 'Aumentar Zoom' },
-        { role: 'zoomOut', label: 'Alejar Zoom' },
-        { type: 'separator' },
-        { role: 'togglefullscreen', label: 'Pantalla Completa' }
-      ]
-    },
-    {
-      label: 'Ayuda',
-      submenu: [
-        {
-          label: 'Documentación',
-          click: () => {
-            shell.openExternal('https://mushi-ayaka.github.io/DVGE-Docs/development/quick-start/')
-          }
-        },
-        {
-          label: 'Manual',
-          click: () => {
-            createManualWindow()
-          }
-        },
-        {
-          label: 'Ecosistema de Plugins',
-          click: () => {
-            shell.openPath(pluginManager.getPluginsFolder())
-          }
-        }
-      ]
-    }
-  ]
-
-  const menu = Menu.buildFromTemplate(template)
-  Menu.setApplicationMenu(menu)
+  // El menú nativo se elimina — usamos TitleBar custom en el renderer
+  Menu.setApplicationMenu(null)
 }
 
 function createManualWindow() {
   const manualWindow = new BrowserWindow({
-    width: 1000,
-    height: 800,
+    width: 1024,
+    height: 650,
+    minWidth: 1024,
+    minHeight: 650,
+    frame: false,
+    thickFrame: false,
     title: 'Manual de Usuario - DV Engine',
     icon: join(__dirname, '../public/icon.png'),
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#050505',
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -299,4 +626,8 @@ function createManualWindow() {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+
+app.on('will-quit', async () => {
+  await TelemetryHub.shutdown();
 })

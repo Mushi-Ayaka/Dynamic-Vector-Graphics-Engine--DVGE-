@@ -1,0 +1,63 @@
+# === DV-Web Graphics Engine ===
+
+# Specs & internal agent docs (SDD workflow)
+.agent/
+
+# Node
+node_modules/
+
+# Build Artifacts
+**/dist/
+**/build/
+**/release/
+**/dist-electron/
+**/app/release/
+**/app/dist/
+**/app/dist-electron/
+**/remotion-bundle/
+
+# Python
+__pycache__/
+*.pyc
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# === Archivos internos de planificación y arquitectura ===
+# (fuente de verdad gestionada por dvge-sync CLI)
+archives/
+scripts/
+implementation_plan.md
+QA_REMEDIATION_PLAN.md
+DVGE_NEXT_GEN_PROPOSALS.md
+dvge_v56_checkpoint3_plan.md
+MANUAL_DE_MANTENIMIENTO.md
+SPECIFICATION.md
+TECHNICAL_DEBT.md
+roadmap.md
+LEGAL.md
+PLUGIN_POLICY.md
+registry_template.json
+docs/DVGE-Master-Strategic-Plan.md
+docs/DVGE-Rules.md
+docs/DVGE-Rules-PrintMe.html
+MONETIZATION_NOTES.md
+
+# === CLI de sincronización (local, no va a GitHub) ===
+tools/
+
+# === DVGE Release & Telemetry Cleanup ===
+*.pdf
+**/*.log
+app/scratch/
+app/electron/telemetry/
+app/src/components/*.tmp
+.remotion-cache/
+remotion-bundle/
+KNOWLEDGE_BRIDGE.md
+CHANGELOG.md
+AUDIT_ENGINE_v58.md
+*.txt
+!app/EULA.txt

@@ -5,6 +5,7 @@
  * Este archivo es la ÚNICA fuente de verdad para el comportamiento del motor,
  * garantizando que el Preview y el Render se comporten de forma idéntica.
  */
+import { Easing } from 'remotion';
 
 export interface DVTimeline {
     progress: number;
@@ -25,6 +26,8 @@ export interface DVContext {
     env: {
         isExporting: boolean;
         resolution: { width: number; height: number };
+        aspectRatio: number;
+        isPortrait: boolean;
         safeArea?: number;
     };
     global: Record<string, any>;
@@ -38,6 +41,15 @@ export interface DVLifecycle {
 
 // --- Utilidades Nativas (Matemáticas y Animación) ---
 export const dvUtils = {
+    bezier: (curveParams: string | number[], t: number): number => {
+        try {
+            let pts = Array.isArray(curveParams) ? curveParams : JSON.parse(curveParams);
+            if (!Array.isArray(pts) || pts.length !== 4) pts = [0.25, 0.1, 0.25, 1];
+            return Easing.bezier(pts[0], pts[1], pts[2], pts[3])(t);
+        } catch {
+            return Easing.ease(t);
+        }
+    },
     lerp: (a: number, b: number, t: number) => a * (1 - t) + b * t,
     clamp: (val: number, min: number, max: number) => Math.min(Math.max(val, min), max),
     easeOutCubic: (t: number) => 1 - Math.pow(1 - t, 3),
@@ -74,7 +86,11 @@ export const dvUtils = {
     hexToRgb: (hex: string) => {
         const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return r ? `${parseInt(r[1], 16)}, ${parseInt(r[2], 16)}, ${parseInt(r[3], 16)}` : null;
-    }
+    },
+    // [v6.7.0] Responsive Remapping Utils
+    remapX: (x: number, designWidth = 1920, currentWidth: number) => (x / designWidth) * currentWidth,
+    remapY: (y: number, designHeight = 1080, currentHeight: number) => (y / designHeight) * currentHeight,
+    isPortrait: (width: number, height: number) => height > width
 };
 
 /**

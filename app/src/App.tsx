@@ -6,9 +6,16 @@ import { HomeMenu } from './components/HomeMenu'
 import { ProjectConfigPanel } from './components/ProjectConfigPanel'
 import { AspectRatioSelector } from './components/AspectRatioSelector'
 import { InspectorTabs } from './components/InspectorTabs'
+import { ArtifactsPanel } from './components/ArtifactsPanel'
 import { RenderStatusPanel } from './components/RenderStatusPanel'
-import { ChevronLeft, Puzzle, Save, Play, Info } from 'lucide-react'
+import { RenderModal } from './components/RenderModal'
+import { ChevronLeft, Puzzle, Save, Play, Info, Feather, HelpCircle, X } from 'lucide-react'
+import { TutorialOverlay } from './components/TutorialOverlay'
 import { APP_VERSION } from './version'
+import { TitleBar } from './components/TitleBar'
+import { AboutModal } from './components/AboutModal'
+import { TelemetryService } from './services/telemetry'
+import { TagExtractorService } from './services/TagExtractor'
 
 class InspectorErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -19,6 +26,7 @@ class InspectorErrorBoundary extends React.Component<
     this.state = { hasError: false, errorMsg: '' };
   }
   static getDerivedStateFromError(error: Error) {
+    TelemetryService.trackError(error, false);
     return { hasError: true, errorMsg: error.message };
   }
   render() {
@@ -53,8 +61,44 @@ export default function App() {
   const isSaving = useStore(state => state.isSaving)
   const lastSaved = useStore(state => state.lastSaved)
   const clearActiveProject = useStore(state => state.clearActiveProject)
+  const toggleRenderModal = useStore(state => state.toggleRenderModal)
 
   const uiState = useStore(state => state.uiState)
+  const [activeRightTab, setActiveRightTab] = React.useState<'inspector' | 'artifacts'>('inspector');
+  const [appIsReady, setAppIsReady] = React.useState(false);
+  const [loadingText, setLoadingText] = React.useState('Iniciando motor...');
+  const [isBriefModalOpen, setIsBriefModalOpen] = React.useState(false);
+  const [showTutorial, setShowTutorial] = React.useState(false);
+
+  const defaultBrief = "Diseño premium, minimalista y corporativo. Priorizar fluidez visual mediante interpolaciones suaves (lerp) y transiciones sutiles (opacidad/escala). El ritmo de animación debe ser determinista y solemne, atado estrictamente a ctx.timeline. \n\nPROHIBIDO: Uso de colores neón, desenfoques de movimiento excesivos (motion blur), o animaciones con rebotes elásticos (spring) que resten seriedad al gráfico.";
+
+  const [briefText, setBriefText] = React.useState('');
+
+  const saveBrief = () => {
+    useStore.getState().updateProjectConfig({ creativeBrief: briefText });
+    setIsBriefModalOpen(false);
+  };
+
+  // --- Dynamic Tag Extraction ---
+  const extractedSchema = React.useMemo(() => {
+    try {
+      let allTextContent = '';
+      if (activePluginFiles) {
+        allTextContent += (activePluginFiles.html || '') + '\n';
+        allTextContent += (activePluginFiles.css || '') + '\n';
+        allTextContent += (activePluginFiles.js || '') + '\n';
+      }
+      Object.values(properties).forEach(val => {
+        if (typeof val === 'string' && val.length < 50000) {
+          allTextContent += val + '\n';
+        }
+      });
+      return TagExtractorService.extractFromString(allTextContent);
+    } catch (e) {
+      console.error("Error extracting schema:", e);
+      return [];
+    }
+  }, [activePluginFiles, properties]);
 
   const handleRatioSelect = (ratio: string) => {
     const updateProjectConfig = useStore.getState().updateProjectConfig;
@@ -63,8 +107,33 @@ export default function App() {
     else if (ratio === '1:1') updateProjectConfig({ width: 1080, height: 1080, aspectRatioMode: ratio });
     else if (ratio === '4:3') updateProjectConfig({ width: 1440, height: 1080, aspectRatioMode: ratio });
     else if (ratio === '21:9') updateProjectConfig({ width: 2520, height: 1080, aspectRatioMode: ratio });
-    else updateProjectConfig({ aspectRatioMode: ratio }); // Para 'custom' u otros
+    else updateProjectConfig({ aspectRatioMode: ratio });
   };
+
+  const handleVideoDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    const outputPath = useStore.getState().outputPath;
+    if (renderState === 'DONE' && outputPath) {
+      window.ipcRenderer.startDrag(outputPath);
+    }
+  };
+
+  // --- Ciclo de Vida de Carga ---
+  React.useEffect(() => {
+    const sequence = async () => {
+      setLoadingText('Verificando hardware & GPU...');
+      await new Promise(r => setTimeout(r, 800));
+      setLoadingText('Ensamblando módulos...');
+      await new Promise(r => setTimeout(r, 1200));
+      setLoadingText('Optimizando pipeline de video...');
+      setLoadingText('Cargando dependencias...');
+      await new Promise(r => setTimeout(r, 500));
+      setLoadingText('Sincronizando datos...');
+      await new Promise(r => setTimeout(r, 600));
+      setAppIsReady(true);
+    };
+    sequence();
+  }, []);
 
   React.useEffect(() => {
     if (window.ipcRenderer) {
@@ -72,28 +141,64 @@ export default function App() {
         setRenderProgress(progress)
       })
     }
-  }, [setRenderProgress])
+    const handleError = (event: ErrorEvent) => {
+      TelemetryService.trackError(event.error || new Error(event.message), true);
+    };
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, [setRenderProgress]);
 
   React.useEffect(() => {
-    if (!activeProject || !window.ipcRenderer) return
+    if (!activeProject || !window.ipcRenderer) return;
     const timer = setTimeout(() => {
       saveProjectState()
     }, 1000)
     return () => clearTimeout(timer)
-  }, [properties, activeProject?.width, activeProject?.height, activeProject?.fps, activeProject?.durationInFrames, activeProject?.aspectRatioMode, saveProjectState])
+  }, [properties, activeProject?.width, activeProject?.height, activeProject?.fps, activeProject?.durationInFrames, activeProject?.aspectRatioMode, activeProject?.creativeBrief, saveProjectState]);
 
-  const outputPath = useStore(state => state.outputPath)
+  // --- Pantalla de Carga Premium ---
+  if (!appIsReady) {
+    return (
+      <div style={{ height: '100vh', background: '#050505', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: '"Roboto", sans-serif' }}>
+        <div style={{ position: 'relative', marginBottom: '40px' }}>
+          <div style={{ width: '80px', height: '80px', border: '2px solid rgba(228, 76, 48, 0.1)', borderTop: '2px solid #E44C30', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 900, color: '#E44C30', letterSpacing: '2px' }}>DVGE</div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
+             <div style={{ width: '100px', height: '1px', background: 'linear-gradient(90deg, transparent, #333, transparent)' }} />
+          </div>
+          <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '4px', marginBottom: '8px' }}>Cargando DVGE</div>
+          <div style={{ fontSize: '12px', color: '#aaa', fontWeight: 300, minWidth: '200px', textShadow: '0 0 10px rgba(0,0,0,0.5)' }}>{loadingText}</div>
+        </div>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
-  const handleVideoDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (renderState === 'DONE' && outputPath) {
-      window.ipcRenderer.startDrag(outputPath);
-    }
-  };
+  const isManualPath = window.location.hash === '#manual';
+  if (isManualPath) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#050505' }}>
+        <TitleBar />
+        <div style={{ flex: 1, overflow: 'hidden', position: 'relative', paddingTop: '32px' }}>
+          <iframe src="https://mushi-ayaka.github.io/DVGE-Docs/" style={{ width: '100%', height: '100%', border: 'none' }} title="Manual DVGE" />
+        </div>
+      </div>
+    );
+  }
 
   if (!activeProject) {
-    return <HomeMenu />
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary)', paddingTop: '32px', boxSizing: 'border-box' }}>
+        <TitleBar />
+        <AboutModal />
+        <HomeMenu />
+      </div>
+    )
   }
+
+
 
   const handleFieldChange = (id: string, value: any) => {
     setProperties({ [id]: value })
@@ -112,7 +217,9 @@ export default function App() {
     }
   }
 
-  const handleRenderReal = async () => {
+
+
+  const handleRenderReal = async (selectedCodec: string = 'prores') => {
     if (!window.ipcRenderer) {
       console.warn('[DVGE] IPC no disponible para renderizar');
       return;
@@ -125,6 +232,7 @@ export default function App() {
 
     setRenderState('RENDERING')
     setRenderProgress(0)
+    TelemetryService.trackFeatureUse('render_video');
 
     try {
       const result = await window.ipcRenderer.renderProject({
@@ -132,6 +240,7 @@ export default function App() {
         pluginId: activeProject.pluginId,
         properties: properties,
         files: activePluginFiles,
+        _codec: selectedCodec,
         // Enviar config real del proyecto
         _renderWidth: activeProject.width || 1920,
         _renderHeight: activeProject.height || 1080,
@@ -152,7 +261,11 @@ export default function App() {
 
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary)', paddingTop: '32px', boxSizing: 'border-box' }}>
+      <TitleBar />
+      <AboutModal />
+      <RenderModal onConfirm={handleRenderReal} />
+      {showTutorial && <TutorialOverlay onClose={() => setShowTutorial(false)} />}
       {/* TopBar (Fija) */}
       <div style={{
         height: '40px',
@@ -162,7 +275,7 @@ export default function App() {
         alignItems: 'center',
         padding: '0 12px',
         justifyContent: 'space-between',
-        zIndex: 100
+        zIndex: 200
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <button
@@ -186,52 +299,99 @@ export default function App() {
           <button disabled className="tab-btn disabled" style={{ padding: '6px 12px', height: 'auto' }} title="Disponible en próximas versiones">Render</button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            onClick={() => setShowTutorial(true)}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--accent)',
+              color: 'var(--accent)',
+              padding: '4px 12px',
+              borderRadius: '0px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '10px',
+              fontWeight: 800,
+              cursor: 'pointer',
+              marginRight: '8px',
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+              transition: 'all 0.2s'
+            }}
+            className="dv-guide-btn"
+          >
+            GUÍA RÁPIDA
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        {/* Sidebar (Inspector) */}
-        <div style={{
-          width: '320px',
+        {/* Left Column (Global Settings) */}
+        <div className="dv-left-panel" style={{
+          width: '280px',
           background: 'var(--bg-secondary)',
           borderRight: '1px solid var(--border)',
           display: 'flex',
           flexDirection: 'column',
-          zIndex: 50
+          zIndex: 10
         }}>
           {/* Global Config Panel */}
           <ProjectConfigPanel />
 
-          {/* Plugin Identity Badge */}
-          <div style={{
-            height: '40px',
-            padding: '0 12px',
-            background: 'var(--bg-surface)',
-            borderBottom: '1px solid var(--border)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}>
-            <div style={{ padding: '6px', background: 'var(--bg-elevated)', borderRadius: '4px', border: '1px solid var(--border)' }}>
-              <Puzzle size={14} color="var(--accent)" />
+          {/* Template Panel (Código / PDF) */}
+          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{
+              height: '40px',
+              padding: '0 12px',
+              background: 'var(--bg-surface)',
+              borderTop: '1px solid var(--border)',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <div style={{ padding: '6px', background: 'var(--bg-elevated)', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                <Puzzle size={14} color="var(--accent)" />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '9px', color: 'var(--text-label)', textTransform: 'uppercase', fontWeight: 700 }}>Template Core</div>
+                <div style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>{activePlugin?.manifest.name || 'Sin plugin'}</div>
+              </div>
+              <button
+                onClick={() => {
+                  setBriefText(activeProject?.creativeBrief || defaultBrief);
+                  setIsBriefModalOpen(true);
+                }}
+                title="Editar Brief Creativo"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: activeProject?.creativeBrief ? 'var(--accent)' : 'var(--text-disabled)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'color 0.2s'
+                }}
+              >
+                <Feather size={16} />
+              </button>
             </div>
-            <div>
-              <div style={{ fontSize: '9px', color: 'var(--text-label)', textTransform: 'uppercase', fontWeight: 700 }}>Template Activo</div>
-              <div style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>{activePlugin?.manifest.name || 'Sin plugin'}</div>
-            </div>
-          </div>
 
-          {/* Dynamic Inspector Tabs */}
-          <div style={{ flex: 1, overflow: 'hidden' }}>
-            <InspectorErrorBoundary>
-              {activePlugin && (
-                <InspectorTabs
-                  schema={activePlugin.manifest.schema || []}
-                  properties={properties}
-                  onChange={handleFieldChange}
-                />
-              )}
-            </InspectorErrorBoundary>
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <InspectorErrorBoundary>
+                {activePlugin && (
+                  <InspectorTabs
+                    schema={activePlugin.manifest.schema || []}
+                    properties={properties}
+                    onChange={handleFieldChange}
+                    hideTabs={true}
+                  />
+                )}
+              </InspectorErrorBoundary>
+            </div>
           </div>
 
           {/* Action Footer (Fijo) */}
@@ -253,7 +413,7 @@ export default function App() {
             <button
               className="dv-btn cta"
               disabled={renderState === 'RENDERING'}
-              onClick={handleRenderReal}
+              onClick={toggleRenderModal}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
             >
               {renderState === 'RENDERING' ? (
@@ -269,7 +429,7 @@ export default function App() {
         </div>
 
         {/* Main Content Area */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', overflow: 'hidden' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', overflow: 'hidden', minWidth: '500px' }}>
 
           {/* Preview Panel Container */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-elevated)' }}>
@@ -305,7 +465,21 @@ export default function App() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-secondary)' }}>
                   <span style={{ fontSize: '8px', opacity: 0.6 }}>EST.</span>
                   <span style={{ fontWeight: 600 }}>
-                    {(((activeProject.durationInFrames || 240) / (activeProject.fps || 60)) * ((activeProject.width || 1920) * (activeProject.height || 1080) * 0.0000012)).toFixed(1)} MB
+                    {(() => {
+                      const codec = activeProject.preferredCodec || 'prores';
+                      const multipliers: Record<string, number> = {
+                        'prores': 0.0988,
+                        'standard': 0.0368,
+                        'h264': 0.002,
+                        'webm': 0.004,
+                        'gif': 0.0022
+                      };
+                      const multiplier = multipliers[codec] || 0.5;
+                      const width = activeProject.width || 1920;
+                      const height = activeProject.height || 1080;
+                      const frames = activeProject.durationInFrames || 240;
+                      return ((width * height * frames * multiplier) / (1024 * 1024)).toFixed(1);
+                    })()} MB
                   </span>
                 </div>
               </div>
@@ -314,7 +488,7 @@ export default function App() {
             </div>
 
             {/* Preview Viewport - High Visibility Area */}
-            <div style={{
+            <div className="dv-preview-area" style={{
               flex: 1,
               padding: '40px',
               display: 'flex',
@@ -356,7 +530,128 @@ export default function App() {
             </div>
           </div>
         </div>
+
+        {/* Right Column (New Dynamic Inspector) */}
+        {activePlugin && (
+          <div className="dv-right-panel" style={{
+            width: '320px',
+            background: 'var(--bg-secondary)',
+            borderLeft: '1px solid var(--border)',
+            display: 'flex',
+            flexDirection: 'column',
+            zIndex: 10
+          }}>
+            <div style={{
+              height: '40px',
+              padding: '0 8px',
+              background: 'var(--bg-surface)',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <button
+                onClick={() => setActiveRightTab('inspector')}
+                style={{
+                  flex: 1,
+                  height: '28px',
+                  border: 'none',
+                  background: activeRightTab === 'inspector' ? 'var(--bg-elevated)' : 'transparent',
+                  color: activeRightTab === 'inspector' ? 'var(--accent)' : 'var(--text-disabled)',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Inspector
+              </button>
+              <button
+                onClick={() => setActiveRightTab('artifacts')}
+                style={{
+                  flex: 1,
+                  height: '28px',
+                  border: 'none',
+                  background: activeRightTab === 'artifacts' ? 'var(--bg-elevated)' : 'transparent',
+                  color: activeRightTab === 'artifacts' ? 'var(--accent)' : 'var(--text-disabled)',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Artefactos
+              </button>
+            </div>
+
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <InspectorErrorBoundary>
+                {activeRightTab === 'inspector' ? (
+                  extractedSchema.length > 0 ? (
+                    <InspectorTabs
+                      schema={extractedSchema}
+                      properties={properties}
+                      onChange={handleFieldChange}
+                      hideTabs={true}
+                    />
+                  ) : (
+                    <div style={{ padding: '20px', color: 'var(--text-disabled)', fontSize: '12px', textAlign: 'center', marginTop: '40px' }}>
+                      No se encontraron tags /* @dv-field */ en el código de la plantilla.
+                    </div>
+                  )
+                ) : (
+                  <ArtifactsPanel />
+                )}
+              </InspectorErrorBoundary>
+            </div>
+          </div>
+        )}
       </div>
-    </div >
+      {/* Render overlay o ventanas flotantes aquí */}
+      {isBriefModalOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+        }}>
+          <div style={{
+            background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', width: '500px', maxWidth: '90%', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Feather size={20} color="var(--accent)" />
+                <h2 style={{ margin: 0, fontSize: '16px', color: 'white', fontFamily: 'var(--font-mono)' }}>Brief Creativo</h2>
+                <div title="Define la intención creativa, el tono visual y las restricciones estéticas para guiar a la IA. La última oración debe definir qué está PROHIBIDO." style={{ color: 'var(--text-disabled)', cursor: 'help', display: 'flex' }}>
+                  <HelpCircle size={16} />
+                </div>
+              </div>
+              <button onClick={() => setIsBriefModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-disabled)', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+
+            <textarea
+              value={briefText}
+              onChange={(e) => setBriefText(e.target.value)}
+              placeholder="Ej. Diseño minimalista corporativo. Priorizar fluidez suave. PROHIBIDO el uso de colores neón y rebotes elásticos."
+              style={{
+                width: '100%', height: '150px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '12px', color: 'white', fontFamily: 'var(--font-body)', fontSize: '13px', resize: 'vertical', outline: 'none', boxSizing: 'border-box'
+              }}
+            />
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button onClick={() => setIsBriefModalOpen(false)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '4px', color: 'white', cursor: 'pointer', fontSize: '12px' }}>
+                Cancelar
+              </button>
+              <button onClick={saveBrief} className="dv-btn cta" style={{ padding: '8px 16px', fontSize: '12px' }}>
+                Guardar Brief
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
