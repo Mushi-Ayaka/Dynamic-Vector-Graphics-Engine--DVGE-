@@ -44,8 +44,8 @@ function createWindow() {
     minHeight: 700,
     frame: false,
     thickFrame: false,
-    title: 'DV Graphics Engine',
-    icon: join(__dirname, '../public/icon.png'),
+    title: 'Ember Motion Studio',
+    icon: join(__dirname, '../public/logo-square.png'),
     backgroundColor: '#050505',
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
@@ -112,12 +112,12 @@ app.whenReady().then(async () => {
   // Handler para el Drag and Drop Nativo al OS / DaVinci Resolve
   ipcMain.on('ondragstart', (event: IpcMainEvent, filePath: string) => {
     console.log(`[IPC] ondragstart: ${filePath}`)
-    const iconPath = join(__dirname, '../public/icon.png')
+    const iconPath = join(__dirname, '../public/logo-square.png')
     const iconExists = fs.existsSync(iconPath)
 
     event.sender.startDrag({
       file: filePath,
-      icon: iconExists ? iconPath : join(__dirname, '../public/icon.png')
+      icon: iconExists ? iconPath : join(__dirname, '../public/logo-square.png')
     })
   })
 

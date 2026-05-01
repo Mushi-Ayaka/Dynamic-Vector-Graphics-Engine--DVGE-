@@ -68,9 +68,9 @@
       "EULA.txt",
       "*.md"
     ],
-    "icon": "public/logoSquare.png",
+    "icon": "public/logo-square.png",
     "win": {
-      "icon": "public/logoSquare.png",
+      "icon": "public/logo-square.png",
       "target": [
         "nsis"
       ]
