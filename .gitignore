@@ -59,5 +59,6 @@ remotion-bundle/
 KNOWLEDGE_BRIDGE.md
 CHANGELOG.md
 AUDIT_ENGINE_v58.md
+TECHNICAL_DEBT.md
 *.txt
 !app/EULA.txt

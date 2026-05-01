@@ -1,8 +1,8 @@
-# Documentación Técnica: DVGE Studio v5.8
+# Documentación Técnica: Ember Motion Studio v5.8
 
 ## Introducción
 
-El **DVGE Studio v5.8** es un motor de producción audiovisual diseñado para la creación, previsualización y exportación de gráficos broadcast. Su núcleo está optimizado para generar archivos de video con transparencia nativa (canal Alfa) listos para flujos de trabajo profesionales en cine y televisión.
+El **Ember Motion Studio v5.8** es un entorno de producción audiovisual impulsado por el motor **DVGE**, diseñado para la creación, previsualización y exportación de gráficos broadcast. Su núcleo está optimizado para generar archivos de video con transparencia nativa (canal Alfa) listos para flujos de trabajo profesionales en cine y televisión.
 
 ---
 

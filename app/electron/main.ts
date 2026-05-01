@@ -226,21 +226,26 @@ app.whenReady().then(async () => {
   // [v5.7.5] Cargador dinámico de la Constitución Maestra de DVGE (Resiliente)
   const getMasterRules = () => {
     try {
-      // Intentar varias rutas comunes (dist, resources, y source dev)
+      const unpacked = join(process.resourcesPath ?? '', 'app.asar.unpacked');
+      const baseDir = fs.existsSync(unpacked) ? unpacked : app.getAppPath();
+
+      // Intentar varias rutas comunes (unpacked prod, resources, y source dev)
       const possiblePaths = [
-        join(__dirname, 'resources/MASTER_PROMPT.md'),
+        join(baseDir, 'electron/resources/MASTER_PROMPT.md'),
         join(app.getAppPath(), 'electron/resources/MASTER_PROMPT.md'),
+        join(__dirname, 'resources/MASTER_PROMPT.md'),
         join(process.cwd(), 'electron/resources/MASTER_PROMPT.md')
       ];
 
       for (const p of possiblePaths) {
         if (fs.existsSync(p)) {
-          console.log(`[Main] Master Rules cargadas desde: ${p}`);
+          console.log(`[Main] Master Rules cargadas con éxito desde: ${p}`);
           return fs.readFileSync(p, 'utf8');
         }
       }
+      console.warn('[Main] No se encontró MASTER_PROMPT.md en ninguna de las rutas conocidas.');
     } catch (e) {
-      console.error('[Main] Error loading MASTER_PROMPT.md:', e);
+      console.error('[Main] Error crítico cargando MASTER_PROMPT.md:', e);
     }
     return "# DVGE MASTER RULES\nExpert system for broadcast. Use props.[id] and getArtifact(ID).";
   };

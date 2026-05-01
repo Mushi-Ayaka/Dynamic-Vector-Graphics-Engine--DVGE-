@@ -1,14 +1,14 @@
-# Manual de Usuario: DVGE v5.8
+# Manual de Usuario: Ember Motion Studio v5.8
 
 ## Bienvenida
 
-Dynamic Vector Graphics Engine (DVGE) es un motor de producción broadcast. Esta versión **v5.8** consolida la estabilidad del sistema y simplifica la creación de gráficos profesionales mediante un flujo de trabajo optimizado.
+Ember Motion Studio v5.8 es un estudio de producción broadcast. Esta versión **v5.8** consolida la estabilidad del sistema y simplifica la creación de gráficos profesionales mediante un flujo de trabajo optimizado.
 
 ---
 
 ## 1. El Catálogo de Plugins
 
-Amplía tu biblioteca de gráficos instantáneamente:
+Amplía tu biblioteca de plugins instantáneamente:
 
 1. En la pantalla de inicio, accede al **Catálogo de Plugins**.
 2. Explora los diseños profesionales disponibles.
@@ -18,7 +18,7 @@ Amplía tu biblioteca de gráficos instantáneamente:
 
 ## 2. Gestión de Proyectos
 
-DVGE organiza tu trabajo de forma segura y eficiente:
+Ember Motion Studio organiza tu trabajo de forma segura y eficiente:
 
 - **Creación**: Elige un nombre y una plantilla (Plugin) para comenzar.
 - **Configuración**: Permite renombrar o eliminar proyectos de forma segura desde la galería.
@@ -51,7 +51,7 @@ Si tienes dudas sobre el funcionamiento de los paneles, usa el botón **GUÍA R�
 
 ## 5. Exportación y Uso
 
-DVGE exporta archivos `.mov` con transparencia real. Para usarlos en tu editor:
+El motor DVGE exporta archivos `.mov` con transparencia real. Para usarlos en tu editor:
 
 - **DaVinci Resolve**: Si ves fondo negro, ve a *Clip Attributes* -> *Alpha Mode* -> *Straight*.
 - **Premiere Pro / After Effects**: La transparencia se reconoce automáticamente por el códec ProRes 4444.

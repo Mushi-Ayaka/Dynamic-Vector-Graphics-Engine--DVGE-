@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ember Motion Studio - Identity Concept</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-oled: #050505;
+      --ember-base: #E44C30;
+      --ember-light: #FF6B4E;
+      --ember-dark: #C13820;
+      --text-primary: #F5F5F5;
+      --text-secondary: #888888;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-oled);
+      color: var(--text-primary);
+      font-family: Outfit;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      /* Evita el antialiasing borroso para bordes más nítidos (estética premium) */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Contenedor del Logo (Target interactivo) */
+    .brand-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+      padding: 60px;
+      border-radius: 16px;
+      cursor: pointer;
+      /* Transición suave para reset */
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+    }
+
+    /* Isotipo (Keyframes + Onion Skinning) */
+    .ember-mark {
+      width: 140px;
+      height: 140px;
+      filter: drop-shadow(0 0 20px rgba(228, 76, 48, 0.3));
+      /* Animación flotante suave */
+      animation: floatGlow 6s infinite alternate ease-in-out;
+    }
+
+    .mark-core {
+      fill: url(#emberGrad);
+      transform-origin: 75px 50px;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .mark-trail {
+      fill: none;
+      stroke-linejoin: miter;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+    }
+
+    /* Micro-interacción: Al hacer hover, los keyframes se separan (Motion effect) */
+    .brand-container:hover .mark-core {
+      transform: translateX(6px) scale(1.05);
+    }
+
+    .brand-container:hover .mark-trail.t2 {
+      transform: translateX(-4px);
+      opacity: 0.9;
+    }
+
+    .brand-container:hover .mark-trail.t1 {
+      transform: translateX(-10px);
+      opacity: 0.6;
+    }
+
+    /* Tipografía (Wordmark) */
+    .wordmark {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      user-select: none;
+    }
+
+    .brand-title {
+      font-size: 52px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .brand-subtitle {
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.35em;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-left: 0.35em;
+      /* Compensa el tracking final para centrar perfecto */
+    }
+
+    /* Animaciones */
+    @keyframes floatGlow {
+      0% {
+        filter: drop-shadow(0 0 15px rgba(228, 76, 48, 0.2));
+        transform: translateY(0px);
+      }
+
+      100% {
+        filter: drop-shadow(0 0 40px rgba(228, 76, 48, 0.5));
+        transform: translateY(-5px);
+      }
+    }
+
+    .animate-in {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: slideUpReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .delay-1 {
+      animation-delay: 0.15s;
+    }
+
+    .delay-2 {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes slideUpReveal {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="brand-container" id="logoContainer">
+    <!-- SVG Mark (Onion Skin Keyframes) -->
+    <svg class="ember-mark animate-in" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Gradiente térmico para la brasa líder -->
+        <linearGradient id="emberGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="var(--ember-dark)" />
+          <stop offset="50%" stop-color="var(--ember-base)" />
+          <stop offset="100%" stop-color="#FFAB99" /> <!-- Punto de ignición blanco-naranja -->
+        </linearGradient>
+      </defs>
+
+      <!-- Trazos de Movimiento (Vectores en el tiempo) -->
+      <!-- Trail 1 (Keyframe anterior - Faded) -->
+      <polygon class="mark-trail t1" points="20,40 30,50 20,60 10,50" stroke="var(--ember-dark)" stroke-width="2.5"
+        opacity="0.3" />
+
+      <!-- Trail 2 (Keyframe de transición) -->
+      <polygon class="mark-trail t2" points="45,36 59,50 45,64 31,50" stroke="var(--ember-base)" stroke-width="4"
+        opacity="0.6" />
+
+      <!-- La Brasa (Keyframe actual sólido) -->
+      <polygon class="mark-core" points="75,30 95,50 75,70 55,50" />
+    </svg>
+
+    <!-- Wordmark -->
+    <div class="wordmark animate-in delay-1">
+      <div class="brand-title">Ember</div>
+      <div class="brand-subtitle">Motion Studio</div>
+    </div>
+  </div>
+
+  <script>
+    // Parallax 3D sutil para reflejar "Motion"
+    const container = document.getElementById('logoContainer');
+    const MAX_ROTATION = 12; // grados máximos
+
+    document.addEventListener('mousemove', (e) => {
+      // Normalizamos coordenadas entre -1 y 1
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = (e.clientY / window.innerHeight) * 2 - 1;
+
+      // Aplicamos rotación en ejes opuestos (efecto tilt)
+      const rotateX = y * -MAX_ROTATION;
+      const rotateY = x * MAX_ROTATION;
+
+      container.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    });
+
+    // Resetear al salir
+    document.addEventListener('mouseleave', () => {
+      container.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+    });
+  </script>
+</body>
+
+</html>

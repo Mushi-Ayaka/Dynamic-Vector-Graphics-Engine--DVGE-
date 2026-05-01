@@ -34,7 +34,11 @@ export const RenderModal: React.FC<RenderModalProps> = ({ onConfirm }) => {
         { id: 'webm', label: 'WebM (VP9 + Alpha)', desc: 'Formato ligero para web con soporte de transparencia.', color: '#fbbf24' },
         { id: 'gif', label: 'GIF Animado', desc: 'Loop clásico sin audio. Ideal para stickers o previews.', color: '#f472b6' },
         { id: 'standard', label: 'MOV (ProRes 422)', desc: 'Alta calidad sin canal alpha. Archivos más ligeros.', color: '#a78bfa' },
+        { id: 'png', label: 'PNG (Secuencia de Imágenes)', desc: 'Exporta cada frame como archivo PNG individual con canal alpha. Ideal para composición, logos y assets estáticos.', color: '#E44C30' },
+        { id: 'jpg', label: 'JPEG (Secuencia de Imágenes)', desc: 'Exporta cada frame como JPEG individual. Sin canal alpha. Ideal para thumbnails y assets sin transparencia.', color: '#fb923c' },
     ];
+
+    const isImageSequence = selectedCodec === 'png' || selectedCodec === 'jpg';
 
     const currentFormat = formats.find(f => f.id === selectedCodec);
 
@@ -194,6 +198,23 @@ export const RenderModal: React.FC<RenderModalProps> = ({ onConfirm }) => {
                                 }
                                 return null;
                             })()}
+                            {isImageSequence && (
+                                <div style={{
+                                    marginTop: '12px',
+                                    padding: '12px',
+                                    background: 'rgba(228, 76, 48, 0.08)',
+                                    border: '1px solid rgba(228, 76, 48, 0.25)',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    gap: '10px',
+                                    animation: 'fadeIn 0.3s ease'
+                                }}>
+                                    <Info size={18} color="var(--accent)" style={{ flexShrink: 0 }} />
+                                    <div style={{ fontSize: '11px', color: 'rgba(228,76,48,0.9)', lineHeight: '1.4' }}>
+                                        <strong>📁 Secuencia de imágenes:</strong> Se generará una carpeta con un archivo por frame. El número total de archivos depende de la duración y FPS del proyecto.
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {currentFormat && (

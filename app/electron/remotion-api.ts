@@ -1,5 +1,5 @@
 import { app, ipcMain } from 'electron'
-import { getCompositions, renderMedia } from '@remotion/renderer'
+import { getCompositions, renderMedia, renderFrames } from '@remotion/renderer'
 import { join, extname } from 'node:path'
 import * as fs from 'node:fs'
 import * as http from 'node:http'
@@ -87,6 +87,9 @@ export function setupRemotionIPC() {
       let proResProfile: any = '4444';
       let pixelFormat: any = 'yuva444p10le';
 
+      const isImageSequence = selectedCodec === 'png' || selectedCodec === 'jpg';
+      const selectedCodecVal = selectedCodec;
+
       if (selectedCodec === 'h264') {
         extension = 'mp4';
         remotionCodec = 'h264';
@@ -104,9 +107,23 @@ export function setupRemotionIPC() {
         remotionCodec = 'prores';
         proResProfile = 'standard';
         pixelFormat = 'yuv422p10le';
+      } else if (selectedCodec === 'png') {
+        extension = 'png';
+        remotionCodec = 'png';
+        pixelFormat = undefined;
+      } else if (selectedCodec === 'jpg') {
+        extension = 'jpg';
+        remotionCodec = 'jpeg';
+        pixelFormat = undefined;
       }
 
-      const outputLocation = join(exportDir, `dvge_render_${Date.now()}.${extension}`)
+      // [v6.0.0] Para secuencias de imagen, outputLocation es una carpeta; para video, es un archivo.
+      const outputLocation = isImageSequence
+        ? join(exportDir, `dvge_frames_${Date.now()}`)
+        : join(exportDir, `dvge_render_${Date.now()}.${extension}`)
+      if (isImageSequence && !fs.existsSync(outputLocation)) {
+        fs.mkdirSync(outputLocation, { recursive: true });
+      }
       const logPath = join(exportDir, 'render_debug.log');
       const logStream = fs.createWriteStream(logPath, { flags: 'a' });
       const log = (msg: string) => {
@@ -192,21 +209,15 @@ export function setupRemotionIPC() {
         delete cleanEnv.VITE_DEV_SERVER_URL;
         delete cleanEnv.REMOTION_DEV_SERVER;
 
-        await renderMedia({
+        const sharedConfig = {
           composition: { ...composition, width: renderWidth, height: renderHeight, fps: renderFps, durationInFrames: renderDuration },
           serveUrl: 'http://127.0.0.1:5555',
-          codec: remotionCodec,
-          ...(remotionCodec === 'prores' ? { proResProfile } : {}),
-          ...(pixelFormat ? { pixelFormat } : {}),
-          imageFormat: 'png',
-          outputLocation,
           inputProps: { ...props, isExporting: true },
           ...(binariesDirectory ? { binariesDirectory } : {}),
           dotRemotionDir,
-          logLevel: 'verbose',
+          logLevel: 'verbose' as const,
           concurrency: 1,
           browserExecutable: await dependencyManager.ensureChromium() || dependencyManager.getSystemChromePath(),
-          // [CRÍTICO] Flags para forzar renderizado estable en Windows
           chromiumFlags: [
             '--headless=new',
             '--transparent-background-color=0',
@@ -222,13 +233,41 @@ export function setupRemotionIPC() {
           ],
           envVariables: cleanEnv as any,
           onConsoleLog: (msg: any) => log(`[Browser] ${msg.text}`),
-          onProgress: ({ progress }: any) => event.sender.send('render-progress', progress),
-          evaluatePage: async (page: any) => {
-            await page.evaluate(() => {
-              document.body.style.backgroundColor = 'transparent';
-            });
-          }
-        } as any)
+        };
+
+        if (isImageSequence) {
+          // [v6.0.0] Image Sequence Export — renderFrames genera un archivo por frame
+          log(`🖼️ Iniciando secuencia de imágenes (${selectedCodecVal.toUpperCase()}) → ${outputLocation}`);
+          await (renderFrames as any)({
+            ...sharedConfig,
+            outputDir: outputLocation,
+            imageFormat: selectedCodecVal === 'jpg' ? 'jpeg' : 'png',
+            evaluatePage: async (page: any) => {
+              await page.evaluate(() => {
+                document.body.style.backgroundColor = 'transparent';
+              });
+            },
+            onFrameUpdate: (frame: number) => {
+              event.sender.send('render-progress', frame / renderDuration);
+            },
+          });
+        } else {
+          // Video export — renderMedia (comportamiento existente)
+          await renderMedia({
+            ...sharedConfig,
+            codec: remotionCodec,
+            ...(remotionCodec === 'prores' ? { proResProfile } : {}),
+            ...(pixelFormat ? { pixelFormat } : {}),
+            imageFormat: 'png',
+            outputLocation,
+            onProgress: ({ progress }: any) => event.sender.send('render-progress', progress),
+            evaluatePage: async (page: any) => {
+              await page.evaluate(() => {
+                document.body.style.backgroundColor = 'transparent';
+              });
+            }
+          } as any);
+        }
       } finally {
         log('[Render] Finalizado o abortado.');
         server.close();

@@ -1,5 +1,5 @@
 {
-  "name": "dv-web-graphics-engine",
+  "name": "ember-motion-studio",
   "version": "5.8.0",
   "main": "dist-electron/main.js",
   "description": "Professional Dynamic Vector Graphics Engine for Broadcast Animation",
@@ -40,8 +40,8 @@
     "vite-plugin-electron-renderer": "^0.14.5"
   },
   "build": {
-    "appId": "com.jonatanbaron.dvremotionengine",
-    "productName": "Dynamic Vector Graphics Engine (DVGE)",
+    "appId": "com.jonatanbaron.embermotionstudio",
+    "productName": "Ember Motion Studio",
     "directories": {
       "output": "C:/Users/Josue B/Desktop/Josue B/Documents/Jonatan Baron/Releases/DVGE/${version}"
     },
@@ -53,6 +53,7 @@
       "src/remotion/**",
       "public/**",
       "remotion-bundle/**",
+      "electron/resources/**",
       "*.md"
     ],
     "files": [
@@ -61,14 +62,15 @@
       "src/remotion/**",
       "public/**",
       "remotion-bundle/**",
+      "electron/resources/**",
       "node_modules/**",
       "package.json",
       "EULA.txt",
       "*.md"
     ],
-    "icon": "public/icon_highlight.png",
+    "icon": "public/logoSquare.png",
     "win": {
-      "icon": "public/icon_highlight.png",
+      "icon": "public/logoSquare.png",
       "target": [
         "nsis"
       ]
@@ -78,7 +80,7 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "license": "EULA.txt",
-      "artifactName": "DVGE-Setup-${version}.${ext}"
+      "artifactName": "EmberMotionStudio-Setup-${version}.${ext}"
     },
     "compression": "store"
   }

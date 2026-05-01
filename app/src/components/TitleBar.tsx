@@ -174,8 +174,7 @@ export const TitleBar: React.FC = () => {
       {/* Left: App identity + menus */}
       {/* @ts-ignore */}
       <div className="tb-left" style={{ WebkitAppRegion: 'no-drag' }}>
-        <img src="icon.png" alt="" style={{ width: '16px', height: '16px', marginRight: '8px' }} />
-        <span className="tb-brand">DVGE</span>
+        <img src="logo.png" alt="" style={{ height: '36px', width: 'auto', marginRight: '16px', transform: 'scale(1.2)', transformOrigin: 'left center' }} />
         {!isManual && (
           <div className="tb-menus">
             {menus.map(group => (
@@ -190,12 +189,12 @@ export const TitleBar: React.FC = () => {
           </div>
         )}
         {isManual && (
-          <span style={{ 
-            fontSize: '11px', 
-            color: 'var(--text-secondary)', 
-            marginLeft: '8px', 
+          <span style={{
+            fontSize: '11px',
+            color: 'var(--text-secondary)',
+            marginLeft: '8px',
             fontFamily: 'Fira Sans, sans-serif',
-            opacity: 0.8 
+            opacity: 0.8
           }}>
             Manual de Usuario
           </span>
