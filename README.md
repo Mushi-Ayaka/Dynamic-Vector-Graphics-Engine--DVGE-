@@ -1,5 +1,7 @@
 # Dynamic Vector Graphics Engine (DVGE) v5.6.0 GA
 
+[![Sitio Oficial](https://img.shields.io/badge/Sitio-Ember_Motion_Studio-E44C30?style=for-the-badge)](https://ember-motion-studio-landing.vercel.app/)
+
 **Dynamic Vector Graphics Engine (DVGE)** es un software de escritorio de alto rendimiento diseñado para gráficos de transmisión profesionales. Construido con React, Electron y Remotion, permite a los productores y editores crear, personalizar y exportar gráficos dinámicos (lower thirds, títulos, callouts) con retroalimentación en tiempo real y soporte nativo para ProRes 4444 + Alpha.
 
 > [!IMPORTANT]
