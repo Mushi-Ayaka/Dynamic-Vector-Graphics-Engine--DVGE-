@@ -1,94 +1,79 @@
-# Dynamic Vector Graphics Engine (DVGE) v5.6.0 GA
+# Ember Motion Studio v5.9.0
 
 [![Sitio Oficial](https://img.shields.io/badge/Sitio-Ember_Motion_Studio-E44C30?style=for-the-badge)](https://ember-motion-studio-landing.vercel.app/)
 
-**Dynamic Vector Graphics Engine (DVGE)** es un software de escritorio de alto rendimiento diseñado para gráficos de transmisión profesionales. Construido con React, Electron y Remotion, permite a los productores y editores crear, personalizar y exportar gráficos dinámicos (lower thirds, títulos, callouts) con retroalimentación en tiempo real y soporte nativo para ProRes 4444 + Alpha.
+**Ember Motion Studio** es un software de escritorio de alto rendimiento diseñado para gráficos o animaciones profesionales. Construido con React, Electron y Remotion, permite a los productores y editores crear, personalizar y exportar gráficos dinámicos (lower thirds, títulos, callouts) con retroalimentación en tiempo real y soporte nativo para ProRes 4444 + Alpha.
 
 > [!IMPORTANT]
-> **Estado del Proyecto**: DVGE es actualmente un proyecto **Open Source** impulsado por un único desarrollador independiente bajo la **MIT License**. Estamos en desarrollo activo (Etapa GA).
+> **Estado del Proyecto**: Ember Motion Studio es actualmente un proyecto **Open Source** impulsado por un único desarrollador independiente bajo la **MIT License**. Estoy en desarrollo activo (Etapa GA).
 > **Compromiso de Seguridad**: Los instaladores actuales no están firmados digitalmente debido a los costes de certificación para desarrolladores independientes. Como proyecto Open Source, priorizamos la transparencia: el código es totalmente auditable. Para instalar sin avisos, simplemente haz clic en "Más información" -> "Ejecutar de todos modos".
 
-## ✨ Key Features
+## ✨ Key Features (v5.9.0)
 
-- **Knowledge Bridge (v5.6)**: Inyección nativa de reglas para asistentes de IA. Genera reglas maestras en PDF para alimentar LLMs (Claude/Gemini/GPT) para la generación de plugins 100% compatibles.
-- **Transparency Transformer**: Capa de estabilidad avanzada para exportaciones ProRes 4444, asegurando una captura perfecta del canal Alpha desde el primer fotograma (Solución para el bug del fotograma 0).
-- **Gestión de Proyectos**: Galería integrada para renombrar, eliminar y gestionar tus activos de transmisión directamente desde el menú de inicio.
-- **Integrity Check**: Capa de seguridad automatizada que evita la carga de proyectos con plugins faltantes o eliminados.
-- **Smart Engine**: Capa de inteligencia que envuelve y corrige automáticamente errores estructurales en scripts generados por IA (Auto-Rescue).
-- **Catálogo de Plugins**: Descubre, instala y actualiza gráficos directamente desde el registro oficial de GitHub.
-- **Security Sandbox**: Ejecución de plugins aislada a través de Shadow DOM y `fakeWindow` para prevenir interferencias en el sistema.
-- **Atomic Async I/O**: Persistencia de proyectos resiliente utilizando operaciones de archivos atómicos para prevenir la corrupción de datos.
-- **Live 60FPS Preview**: Renderizado en tiempo real con animación determinística basada en fotogramas (`ctx.timeline`).
+- **Studio Master Core**: Integración nativa del "Proyecto Vacío". Ahora puedes programar desde cero sin dependencias externas, utilizando el motor como un lienzo en blanco profesional.
+- **Dynamic Inspector v2**: Extracción automática de propiedades mediante tags `/* @dv-prop */`. Soporta tipos complejos como `alignment`, `slider`, `easing` e `icon` con sincronización en tiempo real.
+- **Transparency Transformer**: Sistema avanzado de estabilidad para exportaciones ProRes 4444, garantizando que el canal Alpha sea capturado perfectamente desde el fotograma 0.
+- **Knowledge Bridge**: Generador de contextos para IA. Crea PDFs con reglas maestras para que Claude, Gemini o GPT generen plugins 100% compatibles con la arquitectura del motor.
+- **Bilingual Interface**: Soporte completo para Inglés y Español, sincronizado a través de un sistema de i18n dinámico en toda la aplicación.
+- **Atomic Async I/O**: Sistema de persistencia de proyectos ultra-resiliente que utiliza operaciones atómicas para prevenir la corrupción de datos en sesiones largas.
 
-## Technical Stack
+## 🚀 Technical Stack
 
-- **Core**: Electron, React 18, Vite.
-- **Rendering Engine**: Remotion (Player & Renderer).
-- **State Management**: Zustand.
-- **Styling**: Vanilla CSS (Scoped via Shadow DOM).
-- **Package Manager**: NPM / Electron-builder.
+- **Core**: React 18, Electron 29, Vite.
+- **Rendering**: Remotion (Frame-accurate determinism).
+- **State**: Zustand (Persistence & Global Sync).
+- **Security**: Shadow DOM Sandboxing & Polyfilled Roots.
 
-## Getting Started
+## 🛠️ Getting Started
 
-### Prerequisites
+### Requisitos Previos
 
-- [Node.js](https://nodejs.org/) (Version 18 or higher recommended)
-- [NPM](https://www.npmjs.com/)
-- **Google Chrome** (System-wide installation for headless rendering)
+- [Node.js](https://nodejs.org/) (v18 o superior)
+- **Google Chrome** (Instalado para el renderizado headless)
 
-### Installation
+### Instalación para Desarrollo
 
-1. Clone the repository:
+1. Clonar el repositorio.
+2. Entrar en la carpeta del proyecto:
 
    ```bash
-   git clone https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-.git
    cd "Dynamic Vector Graphics Engine"/app
    ```
 
-2. Install dependencies:
+3. Instalar dependencias:
 
    ```bash
    npm install
    ```
 
-3. Run the development server:
+4. Iniciar el entorno de desarrollo:
 
    ```bash
    npm run dev
    ```
 
-### Building for Production
+### Producción
 
-To generate the installer (.exe) for Windows:
+Para generar el instalador oficial (.exe):
 
 ```bash
 npm run build
 ```
 
-Los artefactos se generarán en la carpeta `Releases` (configurada en `package.json`).
-
-## Estructura del Proyecto
+## 📁 Estructura del Proyecto
 
 ```text
 app/
-├── electron/          # Main process logic (IPC, File System, Render)
-├── src/               # Renderer process (React UI, Logic, Styles)
-│   ├── components/    # UI Components (Manuals, Project Manager)
-│   ├── remotion/      # Remotion compositions and PluginWrapper
-│   └── store/         # Zustand store (Persistence and Global State)
-├── TECHNICAL.md       # Full technical architecture documentation
-├── AI_PLUGIN_GUIDE.md # Tutorial for creating plugins with AI
-└── CHANGELOG.md       # Version history and v3.1 release notes
+├── electron/          # Lógica del proceso principal (IPC, Filesystem, Render API)
+├── src/               # Interfaz de usuario (React, i18n, Global Store)
+│   ├── components/    # Componentes de UI (Inspector, Project Manager, Modales)
+│   ├── remotion/      # Composiciones de video y PluginWrapper
+│   └── engine/        # Núcleo del motor y Sandbox (Bridge, TagExtractor)
+└── TECHNICAL.md       # Documentación técnica profunda del motor
 ```
 
-## Documentation
+## 📜 Licencia
 
-- **[Technical Manual](app/TECHNICAL.md)**: Análisis profundo de la arquitectura, ciclo de vida y puente IPC.
-- **[AI Plugin Guide](app/AI_PLUGIN_GUIDE.md)**: Tutorial paso a paso para generar plugins listos para producción usando IA.
-- **[User Manual](app/USER_MANUAL.md)**: Guía sencilla para editores y productores.
-
-## License
-
-MIT — see the [LICENSE](LICENSE) file for details.
+MIT — ver el archivo [LICENSE](LICENSE) para más detalles.
 
 © 2026 Jonatan Baron. All rights reserved.

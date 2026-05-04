@@ -51,6 +51,10 @@ export const dvUtils = {
         }
     },
     lerp: (a: number, b: number, t: number) => a * (1 - t) + b * t,
+    mapRange: (val: number, inMin: number, inMax: number, outMin: number, outMax: number) => {
+        if (inMax === inMin) return outMin;
+        return outMin + (outMax - outMin) * (val - inMin) / (inMax - inMin);
+    },
     clamp: (val: number, min: number, max: number) => Math.min(Math.max(val, min), max),
     easeOutCubic: (t: number) => 1 - Math.pow(1 - t, 3),
     easeInOutCubic: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,

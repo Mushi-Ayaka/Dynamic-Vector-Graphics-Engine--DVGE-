@@ -71,9 +71,7 @@ export default function App() {
   const clearActiveProject = useStore(state => state.clearActiveProject)
   const toggleRenderModal = useStore(state => state.toggleRenderModal)
   const isSettingsOpen = useStore(state => state.isSettingsOpen)
-  const toggleSettings = useStore(state => state.toggleSettings)
   const isAboutOpen = useStore(state => state.isAboutOpen)
-  const toggleAbout = useStore(state => state.toggleAbout)
   const appSettings = useStore(state => state.appSettings)
   const startHomeTutorial = useStore(state => state.startHomeTutorial)
   const setStartHomeTutorial = useStore(state => state.setStartHomeTutorial)
@@ -834,18 +832,35 @@ export default function App() {
             <div style={{ flex: 1, overflow: 'hidden' }}>
               <InspectorErrorBoundary t={t}>
                 {activeRightTab === 'inspector' ? (
-                  extractedSchema.length > 0 ? (
-                    <InspectorTabs
-                      schema={extractedSchema}
-                      properties={properties}
-                      onChange={handleFieldChange}
-                      hideTabs={true}
-                    />
-                  ) : (
-                    <div style={{ padding: '20px', color: 'var(--text-disabled)', fontSize: '12px', textAlign: 'center', marginTop: '40px' }}>
-                      {t('no_tags_found')}
-                    </div>
-                  )
+                  (() => {
+                    const nativeSchema = activePlugin?.manifest?.schema || [];
+                    const finalSchema = [...nativeSchema, ...extractedSchema];
+                    
+                    // Eliminar duplicados por ID (priorizar extraídos sobre nativos si coinciden)
+                    const uniqueMap = new Map();
+                    finalSchema.forEach(f => uniqueMap.set(f.id, f));
+                    
+                    // [v5.9.1] Filtrar campos internos de Studio Master que se manejan en otros paneles
+                    const EXCLUDED_IDS = ['masterRules', 'htmlCode', 'cssCode', 'jsCode'];
+                    const uniqueSchema = Array.from(uniqueMap.values())
+                      .filter(f => !EXCLUDED_IDS.includes(f.id));
+
+                    if (uniqueSchema.length > 0) {
+                      return (
+                        <InspectorTabs
+                          schema={uniqueSchema}
+                          properties={properties}
+                          onChange={handleFieldChange}
+                          hideTabs={true}
+                        />
+                      );
+                    }
+                    return (
+                      <div style={{ padding: '20px', color: 'var(--text-disabled)', fontSize: '12px', textAlign: 'center', marginTop: '40px' }}>
+                        {t('no_tags_found')}
+                      </div>
+                    );
+                  })()
                 ) : (
                   <div className="dv-artifacts-panel" style={{ height: '100%' }}>
                     <ArtifactsPanel />

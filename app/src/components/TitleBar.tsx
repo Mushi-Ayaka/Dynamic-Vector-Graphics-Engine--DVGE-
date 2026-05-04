@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import './TitleBar.css';
 import { useStore } from '../store/useStore';
 import { useTranslation } from '../i18n/useTranslation';
-import { APP_VERSION } from '../version';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
