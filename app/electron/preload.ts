@@ -31,7 +31,7 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   getPluginFiles: (pluginId: string) => ipcRenderer.invoke('get-plugin-files', pluginId),
   installPlugin: (pluginId: string, files: any) => ipcRenderer.invoke('install-plugin', { pluginId, files }),
   deletePlugin: (pluginId: string) => ipcRenderer.invoke('delete-plugin', pluginId),
-  generateRulesPdf: (rulesText: string) => ipcRenderer.invoke('generate-rules-pdf', rulesText),
+  generateRulesPdf: (data: any) => ipcRenderer.invoke('generate-rules-pdf', data),
   logSync: (data: any) => ipcRenderer.send('log-sync', data),
   
   // Workspace / Proyectos
@@ -66,5 +66,6 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   copyToProject: (data: { projectId: string, sourcePath: string }) => ipcRenderer.invoke('copy-to-project', data),
   listAssets: (projectId: string) => ipcRenderer.invoke('list-assets', projectId),
   indexAsset: (data: { projectId: string, assetPath: string }) => ipcRenderer.invoke('index-asset', data),
+  parseTableFile: (filePath: string) => ipcRenderer.invoke('parse-table-file', filePath),
   fetchRemoteRegistry: () => ipcRenderer.invoke('fetch-remote-registry'),
 })

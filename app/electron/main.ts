@@ -17,6 +17,8 @@ import { app, BrowserWindow, ipcMain, shell, IpcMainEvent, Menu, dialog, protoco
 import 'dotenv/config'
 import { join, basename } from 'node:path'
 import * as fs from 'node:fs'
+import * as XLSX from 'xlsx'
+import Papa from 'papaparse'
 
 // [CRÍTICO] Forzar directorio .remotion global para evitar EPERM en Program Files
 process.env.REMOTION_DOT_REMOTION_DIR = join(app.getPath('userData'), '.remotion-cache');
@@ -251,12 +253,38 @@ app.whenReady().then(async () => {
   };
 
   // [v5.7.0] Generador de PDF Modular con Contexto de Proyecto para IAs
-  ipcMain.handle('generate-rules-pdf', async (_event, data: { rulesText: string, projectContext?: any }) => {
-    return new Promise((resolve) => {
+  ipcMain.handle('generate-rules-pdf', async (_event, data: { rulesText: string, projectContext?: any, options?: any }) => {
+    return new Promise(async (resolve) => {
+      // Opciones por defecto si no se reciben
+      const options = data.options || {
+        includeCanvas: true,
+        includeArtifacts: true,
+        includeCode: false,
+        visualSkill: 'none'
+      };
+
       // Si el texto es el placeholder por defecto o el ID coincide, inyectamos las reglas del archivo .md
-      const finalRules = (data.rulesText === 'Reglas' || data.rulesText.length < 20)
+      let finalRules = (data.rulesText === 'Reglas' || data.rulesText === 'AUTO_GENERATED' || data.rulesText.length < 20)
         ? getMasterRules()
         : data.rulesText;
+
+      // [v6.9.0] Inyección de Visual Skills (MANDATORY DIRECTIVE)
+      const { visualSkills } = await import('./resources/visualSkills');
+      
+      // Sincronización con el array de presets del frontend
+      const activePresets: string[] = options.stylePresets || (options.visualSkill && options.visualSkill !== 'none' ? [options.visualSkill] : []);
+      
+      if (activePresets.length > 0) {
+        finalRules += '\n\n--- ⚠️ CRITICAL DIRECTIVE: MANDATORY ANIMATION STYLE PRESETS ---\n';
+        finalRules += 'You MUST strictly follow these technical and aesthetic guidelines for the requested animation.\n';
+        activePresets.forEach(id => {
+          const skillContent = (visualSkills as any)[id];
+          if (skillContent) {
+            finalRules += `\n[STYLE PRESET: ${id.toUpperCase()}]\n${skillContent}\n`;
+          }
+        });
+        finalRules += '\n--- END OF MANDATORY PRESETS ---\n';
+      }
 
       const pdfPath = join(app.getPath('temp'), `DVGE-Context-${Date.now()}.pdf`)
 
@@ -265,9 +293,138 @@ app.whenReady().then(async () => {
       // Construir el bloque de contexto si existe
       let contextHtml = '';
       if (data.projectContext) {
-        const { name, pluginId = 'Desconocido', updatedAt, artifacts, width = 1920, height = 1080, fps = 60, durationInFrames = 240, creativeBrief } = data.projectContext;
+        const { name, pluginId = 'Desconocido', updatedAt, artifacts = [], width = 1920, height = 1080, fps = 60, durationInFrames = 240, creativeBrief } = data.projectContext;
         const seconds = (durationInFrames / fps).toFixed(1);
         const versionDate = updatedAt ? new Date(updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+        
+        // 1. Bloque de Canvas
+        let canvasHtml = '';
+        if (options.includeCanvas) {
+          canvasHtml = `
+            <h3 style="color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px;">⚙️ Configuración del Canvas (Video)</h3>
+            <div style="display: flex; gap: 20px; font-size: 13px; font-family: monospace; background: #252525; padding: 15px; border-radius: 6px; border: 1px solid #333;">
+              <div><strong>Resolución:</strong> <span style="color: #4CAF50;">${width}x${height}</span></div>
+              <div><strong>Framerate:</strong> <span style="color: #4CAF50;">${fps} FPS</span></div>
+              <div><strong>Duración Total:</strong> <span style="color: #4CAF50;">${durationInFrames} frames (${seconds}s)</span></div>
+            </div>
+          `;
+        }
+
+        // 2. Bloque de Artefactos
+        let artifactsHtml = '';
+        if (options.includeArtifacts && artifacts) {
+          const artifactItems = artifacts.map((a: any) => {
+            const isDataset = a.type === 'dataset';
+            const typeLabel = isDataset ? 'Dataset / Tabular' : (a.type === 'video' ? 'Video' : 'Imagen');
+            
+            if (isDataset) {
+              return `
+              <div style="background: #252525; border: 1px solid #333; border-radius: 6px; margin-bottom: 20px; overflow: hidden;">
+                <div style="background: #333; padding: 10px 15px; font-weight: bold; color: #fff; display: flex; justify-content: space-between;">
+                  <span>${a.label} <span style="font-size: 11px; font-weight: normal; color: #aaa;">(${typeLabel})</span></span>
+                  <span style="color: #E44C30; font-family: monospace;">${a.id}</span>
+                </div>
+                <div style="padding: 15px;">
+                  <div style="font-family: monospace; font-size: 12px; color: #4CAF50; margin-bottom: 5px;">[HTML]</div>
+                  <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>&lt;div id="container_${a.id}"&gt;&lt;/div&gt;</code></pre>
+
+                  ${options.includeDataPreview ? `
+                  <div style="font-family: monospace; font-size: 12px; color: #E44C30; margin-bottom: 5px; margin-top: 15px;">[FULL DATASET]</div>
+                  <div style="background: #111; color: #4CAF50; padding: 10px; border-radius: 4px; border: 1px solid #222; font-size: 10px; font-family: monospace; overflow: auto; max-height: 400px;">
+                    ${(() => {
+                      try {
+                        const d = JSON.parse(a.value || '[]');
+                        if (d.length > 0) {
+                          const preview = d.length > 500 ? d.slice(0, 500) : d;
+                          return JSON.stringify(preview, null, 2).replace(/</g, '&lt;') + (d.length > 500 ? '\n... (truncado por tamaño, total: ' + d.length + ' filas)' : '');
+                        }
+                        return 'El dataset está vacío.';
+                      } catch(e) { return 'Error al parsear JSON del dataset.'; }
+                    })()}
+                  </div>
+                  ` : `
+                  <div style="font-family: monospace; font-size: 12px; color: #888; margin-top: 15px; font-style: italic;">[DATA PREVIEW OMITIDO POR PRIVACIDAD]</div>
+                  `}
+                  
+                  <div style="font-family: monospace; font-size: 12px; color: #FFC107; margin-bottom: 5px; margin-top: 15px;">[JAVASCRIPT]</div>
+                  <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>// [1] EXTRAER DATOS (JSON 2D Array)
+const rawData_${a.id} = props['${a.id}'];
+const data_${a.id} = JSON.parse(rawData_${a.id} || '[["Col1", "Col2"], ["Val1", "Val2"]]');
+const headers_${a.id} = data_${a.id}[0];
+const rows_${a.id} = data_${a.id}.slice(1);
+
+// [2] CACHEAR NODOS DOM
+const container_${a.id} = document.getElementById('container_${a.id}');
+if (container_${a.id} && container_${a.id}.dataset.initialized !== 'true') {
+  container_${a.id}.innerHTML = '';
+  rows_${a.id}.forEach((row, idx) => {
+    const el = document.createElement('div');
+    el.id = "item_${a.id}_" + idx;
+    el.textContent = headers_${a.id}[0] + ": " + row[0];
+    container_${a.id}.appendChild(el);
+  });
+  container_${a.id}.dataset.initialized = 'true';
+}</code></pre>
+              </div></div>`;
+            }
+
+            return `
+            <div style="background: #252525; border: 1px solid #333; border-radius: 6px; margin-bottom: 20px; overflow: hidden;">
+              <div style="background: #333; padding: 10px 15px; font-weight: bold; color: #fff; display: flex; justify-content: space-between;">
+                <span>${a.label} <span style="font-size: 11px; font-weight: normal; color: #aaa;">(${typeLabel})</span></span>
+                <span style="color: #E44C30; font-family: monospace;">${a.id}</span>
+              </div>
+              <div style="padding: 15px;">
+                <div style="font-family: monospace; font-size: 12px; color: #4CAF50; margin-bottom: 5px;">[HTML]</div>
+                <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>&lt;div class="artifact-wrapper"&gt;
+  &lt;${a.type === 'video' ? 'video muted loop autoplay' : 'img'} id="el_${a.id}" class="dv-artifact" src="" alt="${a.label}"&gt;&lt;/${a.type === 'video' ? 'video' : 'img'}&gt;
+&lt;/div&gt;</code></pre>
+                
+                <div style="font-family: monospace; font-size: 12px; color: #2196F3; margin-bottom: 5px; margin-top: 15px;">[CSS]</div>
+                <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>#el_${a.id} {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}</code></pre>
+
+                <div style="font-family: monospace; font-size: 12px; color: #FFC107; margin-bottom: 5px; margin-top: 15px;">[JAVASCRIPT]</div>
+                <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>const media_${a.id} = document.getElementById('el_${a.id}');
+const src_${a.id} = props['${a.id}'];
+
+if (media_${a.id} && src_${a.id} && media_${a.id}.getAttribute('src') !== src_${a.id}) {
+  media_${a.id}.src = src_${a.id};
+  media_${a.id}.style.opacity = "1";
+}</code></pre>
+            </div></div>`;
+          }).join('');
+
+          artifactsHtml = `
+            <h3 style="color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 25px;">🎨 Artefactos Disponibles</h3>
+            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">A continuación se listan los artefactos inyectados para este proyecto y el código exacto necesario para implementarlos. <b>NO inventes otros IDs ni uses getArtifact().</b></p>
+            ${artifacts.length > 0 ? artifactItems : '<div style="padding: 15px; color: #888; font-style: italic;">No hay artefactos definidos en este proyecto.</div>'}
+          `;
+        }
+
+        // 3. Bloque de Código Fuente
+        let codeHtml = '';
+        if (options.includeCode && pluginId) {
+          const files = await pluginManager.getPluginFiles(pluginId);
+          codeHtml = `
+            <h3 style="color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 25px;">💻 Código Fuente Actual</h3>
+            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">A continuación se muestra el código actual del plugin. Modifica SOLO lo necesario basándote en este código en lugar de reescribir de cero.</p>
+            
+            <div style="font-family: monospace; font-size: 12px; color: #4CAF50; margin-bottom: 5px;">[HTML]</div>
+            <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>${(files?.html || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>
+
+            <div style="font-family: monospace; font-size: 12px; color: #2196F3; margin-bottom: 5px; margin-top: 15px;">[CSS]</div>
+            <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>${(files?.css || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>
+
+            <div style="font-family: monospace; font-size: 12px; color: #FFC107; margin-bottom: 5px; margin-top: 15px;">[JAVASCRIPT]</div>
+            <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>${(files?.js || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>
+          `;
+        }
 
         contextHtml = `
           <div style="background: #1a1a1a; color: #eee; padding: 30px; border-radius: 12px; margin-bottom: 40px; border: 1px solid #E44C30;">
@@ -281,12 +438,7 @@ app.whenReady().then(async () => {
               Este documento contiene el contexto vivo del proyecto y su configuración. La IA debe basarse <b>estrictamente</b> en estos valores para generar el código.
             </p>
             
-            <h3 style="color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px;">⚙️ Configuración del Canvas (Video)</h3>
-            <div style="display: flex; gap: 20px; font-size: 13px; font-family: monospace; background: #252525; padding: 15px; border-radius: 6px; border: 1px solid #333;">
-              <div><strong>Resolución:</strong> <span style="color: #4CAF50;">${width}x${height}</span></div>
-              <div><strong>Framerate:</strong> <span style="color: #4CAF50;">${fps} FPS</span></div>
-              <div><strong>Duración Total:</strong> <span style="color: #4CAF50;">${durationInFrames} frames (${seconds}s)</span></div>
-            </div>
+            ${canvasHtml}
 
             ${creativeBrief ? `
             <h3 style="color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 25px;">🎨 Brief Creativo</h3>
@@ -295,45 +447,12 @@ app.whenReady().then(async () => {
             </div>
             ` : ''}
             
-            <h3 style="color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px;">🎨 Artefactos Disponibles</h3>
-            <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">A continuación se listan los artefactos inyectados para este proyecto y el código exacto necesario para implementarlos. <b>NO inventes otros IDs ni uses getArtifact().</b></p>
-            
-            ${artifacts.length > 0 ? artifacts.map((a: any) => `
-              <div style="background: #252525; border: 1px solid #333; border-radius: 6px; margin-bottom: 20px; overflow: hidden;">
-                <div style="background: #333; padding: 10px 15px; font-weight: bold; color: #fff; display: flex; justify-content: space-between;">
-                  <span>${a.label} <span style="font-size: 11px; font-weight: normal; color: #aaa;">(${a.description || 'Imagen'})</span></span>
-                  <span style="color: #E44C30; font-family: monospace;">${a.id}</span>
-                </div>
-                <div style="padding: 15px;">
-                  <div style="font-family: monospace; font-size: 12px; color: #4CAF50; margin-bottom: 5px;">[HTML]</div>
-                  <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>&lt;div class="artifact-wrapper"&gt;
-  &lt;img id="el_${a.id}" class="dv-artifact" src="" alt="${a.label}"&gt;
-&lt;/div&gt;</code></pre>
-                  
-                  <div style="font-family: monospace; font-size: 12px; color: #2196F3; margin-bottom: 5px; margin-top: 15px;">[CSS]</div>
-                  <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>#el_${a.id} {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0; /* Aparece tras cargar */
-  transition: opacity 0.3s ease;
-}</code></pre>
+            ${artifactsHtml}
 
-                  <div style="font-family: monospace; font-size: 12px; color: #FFC107; margin-bottom: 5px; margin-top: 15px;">[JAVASCRIPT]</div>
-                  <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>const img_${a.id} = document.getElementById('el_${a.id}');
-const src_${a.id} = props['${a.id}'];
-
-if (img_${a.id} && src_${a.id} && img_${a.id}.getAttribute('src') !== src_${a.id}) {
-  img_${a.id}.src = src_${a.id};
-  img_${a.id}.style.opacity = "1";
-}</code></pre>
-                </div>
-              </div>
-            `).join('') : '<div style="padding: 15px; color: #888; font-style: italic;">No hay artefactos definidos en este proyecto.</div>'}
-          </div>
+            ${codeHtml}
 
           <!-- [INYECCIÓN] ESQUEMA DE PROPIEDADES DEL INSPECTOR -->
-          <div style="background: #1e1e1e; padding: 25px; border-radius: 12px; border-left: 4px solid #E44C30; margin-bottom: 30px;">
+          <div style="background: #1e1e1e; padding: 25px; border-radius: 12px; border-left: 4px solid #E44C30; margin-bottom: 30px; margin-top: 30px;">
             <h3 style="color: #fff; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px;">🎛️ Esquema de Propiedades del Inspector (Props Schema)</h3>
             
             <p style="color: #ffcccc; font-size: 14px; font-weight: bold; margin-bottom: 15px;">DIRECTIVA OBLIGATORIA: Absolutamente TODO lo que pueda ser personalizable (textos, colores, posiciones, escalas, opacidades, fuentes, velocidades, etc.) DEBE ser expuesto en el Inspector mediante comentarios @dv-prop.</p>
@@ -357,10 +476,17 @@ if (img_${a.id} && src_${a.id} && img_${a.id}.getAttribute('src') !== src_${a.id
               <li style="margin-bottom: 15px;"><b>5. select</b> (Listas Desplegables)
                 <pre style="background: #111; color: #FFC107; padding: 8px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; border: 1px solid #222;"><code>// @dv-prop { "id": "themeVariant", "type": "select", "group": "Apariencia", "label": "Variante Visual", "options": [{"value": "dark", "label": "Oscuro"}, {"value": "light", "label": "Claro"}], "defaultValue": "dark" }</code></pre>
               </li>
-              <li style="margin-bottom: 15px;"><b>6. image-ref</b> (Imágenes Personalizadas URL libre)
+              <li style="margin-bottom: 15px;"><b>6. dataset</b> (Tablas de Datos / JSON 2D Array)
+                <pre style="background: #111; color: #4CAF50; padding: 8px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; border: 1px solid #222;"><code>// @dv-prop { "id": "stats", "type": "dataset", "group": "Datos", "label": "Estadísticas de Jugador" }
+// Uso: const data = JSON.parse(props.stats);</code></pre>
+              </li>
+              <li style="margin-bottom: 15px;"><b>7. code</b> (Bloques de Lógica o Estilos)
+                <pre style="background: #111; color: #2196F3; padding: 8px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; border: 1px solid #222;"><code>// @dv-prop { "id": "customLogic", "type": "code", "group": "Avanzado", "label": "Script Adicional", "defaultValue": "console.log('Hello');" }</code></pre>
+              </li>
+              <li style="margin-bottom: 15px;"><b>8. image-ref</b> (Imágenes Personalizadas URL libre)
                 <pre style="background: #111; color: #FFC107; padding: 8px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; border: 1px solid #222;"><code>// @dv-prop { "id": "customWatermark", "type": "image-ref", "group": "Medios", "label": "Marca de Agua", "defaultValue": "https://via.placeholder.com/150" }</code></pre>
               </li>
-              <li style="margin-bottom: 15px;"><b>7. alignment</b> (Grilla 3x3 de Posicionamiento) - <i>Su uso óptimo es inyectándolo en place-items (CSS Grid).</i>
+              <li style="margin-bottom: 15px;"><b>9. alignment</b> (Grilla 3x3 de Posicionamiento) - <i>Su uso óptimo es inyectándolo en place-items (CSS Grid).</i>
                 <pre style="background: #111; color: #2196F3; padding: 8px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; border: 1px solid #222;"><code>/* @dv-prop { "id": "logoPos", "type": "alignment", "group": "Layout", "label": "Posición del Logo", "defaultValue": "center center" } */
 .logo-container { display: grid; place-items: var(--logoPos); }</code></pre>
               </li>
@@ -589,6 +715,31 @@ if (img_${a.id} && src_${a.id} && img_${a.id}.getAttribute('src') !== src_${a.id
     } catch (err) {
       console.error('[IPC] Error listing assets:', err)
       return []
+    }
+  })
+
+  // [v5.8.5] Parseador de archivos de tabla (CSV, XLSX) para Datasets
+  ipcMain.handle('parse-table-file', async (_event, filePath: string) => {
+    try {
+      const ext = basename(filePath).split('.').pop()?.toLowerCase();
+      const buffer = fs.readFileSync(filePath);
+
+      if (ext === 'csv') {
+        const content = buffer.toString('utf-8');
+        const results = Papa.parse(content, { skipEmptyLines: true });
+        return { success: true, data: results.data };
+      } else if (ext === 'xlsx' || ext === 'xls') {
+        const workbook = XLSX.read(buffer, { type: 'buffer' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        return { success: true, data };
+      }
+
+      return { success: false, error: 'Formato de archivo no soportado' };
+    } catch (err: any) {
+      console.error('[IPC] Error parsing table file:', err);
+      return { success: false, error: err.message };
     }
   })
 

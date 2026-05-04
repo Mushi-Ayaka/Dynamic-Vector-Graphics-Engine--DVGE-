@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useStore } from './store/useStore'
+import { useTranslation } from './i18n/useTranslation'
 import './styles/resolve-theme.css'
 import { PreviewPlayer } from './remotion/PreviewPlayer'
 import { HomeMenu } from './components/HomeMenu'
@@ -9,16 +10,22 @@ import { InspectorTabs } from './components/InspectorTabs'
 import { ArtifactsPanel } from './components/ArtifactsPanel'
 import { RenderStatusPanel } from './components/RenderStatusPanel'
 import { RenderModal } from './components/RenderModal'
-import { ChevronLeft, Puzzle, Save, Play, Info, Feather, HelpCircle, X } from 'lucide-react'
-import { TutorialOverlay } from './components/TutorialOverlay'
+import { Layout, Play, Zap, Info, Puzzle, FileCode, Feather, Save, Layers, ChevronLeft, HelpCircle, X, Plus, Settings2, Scissors, Sparkles } from 'lucide-react'
+import { TutorialOverlay, TutorialStep } from './components/TutorialOverlay'
 import { APP_VERSION } from './version'
 import { TitleBar } from './components/TitleBar'
 import { AboutModal } from './components/AboutModal'
 import { TelemetryService } from './services/telemetry'
 import { TagExtractorService } from './services/TagExtractor'
+import { SettingsModal } from './components/SettingsModal'
+import { TemplateCodePanel } from './components/TemplateCodePanel'
+import { DataGridEditor } from './components/DataGridEditor'
+import { WelcomeGuide } from './components/WelcomeGuide'
+import { WorkflowModal } from './components/WorkflowModal'
+import { StudioGuideReminder } from './components/StudioGuideReminder'
 
 class InspectorErrorBoundary extends React.Component<
-  { children: React.ReactNode },
+  { children: React.ReactNode; t: (key: any) => string },
   { hasError: boolean; errorMsg: string }
 > {
   constructor(props: any) {
@@ -31,14 +38,15 @@ class InspectorErrorBoundary extends React.Component<
   }
   render() {
     if (this.state.hasError) {
+      const { t } = this.props;
       return (
         <div style={{ padding: '16px', color: '#ef4444', fontSize: '11px', fontFamily: 'var(--font-mono)', border: '1px solid #ef4444', borderRadius: '4px', margin: '12px', background: 'rgba(239,68,68,0.05)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <Info size={14} />
-            <strong>ERROR EN INSPECTOR</strong>
+            <strong>{t('inspector_error')}</strong>
           </div>
           <p style={{ margin: 0, opacity: 0.8 }}>{this.state.errorMsg}</p>
-          <p style={{ opacity: 0.6, marginTop: '8px', fontSize: '10px' }}>Revisa el manifest.json del plugin activo.</p>
+          <p style={{ opacity: 0.6, marginTop: '8px', fontSize: '10px' }}>{t('inspector_error_desc')}</p>
         </div>
       );
     }
@@ -62,17 +70,213 @@ export default function App() {
   const lastSaved = useStore(state => state.lastSaved)
   const clearActiveProject = useStore(state => state.clearActiveProject)
   const toggleRenderModal = useStore(state => state.toggleRenderModal)
+  const isSettingsOpen = useStore(state => state.isSettingsOpen)
+  const toggleSettings = useStore(state => state.toggleSettings)
+  const isAboutOpen = useStore(state => state.isAboutOpen)
+  const toggleAbout = useStore(state => state.toggleAbout)
+  const appSettings = useStore(state => state.appSettings)
+  const startHomeTutorial = useStore(state => state.startHomeTutorial)
+  const setStartHomeTutorial = useStore(state => state.setStartHomeTutorial)
 
   const uiState = useStore(state => state.uiState)
+  const templateTab = useStore(state => state.templateTab)
+  const setTemplateTab = useStore(state => state.setTemplateTab)
+  const { t, language } = useTranslation()
   const [activeRightTab, setActiveRightTab] = React.useState<'inspector' | 'artifacts'>('inspector');
   const [appIsReady, setAppIsReady] = React.useState(false);
-  const [loadingText, setLoadingText] = React.useState('Iniciando motor...');
+  const [loadingText, setLoadingText] = React.useState(t('loading_engine'));
   const [isBriefModalOpen, setIsBriefModalOpen] = React.useState(false);
+  const [isWorkflowModalOpen, setIsWorkflowModalOpen] = React.useState(false);
   const [showTutorial, setShowTutorial] = React.useState(false);
+  const [datasetToEdit, setDatasetToEdit] = React.useState<{ id: string, data: string[][] } | null>(null);
 
   const defaultBrief = "Diseño premium, minimalista y corporativo. Priorizar fluidez visual mediante interpolaciones suaves (lerp) y transiciones sutiles (opacidad/escala). El ritmo de animación debe ser determinista y solemne, atado estrictamente a ctx.timeline. \n\nPROHIBIDO: Uso de colores neón, desenfoques de movimiento excesivos (motion blur), o animaciones con rebotes elásticos (spring) que resten seriedad al gráfico.";
 
   const [briefText, setBriefText] = React.useState('');
+
+  const studioSteps: TutorialStep[] = React.useMemo(() => [
+    {
+      title: t('tut_studio_title'),
+      content: t('tut_studio_desc'),
+      icon: <Zap size={24} color="var(--accent)" fill="var(--accent)" />,
+      onEnter: () => useStore.getState().setUiState({ canvasOpen: true })
+    },
+    {
+      title: t('tut_canvas_title'),
+      content: t('tut_canvas_desc'),
+      selector: ".dv-canvas-config",
+      icon: <Layout size={24} color="var(--accent)" />
+    },
+    {
+      title: t('tut_res_title'),
+      content: t('tut_res_desc'),
+      selector: ".dv-field-resolution",
+      icon: <Layout size={24} color="var(--accent)" />
+    },
+    {
+      title: t('tut_duration_title'),
+      content: t('tut_duration_desc'),
+      selector: ".dv-field-duration",
+      icon: <Info size={24} color="var(--accent)" />
+    },
+    {
+      title: t('tut_fps_title'),
+      content: t('tut_fps_desc'),
+      selector: ".dv-field-fps",
+      icon: <Zap size={24} color="var(--accent)" />,
+      onEnter: () => useStore.getState().setUiState({ advancedDuration: true })
+    },
+    {
+      title: t('tut_identity_title'),
+      content: t('tut_identity_desc'),
+      selector: ".dv-template-core",
+      icon: <Puzzle size={24} color="var(--accent)" />
+    },
+    {
+      title: t('tut_html_title'),
+      content: t('tut_html_desc'),
+      selector: ".dv-field-htmlCode",
+      icon: <FileCode size={24} color="var(--accent)" />,
+      onEnter: () => useStore.getState().setTemplateTab('html')
+    },
+    {
+      title: t('tut_css_title'),
+      content: t('tut_css_desc'),
+      selector: ".dv-field-cssCode",
+      icon: <FileCode size={24} color="var(--accent)" />,
+      onEnter: () => useStore.getState().setTemplateTab('html')
+    },
+    {
+      title: t('tut_js_title'),
+      content: t('tut_js_desc'),
+      selector: ".dv-field-jsCode",
+      icon: <FileCode size={24} color="var(--accent)" />,
+      onEnter: () => useStore.getState().setTemplateTab('html')
+    },
+    {
+      title: t('tut_ai_builder_title'),
+      content: t('tut_ai_builder_desc'),
+      selector: ".dv-field-masterRules",
+      icon: <Zap size={24} color="var(--accent)" />,
+      onEnter: () => useStore.getState().setTemplateTab('html')
+    },
+    {
+      title: t('tut_context_arch_title'),
+      content: t('tut_context_arch_desc'),
+      selector: ".dv-context-options",
+      icon: <Info size={24} color="var(--accent)" />,
+      onEnter: () => useStore.getState().setTemplateTab('pdf')
+    },
+    {
+      title: t('tut_visual_grammars_title'),
+      content: t('tut_visual_grammars_desc'),
+      selector: ".dv-style-presets",
+      icon: <Layers size={24} color="var(--accent)" />,
+      onEnter: () => useStore.getState().setTemplateTab('pdf')
+    },
+    {
+      title: t('tut_export_rules_title'),
+      content: t('tut_export_rules_desc'),
+      selector: ".dv-pdf-drag",
+      icon: <Puzzle size={24} color="var(--accent)" />,
+      onEnter: () => useStore.getState().setTemplateTab('pdf')
+    },
+    {
+      title: t('tut_topbar_title'),
+      content: t('tut_topbar_desc'),
+      selector: ".dv-top-bar",
+      icon: <Info size={24} color="var(--accent)" />,
+      onEnter: () => useStore.getState().setTemplateTab('html')
+    },
+    {
+      title: t('tut_preview_title'),
+      content: t('tut_preview_desc'),
+      selector: ".dv-preview-area",
+      icon: <Play size={24} color="var(--accent)" />
+    },
+    {
+      title: t('tut_artifacts_title'),
+      content: t('tut_artifacts_desc'),
+      selector: ".dv-artifacts-panel",
+      icon: <Layers size={24} color="var(--accent)" />,
+      onEnter: () => setActiveRightTab('artifacts')
+    },
+    {
+      title: t('tut_explorer_title'),
+      content: t('tut_explorer_desc'),
+      selector: ".dv-explorer-tab",
+      icon: <Info size={24} color="var(--accent)" />,
+      onEnter: () => setActiveRightTab('artifacts')
+    },
+    {
+      title: t('tut_add_artifact_title'),
+      content: t('tut_add_artifact_desc'),
+      selector: ".dv-add-artifact-btn",
+      icon: <Plus size={24} color="var(--accent)" />,
+      onEnter: () => setActiveRightTab('artifacts')
+    },
+    {
+      title: t('tut_artifact_config_title'),
+      content: t('tut_artifact_config_desc'),
+      selector: ".dv-artifact-edit-btn",
+      icon: <Settings2 size={24} color="var(--accent)" />,
+      onEnter: () => setActiveRightTab('artifacts')
+    },
+    {
+      title: t('tut_ai_brain_title'),
+      content: t('tut_ai_brain_desc'),
+      selector: ".dv-artifact-desc-input",
+      icon: <Zap size={24} color="var(--accent)" />,
+      onEnter: () => setActiveRightTab('artifacts')
+    },
+    {
+      title: t('tut_precision_tools_title'),
+      content: t('tut_precision_tools_desc'),
+      selector: ".dv-artifact-item",
+      icon: <Scissors size={24} color="var(--accent)" />,
+      onEnter: () => setActiveRightTab('artifacts')
+    },
+    {
+      title: t('tut_export_final_title'),
+      content: t('tut_export_final_desc'),
+      selector: ".dv-render-btn",
+      icon: <Play size={24} color="var(--accent)" />
+    }
+  ], [t]);
+
+  const homeSteps: TutorialStep[] = React.useMemo(() => [
+    {
+      title: t('tut_home_gallery_title'),
+      content: t('tut_home_gallery_desc'),
+      selector: ".home-toolbar",
+      icon: <Layout size={24} color="var(--accent)" />
+    },
+    {
+      title: t('tut_home_new_title'),
+      content: t('tut_home_new_desc'),
+      selector: ".dv-new-project-btn",
+      icon: <Plus size={24} color="var(--accent)" />
+    },
+    {
+      title: t('tut_home_workflow_title'),
+      content: t('tut_home_workflow_desc'),
+      selector: ".dv-project-item",
+      icon: <Zap size={24} color="var(--accent)" />
+    },
+    {
+      title: t('tut_home_next_title'),
+      content: t('tut_home_next_desc'),
+      selector: ".home-container",
+      icon: <Sparkles size={24} color="var(--accent)" />
+    },
+  ], [t]);
+
+  React.useEffect(() => {
+    if (activeProject && !appSettings.hasSeenStudioGuide) {
+      setShowTutorial(true);
+      useStore.getState().updateAppSettings({ hasSeenStudioGuide: true });
+    }
+  }, [activeProject, appSettings.hasSeenStudioGuide]);
 
   const saveBrief = () => {
     useStore.getState().updateProjectConfig({ creativeBrief: briefText });
@@ -121,19 +325,19 @@ export default function App() {
   // --- Ciclo de Vida de Carga ---
   React.useEffect(() => {
     const sequence = async () => {
-      setLoadingText('Verificando hardware & GPU...');
+      setLoadingText(t('verifying_hardware'));
       await new Promise(r => setTimeout(r, 800));
-      setLoadingText('Ensamblando módulos...');
+      setLoadingText(t('assembling_modules'));
       await new Promise(r => setTimeout(r, 1200));
-      setLoadingText('Optimizando pipeline de video...');
-      setLoadingText('Cargando dependencias...');
+      setLoadingText(t('optimizing_pipeline'));
+      setLoadingText(t('loading_dependencies'));
       await new Promise(r => setTimeout(r, 500));
-      setLoadingText('Sincronizando datos...');
+      setLoadingText(t('syncing_data'));
       await new Promise(r => setTimeout(r, 600));
       setAppIsReady(true);
     };
     sequence();
-  }, []);
+  }, [t]);
 
   React.useEffect(() => {
     if (window.ipcRenderer) {
@@ -149,7 +353,8 @@ export default function App() {
   }, [setRenderProgress]);
 
   React.useEffect(() => {
-    if (!activeProject || !window.ipcRenderer) return;
+    const { activeProject, appSettings } = useStore.getState();
+    if (!activeProject || !window.ipcRenderer || !appSettings.autoSave) return;
     const timer = setTimeout(() => {
       saveProjectState()
     }, 1000)
@@ -166,9 +371,9 @@ export default function App() {
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px' }}>
-             <div style={{ width: '100px', height: '1px', background: 'linear-gradient(90deg, transparent, #333, transparent)' }} />
+            <div style={{ width: '100px', height: '1px', background: 'linear-gradient(90deg, transparent, #333, transparent)' }} />
           </div>
-          <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '4px', marginBottom: '8px' }}>Cargando DVGE</div>
+          <div style={{ fontSize: '10px', color: '#666', textTransform: 'uppercase', letterSpacing: '4px', marginBottom: '8px' }}>{t('loading_dvge')}</div>
           <div style={{ fontSize: '12px', color: '#aaa', fontWeight: 300, minWidth: '200px', textShadow: '0 0 10px rgba(0,0,0,0.5)' }}>{loadingText}</div>
         </div>
         <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
@@ -182,7 +387,7 @@ export default function App() {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#050505' }}>
         <TitleBar />
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative', paddingTop: '32px' }}>
-          <iframe src="https://mushi-ayaka.github.io/DVGE-Docs/" style={{ width: '100%', height: '100%', border: 'none' }} title="Manual DVGE" />
+          <iframe src={`https://ember-motion-studio-landing.vercel.app/${language === 'es' ? 'es/' : ''}`} style={{ width: '100%', height: '100%', border: 'none' }} title={t('manual_dvge')} />
         </div>
       </div>
     );
@@ -193,7 +398,15 @@ export default function App() {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary)', paddingTop: '32px', boxSizing: 'border-box' }}>
         <TitleBar />
         <AboutModal />
+        <SettingsModal />
         <HomeMenu />
+        <WelcomeGuide />
+        {!activeProject && startHomeTutorial && (
+          <TutorialOverlay
+            onClose={() => setStartHomeTutorial(false)}
+            steps={homeSteps}
+          />
+        )}
       </div>
     )
   }
@@ -215,6 +428,15 @@ export default function App() {
         updateProjectConfig({ height: numVal });
       }
     }
+
+    if (appSettings.autoSave) saveProjectState();
+  }
+
+  const handleSaveDataset = (data: string[][]) => {
+    if (datasetToEdit) {
+      handleFieldChange(datasetToEdit.id, JSON.stringify(data))
+    }
+    setDatasetToEdit(null)
   }
 
 
@@ -264,10 +486,24 @@ export default function App() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary)', paddingTop: '32px', boxSizing: 'border-box' }}>
       <TitleBar />
       <AboutModal />
+      <SettingsModal />
+      <WorkflowModal 
+          isOpen={isWorkflowModalOpen} 
+          onClose={() => setIsWorkflowModalOpen(false)} 
+      />
       <RenderModal onConfirm={handleRenderReal} />
-      {showTutorial && <TutorialOverlay onClose={() => setShowTutorial(false)} />}
+      {showTutorial && (
+        <TutorialOverlay 
+          onClose={() => {
+            setShowTutorial(false);
+            setIsWorkflowModalOpen(true);
+          }} 
+          steps={studioSteps} 
+        />
+      )}
+      <StudioGuideReminder />
       {/* TopBar (Fija) */}
-      <div style={{
+      <div className="dv-top-bar" style={{
         height: '40px',
         background: 'var(--bg-secondary)',
         borderBottom: '1px solid var(--border)',
@@ -281,7 +517,7 @@ export default function App() {
           <button
             className="btn-icon"
             onClick={clearActiveProject}
-            title="Volver a la galería de proyectos"
+            title={t('back_to_gallery')}
           >
             <ChevronLeft size={18} />
           </button>
@@ -289,14 +525,14 @@ export default function App() {
             <span style={{ fontSize: '12px', fontWeight: 600, color: 'white', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: '"Roboto Mono", monospace', textTransform: 'uppercase' }}>
               {activeProject.name}
             </span>
-            <span className="dv-badge" style={{ background: 'var(--accent)', color: 'white', border: 'none' }}>v{APP_VERSION} GA</span>
+            <span className="dv-badge" style={{ background: 'var(--accent)', color: 'white', border: 'none' }}>v{APP_VERSION}</span>
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: '4px' }}>
-          <button className="tab-btn active" style={{ padding: '6px 12px', height: 'auto' }}>Studio</button>
-          <button disabled className="tab-btn disabled" style={{ padding: '6px 12px', height: 'auto' }} title="Disponible en próximas versiones">Library</button>
-          <button disabled className="tab-btn disabled" style={{ padding: '6px 12px', height: 'auto' }} title="Disponible en próximas versiones">Render</button>
+          <button className="tab-btn active" style={{ padding: '6px 12px', height: 'auto' }}>{t('studio')}</button>
+          <button disabled className="tab-btn disabled" style={{ padding: '6px 12px', height: 'auto' }} title={t('available_soon')}>{t('library')}</button>
+          <button disabled className="tab-btn disabled" style={{ padding: '6px 12px', height: 'auto' }} title={t('available_soon')}>{t('render')}</button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -321,7 +557,7 @@ export default function App() {
             }}
             className="dv-guide-btn"
           >
-            GUÍA RÁPIDA
+            {t('quick_guide_btn')}
           </button>
         </div>
       </div>
@@ -340,7 +576,7 @@ export default function App() {
           <ProjectConfigPanel />
 
           {/* Template Panel (Código / PDF) */}
-          <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div className="dv-template-core" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div style={{
               height: '40px',
               padding: '0 12px',
@@ -355,15 +591,15 @@ export default function App() {
                 <Puzzle size={14} color="var(--accent)" />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '9px', color: 'var(--text-label)', textTransform: 'uppercase', fontWeight: 700 }}>Template Core</div>
-                <div style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>{activePlugin?.manifest.name || 'Sin plugin'}</div>
+                <div style={{ fontSize: '9px', color: 'var(--text-label)', textTransform: 'uppercase', fontWeight: 700 }}>{t('template_core')}</div>
+                <div style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>{activePlugin?.manifest.name || t('missing_plugin')}</div>
               </div>
               <button
                 onClick={() => {
                   setBriefText(activeProject?.creativeBrief || defaultBrief);
                   setIsBriefModalOpen(true);
                 }}
-                title="Editar Brief Creativo"
+                title={t('edit_brief_tooltip')}
                 style={{
                   background: 'transparent',
                   border: 'none',
@@ -381,12 +617,13 @@ export default function App() {
             </div>
 
             <div style={{ flex: 1, overflow: 'hidden' }}>
-              <InspectorErrorBoundary>
+              <InspectorErrorBoundary t={t}>
                 {activePlugin && (
                   <InspectorTabs
                     schema={activePlugin.manifest.schema || []}
                     properties={properties}
                     onChange={handleFieldChange}
+                    onOpenDataEditor={(f, data) => setDatasetToEdit({ id: f.id, data })}
                     hideTabs={true}
                   />
                 )}
@@ -395,33 +632,35 @@ export default function App() {
           </div>
 
           {/* Action Footer (Fijo) */}
-          <div style={{ padding: '15px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="dv-action-footer" style={{ padding: '15px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '10px', color: 'var(--text-label)' }}>
-                {lastSaved ? `Guardado: ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Auto-guardado activo'}
+                {lastSaved
+                  ? `${t('saved_at')} ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : (appSettings.autoSave ? t('auto_save_active') : t('auto_save_disabled'))}
               </span>
               <button
                 className="btn-icon"
                 onClick={() => saveProjectState()}
                 disabled={isSaving}
-                title="Forzar guardado ahora"
+                title={t('force_save_tooltip')}
               >
                 <Save size={14} color={isSaving ? 'var(--text-disabled)' : 'var(--text-secondary)'} />
               </button>
             </div>
 
             <button
-              className="dv-btn cta"
+              className="dv-btn cta dv-render-btn"
               disabled={renderState === 'RENDERING'}
               onClick={toggleRenderModal}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
             >
               {renderState === 'RENDERING' ? (
-                'RENDERIZANDO...'
+                t('rendering_btn')
               ) : (
                 <>
                   <Play size={14} fill="currentColor" />
-                  RENDERIZAR VIDEO
+                  {t('render_video_btn')}
                 </>
               )}
             </button>
@@ -445,7 +684,7 @@ export default function App() {
               gap: '16px'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '1.5px', textTransform: 'uppercase' }}>Preview</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '1.5px', textTransform: 'uppercase' }}>{t('preview_label')}</span>
               </div>
 
               {/* Condensed Info Display */}
@@ -463,7 +702,7 @@ export default function App() {
                 </span>
                 <span style={{ width: '1px', height: '10px', background: 'var(--border)' }} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-secondary)' }}>
-                  <span style={{ fontSize: '8px', opacity: 0.6 }}>EST.</span>
+                  <span style={{ fontSize: '8px', opacity: 0.6 }}>{t('est_size')}</span>
                   <span style={{ fontWeight: 600 }}>
                     {(() => {
                       const codec = activeProject.preferredCodec || 'prores';
@@ -512,7 +751,7 @@ export default function App() {
                 {activePluginFiles ? (
                   <PreviewPlayer key={activeProject.id} />
                 ) : (
-                  <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-disabled)', fontSize: '12px' }}>Cargando player...</div>
+                  <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-disabled)', fontSize: '12px' }}>{t('loading_player')}</div>
                 )}
               </div>
 
@@ -551,6 +790,7 @@ export default function App() {
               gap: '4px'
             }}>
               <button
+                className="dv-tab-inspector"
                 onClick={() => setActiveRightTab('inspector')}
                 style={{
                   flex: 1,
@@ -570,6 +810,7 @@ export default function App() {
                 Inspector
               </button>
               <button
+                className="dv-tab-artifacts"
                 onClick={() => setActiveRightTab('artifacts')}
                 style={{
                   flex: 1,
@@ -586,12 +827,12 @@ export default function App() {
                   transition: 'all 0.2s'
                 }}
               >
-                Artefactos
+                {t('artifacts')}
               </button>
             </div>
 
             <div style={{ flex: 1, overflow: 'hidden' }}>
-              <InspectorErrorBoundary>
+              <InspectorErrorBoundary t={t}>
                 {activeRightTab === 'inspector' ? (
                   extractedSchema.length > 0 ? (
                     <InspectorTabs
@@ -602,11 +843,13 @@ export default function App() {
                     />
                   ) : (
                     <div style={{ padding: '20px', color: 'var(--text-disabled)', fontSize: '12px', textAlign: 'center', marginTop: '40px' }}>
-                      No se encontraron tags /* @dv-field */ en el código de la plantilla.
+                      {t('no_tags_found')}
                     </div>
                   )
                 ) : (
-                  <ArtifactsPanel />
+                  <div className="dv-artifacts-panel" style={{ height: '100%' }}>
+                    <ArtifactsPanel />
+                  </div>
                 )}
               </InspectorErrorBoundary>
             </div>
@@ -624,8 +867,8 @@ export default function App() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Feather size={20} color="var(--accent)" />
-                <h2 style={{ margin: 0, fontSize: '16px', color: 'white', fontFamily: 'var(--font-mono)' }}>Brief Creativo</h2>
-                <div title="Define la intención creativa, el tono visual y las restricciones estéticas para guiar a la IA. La última oración debe definir qué está PROHIBIDO." style={{ color: 'var(--text-disabled)', cursor: 'help', display: 'flex' }}>
+                <h2 style={{ margin: 0, fontSize: '16px', color: 'white', fontFamily: 'var(--font-mono)' }}>{t('brief_title')}</h2>
+                <div title={t('brief_tooltip')} style={{ color: 'var(--text-disabled)', cursor: 'help', display: 'flex' }}>
                   <HelpCircle size={16} />
                 </div>
               </div>
@@ -633,25 +876,110 @@ export default function App() {
             </div>
 
             <textarea
+              className="dv-input"
+              style={{ flex: 1, resize: 'none', height: '150px', fontSize: '13px', lineHeight: '1.6', fontFamily: 'var(--font-body)' }}
+              placeholder={t('brief_placeholder')}
               value={briefText}
               onChange={(e) => setBriefText(e.target.value)}
-              placeholder="Ej. Diseño minimalista corporativo. Priorizar fluidez suave. PROHIBIDO el uso de colores neón y rebotes elásticos."
-              style={{
-                width: '100%', height: '150px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '12px', color: 'white', fontFamily: 'var(--font-body)', fontSize: '13px', resize: 'vertical', outline: 'none', boxSizing: 'border-box'
-              }}
             />
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
               <button onClick={() => setIsBriefModalOpen(false)} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '4px', color: 'white', cursor: 'pointer', fontSize: '12px' }}>
-                Cancelar
+                {t('cancel')}
               </button>
               <button onClick={saveBrief} className="dv-btn cta" style={{ padding: '8px 16px', fontSize: '12px' }}>
-                Guardar Brief
+                {t('save_brief')}
               </button>
             </div>
           </div>
         </div>
       )}
+      {isSettingsOpen && <SettingsModal />}
+      {isAboutOpen && <AboutModal />}
+
+      {datasetToEdit && (
+        <DataGridEditor
+          initialData={datasetToEdit.data}
+          onSave={handleSaveDataset}
+          onClose={() => setDatasetToEdit(null)}
+        />
+      )}
+
+      {/* Modal: AI Context Builder */}
+      {templateTab === 'pdf' && (
+        <div
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.75)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999,
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setTemplateTab('html'); }}
+        >
+          <div className="dv-code-modal" style={{
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)',
+            borderTop: '2px solid var(--accent)',
+            borderRadius: '2px',
+            width: '880px',
+            maxWidth: '96vw',
+            height: '540px',
+            maxHeight: '92vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            boxShadow: '0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(228,76,48,0.08)'
+          }}>
+            {/* Header del modal */}
+            <div style={{
+              height: '44px',
+              padding: '0 16px',
+              background: 'var(--bg-elevated)',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexShrink: 0
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ width: '8px', height: '8px', background: 'var(--accent)', borderRadius: '1px' }} />
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
+                    {t('context_builder')}
+                  </span>
+                </div>
+                <span style={{ width: '1px', height: '14px', background: 'var(--border)' }} />
+                <span style={{ fontSize: '10px', color: 'var(--text-disabled)', fontFamily: 'var(--font-body)' }}>
+                  {t('context_builder_desc')}
+                </span>
+              </div>
+              <button
+                onClick={() => setTemplateTab('html')}
+                title={t('close')}
+                style={{
+                  background: 'transparent', border: 'none',
+                  color: 'var(--text-disabled)', cursor: 'pointer',
+                  padding: '4px 6px', display: 'flex', alignItems: 'center',
+                  fontSize: '10px', fontWeight: 600, gap: '4px',
+                  transition: 'color 0.15s', fontFamily: 'var(--font-mono)'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-disabled)'}
+              >
+                <X size={14} /> ESC
+              </button>
+            </div>
+
+            {/* Contenido */}
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <TemplateCodePanel />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Onboarding Guide */}
+      <WelcomeGuide />
     </div>
   )
 }

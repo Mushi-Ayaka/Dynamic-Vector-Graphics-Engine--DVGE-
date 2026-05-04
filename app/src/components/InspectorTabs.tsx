@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { SlidersHorizontal, Layers, ListVideo, Copy, Check, Maximize2, ChevronDown, ChevronRight, FileText, Image, X, RefreshCcw } from 'lucide-react';
+import { SlidersHorizontal, Layers, ListVideo, Copy, Check, Maximize2, ChevronDown, ChevronRight, FileText, Image, X, RefreshCcw, Table } from 'lucide-react';
+import { DataGridEditor } from './DataGridEditor';
 import { FormField } from '../env';
 import { CodeEditorModal } from './CodeEditorModal';
 import { useStore } from '../store/useStore';
+import { useTranslation } from '../i18n/useTranslation';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tipos internos
@@ -12,6 +14,8 @@ interface InspectorTabsProps {
     schema: FormField[];
     properties: Record<string, any>;
     onChange: (id: string, value: any) => void;
+    onExpandCode?: (field: FormField, value: string) => void;
+    onOpenDataEditor?: (field: FormField, value: string[][]) => void;
     hideTabs?: boolean;
 }
 
@@ -42,9 +46,10 @@ const GroupSection: React.FC<{
     properties: Record<string, any>;
     onChange: (id: string, value: any) => void;
     onExpandCode?: (field: FormField, value: string) => void;
+    onOpenDataEditor?: (field: FormField, value: string[][]) => void;
     onToggle?: () => void;
     isExpanded?: boolean;
-}> = ({ title, fields, properties, onChange, onExpandCode, onToggle, isExpanded }) => {
+}> = ({ title, fields, properties, onChange, onExpandCode, onOpenDataEditor, onToggle, isExpanded }) => {
     const isGeneral = title === GENERAL_GROUP;
     const showContent = isGeneral || isExpanded;
 
@@ -96,6 +101,7 @@ const GroupSection: React.FC<{
                             value={properties[field.id]}
                             onChange={onChange}
                             onExpandCode={onExpandCode}
+                            onOpenDataEditor={onOpenDataEditor}
                         />
                     ))}
                 </div>
@@ -113,7 +119,9 @@ export const DynamicField: React.FC<{
     value: any;
     onChange: (id: string, value: any) => void;
     onExpandCode?: (field: FormField, value: string) => void;
-}> = ({ field, value, onChange, onExpandCode }) => {
+    onOpenDataEditor?: (field: FormField, value: string[][]) => void;
+}> = ({ field, value, onChange, onExpandCode, onOpenDataEditor }) => {
+    const { t } = useTranslation();
     const activeProject = useStore(state => state.activeProject);
     const [copied, setCopied] = useState(false);
     const [localNum, setLocalNum] = useState(value?.toString() || field.defaultValue?.toString() || '0');
@@ -126,6 +134,9 @@ export const DynamicField: React.FC<{
             setLocalNum(value?.toString() || field.defaultValue?.toString() || '0');
         }
     }, [value, field.id, field.type, field.defaultValue]);
+
+    // Clase dinámica basada en el ID del campo para el tutorial
+    const fieldClass = `dv-field-${field.id}`;
 
     const labelStyle: React.CSSProperties = {
         display: 'block',
@@ -317,7 +328,7 @@ export const DynamicField: React.FC<{
                         />
                     </div>
                     <div style={{ marginTop: '6px', fontSize: '9px', color: 'var(--text-disabled)', display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Opacidad</span>
+                        <span>{t('opacidad')}</span>
                         <span>{Math.round(alphaPercent * 100)}%</span>
                     </div>
                     <input 
@@ -493,14 +504,14 @@ export const DynamicField: React.FC<{
                                     if (e.target.value) onChange(field.id, JSON.stringify(presets[e.target.value]));
                                 }}
                             >
-                                <option value="">PRESETS...</option>
+                                <option value="">{t('presets_placeholder')}</option>
                                 {Object.keys(presets).map(p => <option key={p} value={p}>{p.toUpperCase()}</option>)}
                             </select>
                             <button 
                                 className="btn-icon" 
                                 style={{ height: '24px', width: '24px', background: 'var(--bg-elevated)' }}
                                 onClick={() => onChange(field.id, "[0,0,1,1]")}
-                                title="Reset"
+                                title={t('reset_tooltip')}
                             >
                                 <RefreshCcw size={12} />
                             </button>
@@ -547,7 +558,7 @@ export const DynamicField: React.FC<{
                             type="text"
                             className="dv-input"
                             style={{ flex: 1 }}
-                            placeholder="Buscar icono..."
+                            placeholder={t('search_icon_placeholder')}
                             value={String(value ?? '')}
                             onChange={(e) => onChange(field.id, e.target.value)}
                         />
@@ -569,7 +580,7 @@ export const DynamicField: React.FC<{
                         border: '1px solid var(--border)',
                         cursor: 'pointer'
                     }} />
-                    <div style={{ fontSize: '9px', color: 'var(--text-disabled)', marginTop: '4px' }}>Editor de degradado (v6.0)</div>
+                    <div style={{ fontSize: '9px', color: 'var(--text-disabled)', marginTop: '4px' }}>{t('gradient_v6')}</div>
                 </div>
             );
 
@@ -592,35 +603,98 @@ export const DynamicField: React.FC<{
 
         case 'prompt':
             return (
-                <div className="dv-field" style={{ marginBottom: '12px' }}>
+                <div className={`dv-field dv-inspector-prompt ${fieldClass}`} style={{ marginBottom: '12px' }}>
                     <label style={labelStyle}>{field.label}</label>
-                    <div
-                        draggable
-                        onDragStart={async (e) => {
-                            e.preventDefault();
-                            if (window.ipcRenderer) {
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {/* Botón principal: Navega al Context Builder */}
+                        <button
+                            onClick={() => useStore.getState().setTemplateTab('pdf')}
+                            style={{
+                                width: '100%',
+                                padding: '9px 12px',
+                                background: 'transparent',
+                                border: '1px solid var(--border)',
+                                borderLeft: '2px solid var(--accent)',
+                                borderRadius: '2px',
+                                color: 'var(--text-primary)',
+                                fontWeight: 700,
+                                fontSize: '10px',
+                                fontFamily: 'var(--font-mono)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                transition: 'all 0.15s',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px'
+                            }}
+                            onMouseOver={(e) => {
+                                e.currentTarget.style.background = 'rgba(228,76,48,0.07)';
+                                e.currentTarget.style.borderColor = 'var(--accent)';
+                                e.currentTarget.style.color = 'var(--accent)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.currentTarget.style.background = 'transparent';
+                                e.currentTarget.style.borderColor = 'var(--border)';
+                                e.currentTarget.style.color = 'var(--text-primary)';
+                                e.currentTarget.style.borderLeftColor = 'var(--accent)';
+                            }}
+                        >
+                            <div style={{ width: '6px', height: '6px', background: 'var(--accent)', borderRadius: '1px', flexShrink: 0 }} />
+                            <span>AI Context Builder</span>
+                        </button>
+
+                        {/* Zona de drag secundaria */}
+                        <div
+                            draggable
+                            onDragStart={async (e) => {
+                                e.preventDefault();
+                                if (!window.ipcRenderer) return;
+                                const contextOptions = useStore.getState().contextOptions;
+                                if (!contextOptions.includeCanvas && !contextOptions.includeArtifacts && !contextOptions.includeCode) {
+                                    useStore.getState().setTemplateTab('pdf');
+                                    return;
+                                }
                                 const projectContext = useStore.getState().getProjectContext();
                                 const pdfPath = await window.ipcRenderer.generateRulesPdf({
                                     rulesText: String(field.defaultValue),
-                                    projectContext
+                                    projectContext,
+                                    options: contextOptions
                                 });
                                 window.ipcRenderer.startDrag(pdfPath);
-                            }
-                        }}
-                        className="dv-master-flow"
-                        style={{
-                            padding: '12px',
-                            border: '1px dashed var(--accent)',
-                            borderRadius: '4px',
-                            textAlign: 'center',
-                            cursor: 'grab',
-                            background: 'rgba(59,130,246,0.05)',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        <div style={{ fontSize: '18px', marginBottom: '4px' }}>📄</div>
-                        <div style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}>{field.defaultValue}</div>
-                        <div style={{ fontSize: '9px', color: 'var(--text-disabled)', marginTop: '4px' }}>ARRÁSTRME A TU IA</div>
+                            }}
+                            style={{
+                                padding: '8px 12px',
+                                border: '1px dashed rgba(228,76,48,0.4)',
+                                borderRadius: '2px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                cursor: 'grab',
+                                color: 'var(--text-disabled)',
+                                fontSize: '10px',
+                                transition: 'all 0.15s',
+                                userSelect: 'none'
+                            }}
+                            onMouseOver={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--accent)';
+                                e.currentTarget.style.color = 'var(--accent)';
+                                e.currentTarget.style.background = 'rgba(228,76,48,0.05)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.currentTarget.style.borderColor = 'rgba(228,76,48,0.4)';
+                                e.currentTarget.style.color = 'var(--text-disabled)';
+                                e.currentTarget.style.background = 'transparent';
+                            }}
+                        >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="5 9 2 12 5 15" /><polyline points="9 5 12 2 15 5" />
+                                <polyline points="15 19 12 22 9 19" /><polyline points="19 9 22 12 19 15" />
+                                <line x1="2" y1="12" x2="22" y2="12" /><line x1="12" y1="2" x2="12" y2="22" />
+                            </svg>
+                            {t('drag_to_ai') || 'Arrastra el contexto a tu IA'}
+                        </div>
                     </div>
                 </div>
             );
@@ -668,15 +742,37 @@ export const DynamicField: React.FC<{
                             }}
                         >
                             {copied ? <Check size={10} /> : <Copy size={10} />}
-                            {copied ? 'COPIADO' : 'COPIAR'}
+                            {copied ? t('copied') : t('copy')}
                         </button>
                     </div>
                 </div>
             );
 
-        case 'code':
+        case 'dataset':
             return (
                 <div className="dv-field" style={{ marginBottom: '12px' }}>
+                    <label style={labelStyle}>{field.label}</label>
+                    <button 
+                        className="dv-btn"
+                        style={{ width: '100%', justifyContent: 'center', gap: '8px', background: 'rgba(59,130,246,0.05)', border: '1px solid var(--border)' }}
+                        onClick={() => {
+                            try {
+                                const currentData = typeof value === 'string' ? JSON.parse(value) : (value || [['Header 1', 'Header 2'], ['', '']]);
+                                onOpenDataEditor?.(field, currentData);
+                            } catch (e) {
+                                onOpenDataEditor?.(field, [['Header 1', 'Header 2'], ['', '']]);
+                            }
+                        }}
+                    >
+                        <Table size={14} color="var(--accent)" />
+                        <span style={{ fontSize: '10px' }}>{t('edit_data')}</span>
+                    </button>
+                </div>
+            );
+
+        case 'code':
+            return (
+                <div className={`dv-field dv-inspector-code ${fieldClass}`} style={{ marginBottom: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                         <label style={{ ...labelStyle, marginBottom: 0 }}>{field.label}</label>
                         <button
@@ -690,7 +786,7 @@ export const DynamicField: React.FC<{
                                 alignItems: 'center',
                                 padding: '2px'
                             }}
-                            title="Expandir editor"
+                            title={t('expand_editor_tooltip')}
                         >
                             <Maximize2 size={12} />
                         </button>
@@ -759,7 +855,7 @@ export const DynamicField: React.FC<{
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
                         }}>
-                            {isLoadingFile ? 'Cargando...' : (fileName ?? 'Sin archivo')}
+                            {isLoadingFile ? t('loading') : (fileName ?? t('no_file'))}
                         </span>
                         <button
                             onClick={handleSelectFile}
@@ -778,7 +874,7 @@ export const DynamicField: React.FC<{
                                 opacity: isLoadingFile ? 0.6 : 1,
                             }}
                         >
-                            Seleccionar
+                            {t('select_file')}
                         </button>
                     </div>
                     {fileWarning && (
@@ -808,7 +904,8 @@ export const DynamicField: React.FC<{
                         {/* Preview zone */}
                         <div
                             onClick={handleSelectImage}
-                            title="Clic para seleccionar imagen"
+                            className="dv-image-field-preview"
+                            title={t('select_image_tooltip')}
                             style={{
                                 width: '56px',
                                 height: '56px',
@@ -852,7 +949,7 @@ export const DynamicField: React.FC<{
                             }}>
                                 {currentSrc
                                     ? currentSrc.split(/[\\/]/).pop()
-                                    : 'Sin imagen'}
+                                    : t('no_image')}
                             </span>
                             <div style={{ display: 'flex', gap: '6px' }}>
                                 <button
@@ -869,19 +966,20 @@ export const DynamicField: React.FC<{
                                         fontWeight: 600,
                                     }}
                                 >
-                                    Seleccionar
+                                    {t('select')}
                                 </button>
                                 {currentSrc && (
                                     <button
-                                        onClick={() => { setFileError(null); onChange(field.id, ''); }}
-                                        title="Limpiar imagen"
+                                        onClick={(e) => { e.stopPropagation(); onChange(field.id, null); }}
+                                        className="btn-icon"
+                                        title={t('clear_image_tooltip')}
                                         style={{
                                             padding: '3px 6px',
                                             fontSize: '9px',
-                                            background: 'transparent',
+                                            background: 'rgba(239,68,68,0.1)',
                                             border: '1px solid var(--border)',
                                             borderRadius: '3px',
-                                            color: 'var(--text-disabled)',
+                                            color: '#ef4444',
                                             cursor: 'pointer',
                                             display: 'flex',
                                             alignItems: 'center',
@@ -921,8 +1019,10 @@ export const DynamicField: React.FC<{
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const InspectorTabs: React.FC<InspectorTabsProps> = ({ schema, properties, onChange, hideTabs = false }) => {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<'props' | 'layers' | 'queue'>('props');
     const [codeModal, setCodeModal] = useState<{ field: FormField; value: string } | null>(null);
+    const [dataModal, setDataModal] = useState<{ field: FormField; value: string[][] } | null>(null);
     const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
 
     // [BUGFIX] Inicialización paramétrica en frío.
@@ -945,7 +1045,7 @@ export const InspectorTabs: React.FC<InspectorTabsProps> = ({ schema, properties
         }
     }, [schema]); // Dependencia intencional: solo cuando el schema cambia (cuando la IA actualiza código)
 
-    if (!schema) return <div style={{ padding: '20px', fontSize: '11px', color: 'var(--text-disabled)' }}>Selecciona un plugin para ver propiedades</div>;
+    if (!schema) return <div style={{ padding: '20px', fontSize: '11px', color: 'var(--text-disabled)' }}>{t('select_plugin_prompt')}</div>;
 
     const grouped = groupFields(schema);
 
@@ -975,21 +1075,21 @@ export const InspectorTabs: React.FC<InspectorTabsProps> = ({ schema, properties
                         onClick={() => setActiveTab('props')}
                         className={`tab-btn ${activeTab === 'props' ? 'active' : ''}`}
                     >
-                        <SlidersHorizontal size={14} /> Props
+                        <SlidersHorizontal size={14} /> {t('inspector')}
                     </button>
                     <button
                         disabled
                         className="tab-btn disabled"
-                        title="Layer Inspector — Disponible en v6.0"
+                        title={t('layer_inspector_v6')}
                     >
-                        <Layers size={14} /> Layers
+                        <Layers size={14} /> {t('layers')}
                     </button>
                     <button
                         disabled
                         className="tab-btn disabled"
-                        title="Render Queue — Disponible en v6.0"
+                        title={t('render_queue_v6')}
                     >
-                        <ListVideo size={14} /> Queue
+                        <ListVideo size={14} /> {t('render')}
                     </button>
                 </div>
             )}
@@ -1009,6 +1109,7 @@ export const InspectorTabs: React.FC<InspectorTabsProps> = ({ schema, properties
                                 isExpanded={expandedGroupId === groupName}
                                 onToggle={() => setExpandedGroupId(prev => prev === groupName ? null : groupName)}
                                 onExpandCode={(field, value) => setCodeModal({ field, value })}
+                                onOpenDataEditor={(field, value) => setDataModal({ field, value })}
                             />
                         ))}
                     </div>
@@ -1016,7 +1117,7 @@ export const InspectorTabs: React.FC<InspectorTabsProps> = ({ schema, properties
                 {activeTab === 'layers' && (
                     <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-disabled)' }}>
                         <Layers size={32} style={{ marginBottom: '12px', opacity: 0.2 }} />
-                        <div style={{ fontSize: '11px' }}>Layer Inspector llegará en la v6.0</div>
+                        <div style={{ fontSize: '11px' }}>{t('layer_inspector_v6')}</div>
                     </div>
                 )}
             </div>
@@ -1029,6 +1130,17 @@ export const InspectorTabs: React.FC<InspectorTabsProps> = ({ schema, properties
                     onChange={(newValue) => {
                         onChange(codeModal.field.id, newValue);
                     }}
+                />
+            )}
+
+            {dataModal && (
+                <DataGridEditor 
+                    initialData={dataModal.value}
+                    onSave={(newData) => {
+                        onChange(dataModal.field.id, JSON.stringify(newData));
+                        setDataModal(null);
+                    }}
+                    onClose={() => setDataModal(null)}
                 />
             )}
 

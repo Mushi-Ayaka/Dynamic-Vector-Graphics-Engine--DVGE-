@@ -31,8 +31,25 @@ type StoreState = {
   toggleGallery: () => void
   isAboutOpen: boolean
   toggleAbout: () => void
+  isWelcomeGuideOpen: boolean
+  toggleWelcomeGuide: () => void
+  startHomeTutorial: boolean
+  setStartHomeTutorial: (val: boolean) => void
   isRenderModalOpen: boolean
   toggleRenderModal: () => void
+  isSettingsOpen: boolean
+  toggleSettings: () => void
+
+  appSettings: {
+    language: 'es' | 'en'
+    theme: 'dark' | 'light'
+    autoSave: boolean
+    hasSeenWelcomeGuide: boolean
+    hasSeenStudioGuide: boolean
+    hasSeenHomeTutorial: boolean
+    hasSeenStudioGuideReminder: boolean
+  }
+  updateAppSettings: (patch: Partial<StoreState['appSettings']>) => void
 
   activePluginId: string | null
   setRenderProgress: (progress: number) => void
@@ -47,7 +64,7 @@ type StoreState = {
   setNewProjectPluginId: (val: string) => void
   updateProjectConfig: (patch: Partial<{ width: number; height: number; fps: number; durationInFrames: number; aspectRatioMode: string; creativeBrief: string }>) => void
 
-  uiState: { aspectRatioMode: string; advancedDuration: boolean }
+  uiState: { aspectRatioMode: string; advancedDuration: boolean; canvasOpen: boolean }
   setUiState: (patch: Partial<StoreState['uiState']>) => void
   artifactFields: FormField[]
   addArtifactField: (field: FormField) => void
@@ -56,6 +73,13 @@ type StoreState = {
   updateProjectName: (name: string) => Promise<void>
   deleteProject: () => Promise<void>
   getProjectContext: () => { name: string; artifacts: any[] }
+  
+  contextOptions: import('../env').AIContextOptions
+  updateContextOptions: (patch: Partial<import('../env').AIContextOptions>) => void
+
+  // Control global del tab activo en TemplateCodePanel
+  templateTab: 'html' | 'css' | 'js' | 'pdf'
+  setTemplateTab: (tab: 'html' | 'css' | 'js' | 'pdf') => void
 }
 
 export const useStore = create<StoreState>((set, get) => ({
@@ -93,8 +117,39 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   isSaving: false,
   lastSaved: null,
-  uiState: { aspectRatioMode: '16:9', advancedDuration: false },
+  uiState: { aspectRatioMode: '16:9', advancedDuration: false, canvasOpen: true },
   setUiState: (patch) => set((state) => ({ uiState: { ...state.uiState, ...patch } })),
+
+  contextOptions: {
+    includeCanvas: true,
+    includeArtifacts: true,
+    includeCode: false,
+    includeDataPreview: true,
+    visualSkill: 'none',
+    stylePresets: []
+  },
+  updateContextOptions: (patch) => {
+    set((state) => {
+      const nextOptions = { ...state.contextOptions, ...patch };
+      const nextProject = state.activeProject 
+        ? { ...state.activeProject, contextOptions: nextOptions } 
+        : null;
+      
+      return {
+        contextOptions: nextOptions,
+        activeProject: nextProject
+      };
+    });
+
+    // Auto-save logic
+    const { appSettings, saveProjectState } = get();
+    if (appSettings.autoSave) {
+      saveProjectState();
+    }
+  },
+
+  templateTab: 'html',
+  setTemplateTab: (tab) => set({ templateTab: tab }),
 
   // Carga todos los plugins disponibles (llamar al arrancar la app)
   initialize: async () => {
@@ -125,10 +180,19 @@ export const useStore = create<StoreState>((set, get) => ({
       activeProject: project, 
       properties: project.properties || {}, 
       artifactFields: project.artifactFields || [],
+      contextOptions: project.contextOptions || {
+        includeCanvas: true,
+        includeArtifacts: true,
+        includeCode: false,
+        includeDataPreview: true,
+        visualSkill: 'none',
+        stylePresets: []
+      },
       activePlugin,
       uiState: { 
         aspectRatioMode: project.aspectRatioMode || 'custom', 
-        advancedDuration: false 
+        advancedDuration: false,
+        canvasOpen: true
       }
     })
     try {
@@ -210,8 +274,34 @@ export const useStore = create<StoreState>((set, get) => ({
   toggleGallery: () => set((state) => ({ isGalleryOpen: !state.isGalleryOpen })),
   isAboutOpen: false,
   toggleAbout: () => set((state) => ({ isAboutOpen: !state.isAboutOpen })),
+  isWelcomeGuideOpen: false,
+  toggleWelcomeGuide: () => set((state) => ({ isWelcomeGuideOpen: !state.isWelcomeGuideOpen })),
+  startHomeTutorial: false,
+  setStartHomeTutorial: (val) => set({ startHomeTutorial: val }),
   isRenderModalOpen: false,
   toggleRenderModal: () => set((state) => ({ isRenderModalOpen: !state.isRenderModalOpen })),
+  isSettingsOpen: false,
+  toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
+  appSettings: {
+    language: (localStorage.getItem('dvge_lang') as 'es' | 'en') || 'es',
+    theme: (localStorage.getItem('dvge_theme') as 'dark' | 'light') || 'dark',
+    autoSave: localStorage.getItem('dvge_autosave') !== 'false',
+    hasSeenWelcomeGuide: localStorage.getItem('dvge_welcome_seen') === 'true',
+    hasSeenStudioGuide: localStorage.getItem('dvge_studio_seen') === 'true',
+    hasSeenHomeTutorial: localStorage.getItem('dvge_home_seen') === 'true',
+    hasSeenStudioGuideReminder: localStorage.getItem('dvge_studio_reminder_seen') === 'true'
+  },
+  updateAppSettings: (patch) => set((state) => {
+    const nextSettings = { ...state.appSettings, ...patch };
+    if (patch.language) localStorage.setItem('dvge_lang', patch.language);
+    if (patch.theme) localStorage.setItem('dvge_theme', patch.theme);
+    if (patch.autoSave !== undefined) localStorage.setItem('dvge_autosave', String(patch.autoSave));
+    if (patch.hasSeenWelcomeGuide !== undefined) localStorage.setItem('dvge_welcome_seen', String(patch.hasSeenWelcomeGuide));
+    if (patch.hasSeenStudioGuide !== undefined) localStorage.setItem('dvge_studio_seen', String(patch.hasSeenStudioGuide));
+    if (patch.hasSeenHomeTutorial !== undefined) localStorage.setItem('dvge_home_seen', String(patch.hasSeenHomeTutorial));
+    if (patch.hasSeenStudioGuideReminder !== undefined) localStorage.setItem('dvge_studio_reminder_seen', String(patch.hasSeenStudioGuideReminder));
+    return { appSettings: nextSettings };
+  }),
 
   activePluginId: null,
 
@@ -226,7 +316,7 @@ export const useStore = create<StoreState>((set, get) => ({
   setIsCreatingProject: (val) => set({ isCreatingProject: val }),
   newProjectName: '',
   setNewProjectName: (val) => set({ newProjectName: val }),
-  newProjectPluginId: '',
+  newProjectPluginId: 'proyecto-vacio',
   setNewProjectPluginId: (val) => set({ newProjectPluginId: val }),
   updateProjectConfig: (patch) => set((state) => {
     const nextProject = state.activeProject ? { ...state.activeProject, ...patch } : null;
@@ -280,7 +370,8 @@ export const useStore = create<StoreState>((set, get) => ({
         id: f.id,
         label: f.label,
         type: f.type,
-        description: f.description || ''
+        description: f.description || '',
+        value: get().properties[f.id] // Se pasa el valor actual para que la IA sepa qué contiene
       }))
     };
   }

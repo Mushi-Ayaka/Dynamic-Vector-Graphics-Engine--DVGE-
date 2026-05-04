@@ -95,51 +95,63 @@ export class ProjectManager {
     return projectData;
   }
 
+  private saveQueue: Map<string, Promise<any>> = new Map();
+
   public async saveProjectProperties(projectId: string, payload: any): Promise<boolean> {
-    const projectPath = path.join(this.baseDir, projectId);
-    const metadataPath = path.join(projectPath, 'project.json');
-    const tmpPath = metadataPath + '.tmp';
+    // [v5.8.3] Serialización de guardado por proyecto para evitar race conditions
+    const currentQueue = this.saveQueue.get(projectId) || Promise.resolve();
+    
+    const nextSave = currentQueue.then(async () => {
+      const projectPath = path.join(this.baseDir, projectId);
+      const metadataPath = path.join(projectPath, 'project.json');
+      const tmpPath = metadataPath + '.tmp';
 
-    if (!fs.existsSync(metadataPath)) {
-        console.warn(`[ProjectManager] ⚠ Attempted to save to non-existent project: ${projectId}`);
-        return false;
-    }
-
-    try {
-        const raw = await fsPromises.readFile(metadataPath, 'utf8');
-        const data = JSON.parse(raw);
-        
-        // Si payload contiene 'properties', lo tratamos como el objeto principal de props
-        // Pero también permitimos que el payload contenga campos de la raíz del proyecto (metadata)
-        if (payload.properties) {
-          Object.assign(data, payload);
-        } else {
-          // Si no, asumimos que el payload SON las properties (retrocompatibilidad)
-          data.properties = payload;
-        }
-        
-        data.updatedAt = Date.now();
-
-        const json = JSON.stringify(data, null, 2);
-
-        // [v5.8.2] Validación pre-write: verificar que el JSON generado es parseable
-        // antes de escribirlo al disco, para evitar corrupción del archivo de producción.
-        try { JSON.parse(json); } catch (validateErr) {
-          console.error(`[ProjectManager] JSON validation failed, aborting save for ${projectId}:`, validateErr);
+      if (!fs.existsSync(metadataPath)) {
+          console.warn(`[ProjectManager] ⚠ Attempted to save to non-existent project: ${projectId}`);
           return false;
-        }
+      }
 
-        await fsPromises.writeFile(tmpPath, json, 'utf8');
-        await fsPromises.rename(tmpPath, metadataPath);
+      try {
+          const raw = await fsPromises.readFile(metadataPath, 'utf8');
+          const data = JSON.parse(raw);
+          
+          if (payload.properties) {
+            Object.assign(data, payload);
+          } else {
+            data.properties = payload;
+          }
+          
+          data.updatedAt = Date.now();
 
-        console.log(`[ProjectManager] Saved (metadata+props) for: ${projectId}`);
-        return true;
-    } catch(e) {
-        console.error(`[ProjectManager] Failed atomic save for ${projectId}:`, e);
-        // Limpieza defensiva: borrar .tmp si quedó a medias
-        try { await fsPromises.unlink(tmpPath); } catch { /* no existe, ignorar */ }
-        return false;
-    }
+          const json = JSON.stringify(data, null, 2);
+
+          try { JSON.parse(json); } catch (validateErr) {
+            console.error(`[ProjectManager] JSON validation failed, aborting save for ${projectId}:`, validateErr);
+            return false;
+          }
+
+          await fsPromises.writeFile(tmpPath, json, 'utf8');
+          await fsPromises.rename(tmpPath, metadataPath);
+
+          console.log(`[ProjectManager] Saved (metadata+props) for: ${projectId}`);
+          return true;
+      } catch(e) {
+          console.error(`[ProjectManager] Failed atomic save for ${projectId}:`, e);
+          try { await fsPromises.unlink(tmpPath); } catch { /* no existe, ignorar */ }
+          return false;
+      }
+    });
+
+    this.saveQueue.set(projectId, nextSave);
+    
+    // Limpiar el mapa después de que termine la cola (opcional, para evitar fugas de memoria)
+    nextSave.finally(() => {
+      if (this.saveQueue.get(projectId) === nextSave) {
+        this.saveQueue.delete(projectId);
+      }
+    });
+
+    return nextSave;
   }
 
   public getProjectExportsFolder(projectId: string): string {

@@ -1,6 +1,6 @@
 {
   "name": "ember-motion-studio",
-  "version": "5.8.0",
+  "version": "5.9.0",
   "main": "dist-electron/main.js",
   "description": "Professional Dynamic Vector Graphics Engine for Broadcast Animation",
   "author": "Jonatan Baron",
@@ -19,6 +19,7 @@
     "dotenv": "^17.4.2",
     "lucide-react": "^1.8.0",
     "node-machine-id": "^1.1.12",
+    "papaparse": "^5.5.3",
     "posthog-js": "^1.372.3",
     "posthog-node": "^5.30.6",
     "react": "^18.2.0",
@@ -26,9 +27,11 @@
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "systeminformation": "^5.31.5",
+    "xlsx": "^0.18.5",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@types/papaparse": "^5.5.2",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react": "^4.2.1",

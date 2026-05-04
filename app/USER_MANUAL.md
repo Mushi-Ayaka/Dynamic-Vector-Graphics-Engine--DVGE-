@@ -1,63 +1,51 @@
-# Manual de Usuario: Ember Motion Studio v5.8
+# Manual de Usuario: Ember Motion Studio v5.9.0
 
-## Bienvenida
+## El Flujo de Trabajo en 5 Pasos
 
-Ember Motion Studio v5.8 es un estudio de producción broadcast. Esta versión **v5.8** consolida la estabilidad del sistema y simplifica la creación de gráficos profesionales mediante un flujo de trabajo optimizado.
+Ember v5.9.0 introduce un flujo de trabajo optimizado para garantizar resultados profesionales al primer intento:
+
+1. **Configuración del Canvas**: Define las dimensiones, duración y FPS de tu proyecto.
+2. **Gestión de Artefactos**: Inyecta imágenes, videos o bases de datos (Excel/CSV). Es crucial añadir títulos y descripciones detalladas; esta es la información que la IA usará para entender cómo manipular cada recurso.
+3. **AI Context Builder**: Genera el manual de reglas técnico (PDF) y arrástralo a tu chat de IA favorito (Claude, GPT o **DeepSeek en Modo Experto**).
+4. **Refinamiento Visual**: Una vez generado el código, ajusta los valores en el **Inspector** en tiempo real para pulir los detalles estéticos.
+5. **Exportación e Iteración**: Renderiza tu video final o regresa al Builder para incluir el código actual y solicitar modificaciones a la IA.
 
 ---
 
 ## 1. El Catálogo de Plugins
 
-Amplía tu biblioteca de plugins instantáneamente:
+Amplía tu biblioteca de gráficos con un solo clic:
 
-1. En la pantalla de inicio, accede al **Catálogo de Plugins**.
-2. Explora los diseños profesionales disponibles.
-3. Haz clic en **Instalar**. El plugin aparecerá en tu lista de plantillas al crear un nuevo proyecto.
-
----
-
-## 2. Gestión de Proyectos
-
-Ember Motion Studio organiza tu trabajo de forma segura y eficiente:
-
-- **Creación**: Elige un nombre y una plantilla (Plugin) para comenzar.
-- **Configuración**: Permite renombrar o eliminar proyectos de forma segura desde la galería.
-- **Integridad**: El sistema detecta automáticamente si falta un plugin (`MISSING PLUGIN`) para evitar errores de carga.
+- Accede al **Catálogo de Plugins** desde la pantalla de inicio.
+- Instala o actualiza plantillas.
+- Los plugins instalados aparecerán automáticamente en tu lista de plantillas de proyecto.
 
 ---
 
-## 3. El Studio (Interfaz de Trabajo)
+## 2. El Studio (Interfaz de Trabajo)
 
-### 3.1 Panel de Control (Izquierda)
+### 2.1 AI Context Builder (Smart Knowledge)
 
-Define la identidad de tu gráfico. Aquí ajustas dimensiones, FPS y variables globales del diseño.
+Localizado en la parte inferior del panel de control. Te permite "enseñar" a la IA sobre tu proyecto actual. Puedes elegir inyectar el contexto de tus artefactos, dimensiones o incluso el código actual.
 
-### 3.2 Preview (Centro)
+### 2.2 Inspector
 
-Visualiza cambios en tiempo real.
+Permite ajustar parámetros del proyecto actual.
 
-### 3.3 Inspector & Artefactos (Derecha)
+### 2.3 Recordatorios Inteligentes (Smart Tips)
 
-- **Inspector**: Ajusta valores específicos de la animación de forma dinámica.
-- **Artefactos**: Gestiona assets externos (imágenes, JSONs, textos) que alimentan la lógica del plugin.
-
----
-
-## 4. Guía Rápida
-
-Si tienes dudas sobre el funcionamiento de los paneles, usa el botón **GUÍA RÁPIDA** en la barra superior. Un asistente visual te mostrará los puntos clave del flujo de trabajo en menos de 2 minutos.
+Si eres nuevo, verás un recordatorio sobre la **Guía Rápida**. Este aviso se vuelve transparente al pasar el cursor para no estorbar tu visión mientras trabajas.
 
 ---
 
-## 5. Exportación y Uso
+## 3. Exportación Broadcast
 
-El motor DVGE exporta archivos `.mov` con transparencia real. Para usarlos en tu editor:
+El motor de renderizado **Ember** exporta archivos de alta fidelidad:
 
-- **DaVinci Resolve**: Si ves fondo negro, ve a *Clip Attributes* -> *Alpha Mode* -> *Straight*.
-- **Premiere Pro / After Effects**: La transparencia se reconoce automáticamente por el códec ProRes 4444.
+- **ProRes 4444**: Máxima calidad con transparencia real para broadcast.
+- **H.264 / MP4**: Ideal para redes sociales (sin transparencia).
+- **GIF**: Para previsualizaciones rápidas y stickers.
 
----
-
-## 6. Soporte
-
-Accede a la documentación completa y reporta errores al desarrollador buscando su contacto en el portafolio desde el panel **Acerca de** en la pantalla principal.
+:::tip[Tip para DaVinci Resolve]
+Si el video ProRes aparece con fondo negro: Clic derecho sobre el clip -> **Clip Attributes** -> **Alpha Mode** -> **Straight**.
+:::

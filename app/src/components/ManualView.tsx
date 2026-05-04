@@ -5,8 +5,11 @@ import { Components } from 'react-markdown'
 import './ManualView.css'
 import { TitleBar } from './TitleBar'
 
+import { useTranslation } from '../i18n/useTranslation';
+
 // Componente de bloque de código con botón de copiar
 const CodeBlock: React.FC<{ children?: React.ReactNode; className?: string }> = ({ children, className }) => {
+    const { t } = useTranslation();
     const [copied, setCopied] = useState(false)
 
     // Normalizar texto para comparación robusca (line endings)
@@ -49,9 +52,9 @@ const CodeBlock: React.FC<{ children?: React.ReactNode; className?: string }> = 
                         textTransform: 'uppercase',
                         letterSpacing: '1px'
                     }}>
-                        {isPromptBlock ? 'PROMPT' : (className?.replace('language-', '') || 'BLOQUE DE CÓDIGO')}
+                        {isPromptBlock ? 'PROMPT' : (className?.replace('language-', '') || t('code_block'))}
                     </span>
-                    {isPromptBlock && <span style={{ fontSize: '10px', background: '#E44C30', color: 'white', padding: '1px 5px', borderRadius: '3px', fontWeight: 'bold' }}>RECOMENDADO</span>}
+                    {isPromptBlock && <span style={{ fontSize: '10px', background: '#E44C30', color: 'white', padding: '1px 5px', borderRadius: '3px', fontWeight: 'bold' }}>{t('recommended')}</span>}
                 </div>
                 <button
                     onClick={handleCopy}
@@ -68,7 +71,7 @@ const CodeBlock: React.FC<{ children?: React.ReactNode; className?: string }> = 
                         transform: copied ? 'scale(1.05)' : 'scale(1)',
                     }}
                 >
-                    {copied ? '¡COPIADO!' : (isPromptBlock ? 'COPIAR PROMPT' : 'COPIAR')}
+                    {copied ? t('copied_msg') : (isPromptBlock ? t('copy_prompt') : t('copy_btn'))}
                 </button>
             </div>
             <pre style={{
@@ -90,13 +93,6 @@ const CodeBlock: React.FC<{ children?: React.ReactNode; className?: string }> = 
     )
 }
 
-const DOCS = [
-    { id: 'USER_MANUAL.md', label: 'Manual de Usuario' },
-    { id: 'TECHNICAL.md', label: 'Documentación Técnica' },
-    { id: 'PLUGIN_POLICY.md', label: 'Política de Plugins' },
-    { id: 'LEGAL.md', label: 'Aviso Legal' },
-]
-
 const mdComponents: Partial<Components> = {
     // Evitar doble pre-anidamiento que rompe el diseño
     pre({ children }) {
@@ -116,22 +112,37 @@ const mdComponents: Partial<Components> = {
 }
 
 export const ManualView: React.FC = () => {
-    const [content, setContent] = useState<string>('Cargando...')
+    const { t, language } = useTranslation();
+    const [content, setContent] = useState<string>(t('loading_docs'))
     const [activeDoc, setActiveDoc] = useState<string>('USER_MANUAL.md')
 
+    const DOCS = [
+        { id: 'USER_MANUAL.md', label: t('user_manual') },
+        { id: 'TECHNICAL.md', label: t('technical_docs') },
+        { id: 'PLUGIN_POLICY.md', label: t('plugin_policy') },
+        { id: 'LEGAL.md', label: t('legal_notice') },
+    ]
+
     useEffect(() => {
+        let isMounted = true;
         const fetchContent = async () => {
             try {
+                const docToFetch = language === 'en' ? activeDoc.replace('.md', '_en.md') : activeDoc;
                 // @ts-ignore
-                const data = await window.ipcRenderer.getDocContent(activeDoc)
-                setContent(data)
+                const data = await window.ipcRenderer.getDocContent(docToFetch)
+                if (isMounted) setContent(data)
             } catch (err) {
-                setContent('# Error\nNo se pudo cargar el documento.')
+                if (isMounted) setContent(`# Error\n${t('error_loading_docs')}`)
             }
         }
-        setContent('Cargando...')
+        
+        // Solo mostrar loading si realmente estamos cambiando de documento y no es un cambio de idioma
+        // (El cambio de idioma suele ser rápido y es mejor ver el texto viejo que un flash de loading)
+        // Pero para simplificar y evitar el bug, vamos a asegurar que fetchContent sea lo único que mueva el estado.
         fetchContent()
-    }, [activeDoc])
+        
+        return () => { isMounted = false; }
+    }, [activeDoc, language, t])
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', background: '#0a0a0a', color: 'white', fontFamily: 'Inter, sans-serif', paddingTop: '32px', boxSizing: 'border-box' }}>

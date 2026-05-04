@@ -3,12 +3,14 @@ import { useStore } from '../store/useStore';
 import { Player } from '@remotion/player';
 import { PluginWrapper } from '../remotion/PluginWrapper';
 import { X, Info, FileVideo, Download, AlertTriangle } from 'lucide-react';
+import { useTranslation } from '../i18n/useTranslation';
 
 interface RenderModalProps {
     onConfirm: (codec: string) => void;
 }
 
 export const RenderModal: React.FC<RenderModalProps> = ({ onConfirm }) => {
+    const { t } = useTranslation();
     const isRenderModalOpen = useStore(state => state.isRenderModalOpen);
     const toggleRenderModal = useStore(state => state.toggleRenderModal);
     const activeProject = useStore(state => state.activeProject);
@@ -29,13 +31,13 @@ export const RenderModal: React.FC<RenderModalProps> = ({ onConfirm }) => {
     };
 
     const formats = [
-        { id: 'prores', label: 'MOV (ProRes 4444 + Alpha)', desc: 'Calidad máxima para broadcast con transparencia.', color: '#38bdf8' },
-        { id: 'h264', label: 'MP4 (H.264 - Estándar)', desc: 'Ideal para redes sociales y visualización rápida.', color: '#4ade80' },
-        { id: 'webm', label: 'WebM (VP9 + Alpha)', desc: 'Formato ligero para web con soporte de transparencia.', color: '#fbbf24' },
-        { id: 'gif', label: 'GIF Animado', desc: 'Loop clásico sin audio. Ideal para stickers o previews.', color: '#f472b6' },
-        { id: 'standard', label: 'MOV (ProRes 422)', desc: 'Alta calidad sin canal alpha. Archivos más ligeros.', color: '#a78bfa' },
-        { id: 'png', label: 'PNG (Secuencia de Imágenes)', desc: 'Exporta cada frame como archivo PNG individual con canal alpha. Ideal para composición, logos y assets estáticos.', color: '#E44C30' },
-        { id: 'jpg', label: 'JPEG (Secuencia de Imágenes)', desc: 'Exporta cada frame como JPEG individual. Sin canal alpha. Ideal para thumbnails y assets sin transparencia.', color: '#fb923c' },
+        { id: 'prores', label: 'MOV (ProRes 4444 + Alpha)', desc: t('format_prores_desc'), color: '#38bdf8' },
+        { id: 'h264', label: 'MP4 (H.264 - Estándar)', desc: t('format_h264_desc'), color: '#4ade80' },
+        { id: 'webm', label: 'WebM (VP9 + Alpha)', desc: t('format_webm_desc'), color: '#fbbf24' },
+        { id: 'gif', label: 'GIF Animado', desc: t('format_gif_desc'), color: '#f472b6' },
+        { id: 'standard', label: 'MOV (ProRes 422)', desc: t('format_prores422_desc'), color: '#a78bfa' },
+        { id: 'png', label: 'PNG (Secuencia de Imágenes)', desc: t('format_png_desc'), color: '#E44C30' },
+        { id: 'jpg', label: 'JPEG (Secuencia de Imágenes)', desc: t('format_jpg_desc'), color: '#fb923c' },
     ];
 
     const isImageSequence = selectedCodec === 'png' || selectedCodec === 'jpg';
@@ -77,7 +79,7 @@ export const RenderModal: React.FC<RenderModalProps> = ({ onConfirm }) => {
                             <FileVideo size={20} color="white" />
                         </div>
                         <div>
-                            <h2 style={{ margin: 0, fontSize: '16px', color: 'white', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Configuración de Renderizado</h2>
+                            <h2 style={{ margin: 0, fontSize: '16px', color: 'white', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>{t('render_config')}</h2>
                             <div style={{ fontSize: '11px', color: 'var(--text-disabled)' }}>{activeProject.name}</div>
                         </div>
                     </div>
@@ -119,12 +121,12 @@ export const RenderModal: React.FC<RenderModalProps> = ({ onConfirm }) => {
                         
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                             <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <div style={{ fontSize: '9px', color: 'var(--text-disabled)', textTransform: 'uppercase', marginBottom: '4px' }}>Resolución</div>
+                                <div style={{ fontSize: '9px', color: 'var(--text-disabled)', textTransform: 'uppercase', marginBottom: '4px' }}>{t('output_resolution')}</div>
                                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'white' }}>{activeProject.width}x{activeProject.height}</div>
                             </div>
                             <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <div style={{ fontSize: '9px', color: 'var(--text-disabled)', textTransform: 'uppercase', marginBottom: '4px' }}>Duración</div>
-                                <div style={{ fontSize: '13px', fontWeight: 600, color: 'white' }}>{((activeProject.durationInFrames || 240) / (activeProject.fps || 60)).toFixed(1)} segundos</div>
+                                <div style={{ fontSize: '9px', color: 'var(--text-disabled)', textTransform: 'uppercase', marginBottom: '4px' }}>{t('duration')}</div>
+                                <div style={{ fontSize: '13px', fontWeight: 600, color: 'white' }}>{((activeProject.durationInFrames || 240) / (activeProject.fps || 60)).toFixed(1)} {t('seconds_label')}</div>
                             </div>
                         </div>
                     </div>
@@ -133,7 +135,7 @@ export const RenderModal: React.FC<RenderModalProps> = ({ onConfirm }) => {
                     <div style={{ width: '320px', padding: '24px', borderLeft: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div>
                             <label style={{ fontSize: '10px', color: 'var(--text-disabled)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '8px', letterSpacing: '0.5px' }}>
-                                Formato de Salida
+                                {t('output_format')}
                             </label>
                             <select 
                                 value={selectedCodec}
@@ -172,7 +174,7 @@ export const RenderModal: React.FC<RenderModalProps> = ({ onConfirm }) => {
                                         }}>
                                             <AlertTriangle size={18} color="#ef4444" style={{ flexShrink: 0 }} />
                                             <div style={{ fontSize: '11px', color: '#ef4444', lineHeight: '1.4' }}>
-                                                <strong>❌ Error de FPS:</strong> El formato GIF no soporta más de 50 FPS (Detectado: {currentFps} FPS). Baja los FPS en "Configuración del Proyecto" para exportar como GIF.
+                                                <strong>❌ Error de FPS:</strong> {t('gif_fps_error').replace("50 FPS", "50 FPS (Detectado: " + currentFps + " FPS)")}
                                             </div>
                                         </div>
                                     );
@@ -191,7 +193,7 @@ export const RenderModal: React.FC<RenderModalProps> = ({ onConfirm }) => {
                                         }}>
                                             <AlertTriangle size={18} color="#eab308" style={{ flexShrink: 0 }} />
                                             <div style={{ fontSize: '11px', color: '#eab308', lineHeight: '1.4' }}>
-                                                <strong>⚠️ Limitación MP4:</strong> Este formato no soporta transparencia ni canal alpha. El fondo se renderizará negro por defecto.
+                                                <strong>⚠️ Limitación MP4:</strong> {t('mp4_alpha_warning')}
                                             </div>
                                         </div>
                                     );
@@ -211,7 +213,7 @@ export const RenderModal: React.FC<RenderModalProps> = ({ onConfirm }) => {
                                 }}>
                                     <Info size={18} color="var(--accent)" style={{ flexShrink: 0 }} />
                                     <div style={{ fontSize: '11px', color: 'rgba(228,76,48,0.9)', lineHeight: '1.4' }}>
-                                        <strong>📁 Secuencia de imágenes:</strong> Se generará una carpeta con un archivo por frame. El número total de archivos depende de la duración y FPS del proyecto.
+                                        <strong>📁 Secuencia de imágenes:</strong> {t('image_sequence_info')}
                                     </div>
                                 </div>
                             )}
@@ -245,7 +247,7 @@ export const RenderModal: React.FC<RenderModalProps> = ({ onConfirm }) => {
                             }}>
                                 <Info size={16} color="var(--accent)" />
                                 <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', lineHeight: '1.3' }}>
-                                    El proceso de renderizado utiliza aceleración por CPU/GPU. No cierres la aplicación.
+                                    {t('render_warning')}
                                 </div>
                             </div>
 
@@ -269,7 +271,7 @@ export const RenderModal: React.FC<RenderModalProps> = ({ onConfirm }) => {
                                 }}
                             >
                                 <Download size={18} />
-                                INICIAR EXPORTACIÓN
+                                {t('start_export')}
                             </button>
                         </div>
                     </div>

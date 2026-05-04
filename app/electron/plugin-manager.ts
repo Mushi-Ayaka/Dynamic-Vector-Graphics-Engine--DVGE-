@@ -46,6 +46,37 @@ export class PluginManager {
   }
 
   private ensureDefaultPlugin() {
+    // 1. Proyecto Vacío (Studio Master Core) - INTEGRADO INTERNAMENTE
+    const emptyProjectDir = path.join(this.baseDir, 'proyecto-vacio')
+    if (!fs.existsSync(emptyProjectDir)) {
+      console.log(`[PluginManager] Initializing internal core plugin: proyecto-vacio`)
+      fs.mkdirSync(emptyProjectDir, { recursive: true })
+      
+      const manifest = {
+        id: "proyecto-vacio",
+        name: "Proyecto Vacío",
+        description: "Lienzo en blanco con el motor Studio Master listo para programar.",
+        version: "1.0.0",
+        author: "Jonatan Barón",
+        schema: [
+          { id: "masterRules", type: "prompt", label: "Contexto para IA", defaultValue: "MASTER_PROMPT" },
+          { id: "htmlCode", type: "code", label: "Estructura HTML", defaultValue: "<div id=\"canvas-root\">\n  <!-- Tu HTML aquí -->\n</div>" },
+          { id: "cssCode", type: "code", label: "Estilos CSS", defaultValue: "#canvas-root {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  display: grid;\n  place-items: center;\n}" },
+          { id: "jsCode", type: "code", label: "Lógica JS", defaultValue: "window.renderDVGE = (frame, props, ctx) => {\n  // Tu lógica de animación aquí\n};" }
+        ]
+      }
+
+      const html = "<div id=\"dv-master-host\"><style id=\"dv-master-styles\"></style><div id=\"dv-master-canvas\" style=\"width: 1920px; height: 1080px; position: relative; overflow: hidden;\"></div></div>"
+      const css = "#dv-master-host { width: 100%; height: 100%; background: transparent; will-change: transform; contain: paint; } #dv-master-canvas { transform-origin: top left; }"
+      const js = "dvEngine.register({ awake: (ctx) => { ctx.state.lastHtml = null; ctx.state.lastCss = null; ctx.state.lastJs = null; ctx.state.injectedFn = null; ctx.state.childCtx = null; ctx.refs.canvas = ctx.root.getElementById('dv-master-canvas'); ctx.refs.styleTag = ctx.root.getElementById('dv-master-styles'); }, update: (ctx) => { const { props, refs, state, frame } = ctx; if (!refs.canvas || !refs.styleTag) return; if (state.lastHtml !== props.htmlCode) { refs.canvas.innerHTML = props.htmlCode || ''; state.lastHtml = props.htmlCode; state.injectedFn = null; state.lastJs = null; } if (state.lastCss !== props.cssCode) { refs.styleTag.textContent = props.cssCode || ''; state.lastCss = props.cssCode; } const currentJs = (props.jsCode || '').trim(); if (currentJs && state.lastJs !== currentJs) { state.lastJs = currentJs; try { const sandbox = { renderDVGE: null }; const sandboxCode = `(function(sandbox, ctx) { \"use strict\"; const window = { renderDVGE: null }; ${currentJs} \\n sandbox.renderDVGE = window.renderDVGE; })(arguments[0], arguments[1])`; const fn = new Function(sandboxCode); fn(sandbox, ctx); if (sandbox.renderDVGE) { state.injectedFn = sandbox.renderDVGE; state.childCtx = { ...ctx, state: {}, refs: {}, parent: ctx }; } } catch (e) { console.error('[Studio Master] JS Error:', e.message); } } if (state.injectedFn) { try { state.childCtx.frame = frame; state.childCtx.props = props; state.childCtx.timeline = ctx.timeline; state.injectedFn(frame, props, state.childCtx); } catch (e) {} } } });"
+
+      fs.writeFileSync(path.join(emptyProjectDir, 'manifest.json'), JSON.stringify(manifest, null, 2))
+      fs.writeFileSync(path.join(emptyProjectDir, 'index.html'), html)
+      fs.writeFileSync(path.join(emptyProjectDir, 'style.css'), css)
+      fs.writeFileSync(path.join(emptyProjectDir, 'script.js'), js)
+    }
+
+    // 2. Lower Third (Basic)
     const defaultPluginDir = path.join(this.baseDir, 'lower-third-basic')
     if (!fs.existsSync(defaultPluginDir)) {
       fs.mkdirSync(defaultPluginDir, { recursive: true })

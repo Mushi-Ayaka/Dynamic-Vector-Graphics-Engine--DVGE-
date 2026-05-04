@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { Settings2, ChevronDown, ChevronRight } from 'lucide-react';
+import { useTranslation } from '../i18n/useTranslation';
 
 export const ProjectConfigPanel: React.FC = () => {
+    const { t } = useTranslation();
     const activeProject = useStore(state => state.activeProject);
     const updateProjectConfig = useStore(state => state.updateProjectConfig);
     const uiState = useStore(state => state.uiState);
     const setUiState = useStore(state => state.setUiState);
-    const [isOpen, setIsOpen] = useState(true);
 
     if (!activeProject) return null;
 
@@ -37,10 +38,10 @@ export const ProjectConfigPanel: React.FC = () => {
     };
 
     return (
-        <div className="dv-panel">
+        <div className="dv-panel dv-canvas-config">
             <div 
                 className="dv-panel-header" 
-                onClick={() => setIsOpen(!isOpen)} 
+                onClick={() => setUiState({ canvasOpen: !uiState.canvasOpen })} 
                 style={{ 
                     cursor: 'pointer', 
                     height: '40px', 
@@ -54,16 +55,16 @@ export const ProjectConfigPanel: React.FC = () => {
                     <Settings2 size={14} color="var(--accent)" />
                     <span style={{ fontWeight: 600, fontSize: '10px', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>CANVAS</span>
                 </div>
-                {isOpen ? <ChevronDown size={14} color="var(--text-disabled)" /> : <ChevronRight size={14} color="var(--text-disabled)" />}
+                {uiState.canvasOpen ? <ChevronDown size={14} color="var(--text-disabled)" /> : <ChevronRight size={14} color="var(--text-disabled)" />}
             </div>
             
-            {isOpen && (
-                <div className="dv-panel-content" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '12px' }}>
+            {uiState.canvasOpen && (
+                <div className="dv-panel-content dv-canvas-config" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '12px' }}>
                     
                     {/* Resolution Section */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="dv-field-resolution" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         <div className="dv-field">
-                            <label>Ancho (px)</label>
+                            <label>{t('width_label')} (px)</label>
                             <input 
                                 type="number" 
                                 min="1"
@@ -77,7 +78,7 @@ export const ProjectConfigPanel: React.FC = () => {
                             />
                         </div>
                         <div className="dv-field">
-                            <label>Alto (px)</label>
+                            <label>{t('height_label')} (px)</label>
                             <input 
                                 type="number" 
                                 min="1"
@@ -91,12 +92,11 @@ export const ProjectConfigPanel: React.FC = () => {
                             />
                         </div>
                     </div>
-
                     {/* Duration Section */}
-                    <div style={{ marginTop: '4px', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
+                    <div className="dv-field-duration" style={{ marginTop: '4px', borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
                         <div className="dv-field">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                <label style={{ margin: 0 }}>Duración (segundos)</label>
+                                <label style={{ margin: 0 }}>{t('duration_seconds')}</label>
                             </div>
                             <input 
                                 type="number" 
@@ -141,14 +141,14 @@ export const ProjectConfigPanel: React.FC = () => {
                                     }}
                                 >
                                     {uiState.advancedDuration ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                                    Ajustar FPS
+                                    {t('adjust_fps')}
                                 </button>
                             </div>
                         </div>
 
                         {uiState.advancedDuration && (
-                            <div className="dv-field" style={{ marginTop: '12px', background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '4px' }}>
-                                <label>Velocidad (FPS)</label>
+                            <div className="dv-field dv-field-fps" style={{ marginTop: '12px', background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '4px' }}>
+                                <label>{t('fps_label')} (FPS)</label>
                                 <input 
                                     type="number" 
                                     min="1"
@@ -159,7 +159,7 @@ export const ProjectConfigPanel: React.FC = () => {
                                     onFocus={e => e.target.select()}
                                 />
                                 <span style={{ fontSize: '10px', color: 'var(--text-disabled)', marginTop: '4px', display: 'block' }}>
-                                    Total: {localDuration} frames calculados
+                                    {t('total_label')}: {localDuration} {t('frames_calculated')}
                                 </span>
                             </div>
                         )}

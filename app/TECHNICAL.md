@@ -1,67 +1,56 @@
-# Documentación Técnica: Ember Motion Studio v5.8
+# Documentación Técnica: Ember Motion Studio v5.9.0
 
 ## Introducción
 
-El **Ember Motion Studio v5.8** es un entorno de producción audiovisual impulsado por el motor **DVGE**, diseñado para la creación, previsualización y exportación de gráficos broadcast. Su núcleo está optimizado para generar archivos de video con transparencia nativa (canal Alfa) listos para flujos de trabajo profesionales en cine y televisión.
+El **Ember Motion Studio v5.9.0** es un entorno de producción impulsado por el motor **DVGE**. Su arquitectura está diseñada para la orquestación de gráficos broadcast asistidos por IA, garantizando un renderizado de alta fidelidad con transparencia nativa.
 
 ---
 
-## 1. Arquitectura del Motor
+## 1. Arquitectura de Orquestación
 
-El sistema utiliza un modelo de ejecución distribuido que garantiza el determinismo visual y la estabilidad del sistema host.
+El sistema utiliza un modelo de ejecución dual (Main y Renderer) que separa la lógica de interfaz del procesamiento de video pesado.
 
-### 1.1 Núcleo de Ejecución
+### 1.1 AI Context Builder (Knowledge Bridge)
 
-El motor separa la interfaz de usuario de la lógica de renderizado pesado. Esto permite previsualizaciones fluidas a 60fps mientras el backend gestiona la persistencia de datos y la codificación de video en segundo plano.
+Es el componente central de la v5.9.0. El motor genera dinámicamente un manual técnico (PDF) que contiene:
 
-### 1.2 Aislamiento y Renderizado (v5.8)
+- El esquema de la API de DVGE.
+- La descripción de los artefactos de usuario.
+- El contexto técnico del proyecto (Dimensiones, Duración, FPS).
+- El código fuente actual para iteraciones incrementales.
 
-- **Cápsula de Estilos**: Los plugins operan en entornos aislados para evitar conflictos visuales con el Studio.
-- **Determinismo**: El motor controla el reloj de animación fotograma a fotograma, asegurando que la previsualización sea idéntica al video exportado bit a bit.
+### 1.2 Determinismo Visual
 
----
-
-## 2. Gestión de Proyectos
-
-Cada producción se encapsula en un directorio independiente dentro de la carpeta de usuario.
-
-### 2.1 Persistencia Atómica
-
-El motor implementa un sistema de guardado resiliente: los cambios se validan antes de escribirse y se utiliza un flujo de escritura temporal para prevenir la corrupción de archivos en caso de fallos del sistema.
+El motor controla el reloj de animación fotograma a fotograma (frame-by-frame clock control). Esto asegura que la previsualización en el Studio sea idéntica al video exportado, garantizando la consistencia del bit-rate y el timing.
 
 ---
 
-## 3. Sistema de Plugins v5 (Master)
+## 2. Gestión de Artefactos y Datos
 
-### 3.1 Estructura del Plugin
+### 2.1 Artifact Linking
 
-Cada gráfico es una extensión del motor compuesta por:
+El sistema de propiedades (Inspector) se ha rediseñado para permitir la vinculación dinámica con los artefactos de la galería. El motor resuelve las referencias a assets locales y las inyecta en el contexto del plugin de forma segura.
 
-- `manifest.json`: Definición de la interfaz y metadatos.
-- `index.html`, `style.css`, `script.js`: Los componentes lógicos y visuales del gráfico.
+### 2.2 Seguridad (Sandbox Shadow DOM)
 
-### 3.2 Ciclo de Vida del Gráfico
-
-La API del motor proporciona ganchos de ejecución para el control total de la animación:
-
-- `awake`: Configuración inicial.
-- `start`: Disparadores de inicio.
-- `update`: Lógica reactiva fotograma a fotograma.
+Cada plugin se ejecuta dentro de un **Shadow Root** aislado con un proxy `fakeWindow`. Esto previene colisiones de estilos CSS y asegura que el código generado por la IA no tenga acceso a APIs críticas del sistema host.
 
 ---
 
-## 4. Tubería de Exportación (Master Mode)
+## 3. Tubería de Exportación
 
-### 4.1 Transparency Transformer
+### 3.1 Transparency Transformer
 
-El motor de exportación aplica inyección directa para asegurar que los niveles de transparencia sean perfectos para broadcast, eliminando artefactos en los bordes y garantizando negros puros donde no hay gráfico.
+Aplica inyecciones de estilo a nivel de motor antes de cada captura de cuadro para asegurar una transparencia "Straight" perfecta, eliminando cualquier halo o artefacto en los bordes del gráfico.
 
-### 4.2 Codificación Profesional
+### 3.2 Formatos Soportados
 
-El sistema codifica la salida en **Apple ProRes 4444** (10-bit con soporte Alfa), el estándar de la industria para gráficos de video de alta calidad.
+- **Apple ProRes 4444**: Estándar broadcast de 10 bits con canal Alfa.
+- **H.264 (MP4)**: Codificación optimizada para web.
+- **WebM / GIF / PNG Sequence**: Formatos versátiles para integraciones digitales.
 
 ---
 
-## 5. Preparación para v6 (Roadmap Técnico)
+## 4. Evolución hacia v6.0
 
-El motor está evolucionando hacia un modelo de **Extensiones Modulares**, donde la jerarquía de herramientas y efectos será totalmente personalizable, eliminando las restricciones de los plugins estáticos actuales.
+El motor v5.9.0 sirve como base estable para la transición a un modelo de **Extensiones Modulares**, donde las herramientas del Studio (como el cropper o los editores de datos) serán componentes desacoplados y ampliables.

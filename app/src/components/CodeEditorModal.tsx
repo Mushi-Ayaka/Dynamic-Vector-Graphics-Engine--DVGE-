@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { X } from 'lucide-react';
 import { FormField } from '../env';
+import { useTranslation } from '../i18n/useTranslation';
 
 interface CodeEditorModalProps {
     field: FormField;
@@ -11,6 +12,7 @@ interface CodeEditorModalProps {
 }
 
 export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({ initialValue, onChange, onClose }) => {
+    const { t } = useTranslation();
     const [value, setValue] = useState(initialValue);
 
     const handleChange = (newValue: string) => {
@@ -80,11 +82,11 @@ export const CodeEditorModal: React.FC<CodeEditorModalProps> = ({ initialValue, 
                             opacity: 0.7,
                             transition: 'opacity 0.2s'
                         }}
-                        title="Cerrar y volver al inspector"
+                        title={t('close_editor_tooltip')}
                         onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
                         onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
                     >
-                        <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', opacity: 0.8 }}>ESC para cerrar</span>
+                        <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', opacity: 0.8 }}>{t('esc_to_close')}</span>
                         <X size={16} />
                     </button>
                 </div>

@@ -3,10 +3,12 @@ import ReactDOM from 'react-dom';
 import { useStore } from '../store/useStore';
 import { APP_VERSION, BUILD_DATE } from '../version';
 import { ExternalLink, Mail, X } from 'lucide-react';
+import { useTranslation } from '../i18n/useTranslation';
 
 export const AboutModal: React.FC = () => {
     const isAboutOpen = useStore(state => state.isAboutOpen);
     const toggleAbout = useStore(state => state.toggleAbout);
+    const { t } = useTranslation();
 
     if (!isAboutOpen) return null;
 
@@ -33,7 +35,7 @@ export const AboutModal: React.FC = () => {
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <img src="logo-square.png" alt="Ember Motion Studio" style={{ width: '48px', height: '48px' }} />
+                        <img src="logo-square.png" alt="DVGE Studio" style={{ width: '48px', height: '48px' }} />
                         <div>
                             <h2 style={{ margin: 0, fontSize: '18px', color: 'white', fontFamily: 'Outfit, sans-serif', textTransform: 'uppercase', letterSpacing: '1px' }}>
                                 Ember Motion Studio
@@ -52,28 +54,28 @@ export const AboutModal: React.FC = () => {
                 </div>
 
                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', fontFamily: 'Fira Sans, sans-serif' }}>
-                    <p>El entorno para la generación de gráficos broadcast dinámicos. <strong>Ember Motion Studio v5.8</strong> introduce un sistema de renderizado determinista de alta fidelidad impulsado por el motor <strong>DVGE</strong>, diseñado para entornos de producción real.</p>
+                    <p>{t('about_studio')}</p>
 
                     <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <strong style={{ color: 'white', fontSize: '10px', textTransform: 'uppercase' }}>Desarrollador</strong> 
+                            <strong style={{ color: 'white', fontSize: '10px', textTransform: 'uppercase' }}>{t('developer')}</strong> 
                             <span style={{ fontSize: '11px' }}>Jonatan Barón</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <strong style={{ color: 'white', fontSize: '10px', textTransform: 'uppercase' }}>Motor</strong> 
+                            <strong style={{ color: 'white', fontSize: '10px', textTransform: 'uppercase' }}>{t('engine')}</strong> 
                             <span style={{ fontSize: '11px' }}>Remotion v4 + Electron Core</span>
                         </div>
                     </div>
 
                     <div style={{ marginTop: '20px', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
                         <a href="https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-" target="_blank" rel="noopener" style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '11px', fontWeight: 'bold' }}>
-                            <ExternalLink size={13} /> GITHUB
+                            <ExternalLink size={13} /> {t('github')}
                         </a>
                         <a href="https://portafolio-jonatan-baron.vercel.app/" target="_blank" rel="noopener" style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '11px', fontWeight: 'bold' }}>
-                            <ExternalLink size={13} /> PORTAFOLIO
+                            <ExternalLink size={13} /> {t('portfolio')}
                         </a>
                         <a href="https://mail.google.com/mail/?view=cm&fs=1&to=barojonatan8@gmail.com" target="_blank" rel="noopener" style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '11px', fontWeight: 'bold' }}>
-                            <Mail size={13} /> CONTACTO
+                            <Mail size={13} /> {t('contact')}
                         </a>
                     </div>
                 </div>

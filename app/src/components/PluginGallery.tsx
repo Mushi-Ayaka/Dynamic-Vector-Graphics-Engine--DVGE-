@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { Download, Trash2, RefreshCw, X } from 'lucide-react';
+import { useTranslation } from '../i18n/useTranslation';
 
 interface GalleryPlugin {
     id: string;
@@ -18,6 +19,7 @@ interface GalleryPlugin {
 }
 
 export const PluginGallery: React.FC = () => {
+    const { t } = useTranslation();
     const { toggleGallery, plugins, initialize } = useStore();
     const [remotePlugins, setRemotePlugins] = useState<GalleryPlugin[]>([]);
     const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ export const PluginGallery: React.FC = () => {
             }
         } catch (err: any) {
             console.error('[PluginGallery] Error al obtener registro:', err);
-            setError(`Error de catálogo: ${err.message}`);
+            setError(`${t('catalog_error')} ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -83,9 +85,9 @@ export const PluginGallery: React.FC = () => {
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                     <div>
-                        <h2 style={{ margin: 0, color: 'white' }}>Catálogo de Plugins</h2>
+                        <h2 style={{ margin: 0, color: 'white' }}>{t('plugin_catalog')}</h2>
                         <p style={{ margin: '5px 0 0', fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
-                            Descubre y descarga nuevos plugins.
+                            {t('plugin_catalog_desc')}
                         </p>
                     </div>
                     <button className="btn-icon" onClick={toggleGallery} style={{ padding: '10px' }}>
@@ -94,17 +96,19 @@ export const PluginGallery: React.FC = () => {
                 </div>
 
                 <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
-                    {loading && <div style={{ textAlign: 'center', padding: '40px', gridColumn: '1/-1' }}>Cargando catálogo...</div>}
+                    {loading && <div style={{ textAlign: 'center', padding: '40px', gridColumn: '1/-1' }}>{t('loading_catalog')}</div>}
                     {error && (
                         <div style={{ textAlign: 'center', padding: '40px', gridColumn: '1/-1', color: '#E44C30' }}>
                             {error}<br/>
                             <button onClick={fetchRegistry} style={{ marginTop: '10px', background: 'none', border: 'none', color: '#E44C30', cursor: 'pointer', textDecoration: 'underline' }}>
-                                Reintentar
+                                {t('retry')}
                             </button>
                         </div>
                     )}
                     
-                    {!loading && !error && remotePlugins.map(p => {
+                    {!loading && !error && remotePlugins
+                        .filter(p => p.id !== 'proyecto-vacio')
+                        .map(p => {
                         const local = plugins.find(lp => lp.manifest.id === p.id);
                         const isOutdated = local && local.manifest.version !== p.version;
 
@@ -122,32 +126,32 @@ export const PluginGallery: React.FC = () => {
                                 <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.6)', flex: 1 }}>{p.description}</p>
                                 
                                 <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '5px' }}>
-                                    Por: {p.author} • {new Date(p.updatedAt).toLocaleDateString()}
+                                    {t('by_author')} {p.author} • {new Date(p.updatedAt).toLocaleDateString()}
                                 </div>
 
                                 <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                                     {!local ? (
                                         <button className="dv-btn" style={{ flex: 1, padding: '8px' }} onClick={() => handleInstall(p)}>
-                                            <Download size={14} style={{ marginRight: '5px' }} /> Instalar
+                                            <Download size={14} style={{ marginRight: '5px' }} /> {t('install')}
                                         </button>
                                     ) : (
                                         <>
                                             {isOutdated ? (
                                                 <button className="dv-btn" style={{ flex: 1, padding: '8px' }} onClick={() => handleInstall(p)}>
-                                                    <RefreshCw size={14} style={{ marginRight: '5px' }} /> Actualizar
+                                                    <RefreshCw size={14} style={{ marginRight: '5px' }} /> {t('update')}
                                                 </button>
                                             ) : (
                                                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', color: 'var(--success)' }}>
-                                                    ✓ Instalado
+                                                    {t('installed')}
                                                 </div>
                                             )}
                                             {confirmingId === p.id ? (
                                                 <div style={{ display: 'flex', gap: '5px', flex: 1 }}>
                                                     <button className="dv-btn" style={{ flex: 1, padding: '8px', background: '#E44C30', color: 'white', border: 'none' }} onClick={() => handleDeleteConfirm(p.id)}>
-                                                        Sí
+                                                        {t('yes')}
                                                     </button>
                                                     <button className="dv-btn secondary" style={{ flex: 1, padding: '8px' }} onClick={() => setConfirmingId(null)}>
-                                                        No
+                                                        {t('no_btn')}
                                                     </button>
                                                 </div>
                                             ) : (
@@ -155,7 +159,7 @@ export const PluginGallery: React.FC = () => {
                                                     className="dv-btn secondary" 
                                                     style={{ padding: '8px', minWidth: '40px' }} 
                                                     onClick={() => setConfirmingId(p.id)}
-                                                    title="Borrar plugin local"
+                                                    title={t('delete_local_plugin')}
                                                 >
                                                     <Trash2 size={14} />
                                                 </button>

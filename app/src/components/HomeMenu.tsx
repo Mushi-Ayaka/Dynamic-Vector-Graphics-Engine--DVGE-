@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { FolderOpen, Plus, ShoppingBag, Settings, Trash2, Edit3, X, Search, LayoutGrid, List } from 'lucide-react';
+import { useTranslation } from '../i18n/useTranslation';
 import './HomeMenu.css';
 import { PluginGallery } from './PluginGallery';
 import { APP_VERSION } from '../version';
@@ -10,6 +11,7 @@ const ProjectSettingsModal: React.FC<{
     onClose: () => void,
     onRefresh: () => void
 }> = ({ project, onClose, onRefresh }) => {
+    const { t } = useTranslation();
     const [newName, setNewName] = useState(project.name);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -47,14 +49,14 @@ const ProjectSettingsModal: React.FC<{
                 animation: 'scaleIn 0.2s ease-out'
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h3 style={{ margin: 0, fontSize: '14px', color: 'white', fontWeight: 600 }}>Ajustes del Proyecto</h3>
+                    <h3 style={{ margin: 0, fontSize: '14px', color: 'white', fontWeight: 600 }}>{t('project_settings')}</h3>
                     <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-disabled)', cursor: 'pointer' }}>
                         <X size={18} />
                     </button>
                 </div>
 
                 <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', fontSize: '10px', color: 'var(--text-label)', marginBottom: '6px', fontWeight: 600, textTransform: 'uppercase' }}>Nombre del Proyecto</label>
+                    <label style={{ display: 'block', fontSize: '10px', color: 'var(--text-label)', marginBottom: '6px', fontWeight: 600, textTransform: 'uppercase' }}>{t('project_name_label')}</label>
                     <div style={{ display: 'flex', gap: '8px' }}>
                         <input
                             className="dv-input"
@@ -100,23 +102,23 @@ const ProjectSettingsModal: React.FC<{
                                 transition: 'all 0.2s'
                             }}
                         >
-                            <Trash2 size={14} /> ELIMINAR PROYECTO
+                            <Trash2 size={14} /> {t('delete_project_btn')}
                         </button>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <span style={{ fontSize: '11px', color: '#ef4444', textAlign: 'center', fontWeight: 600 }}>¿ESTÁS SEGURO? NO HAY VUELTA ATRÁS</span>
+                            <span style={{ fontSize: '11px', color: '#ef4444', textAlign: 'center', fontWeight: 600 }}>{t('delete_confirm_msg')}</span>
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <button
                                     onClick={() => setIsDeleting(false)}
                                     style={{ flex: 1, padding: '10px', fontSize: '11px', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '6px', color: 'white', cursor: 'pointer', fontWeight: 600 }}
                                 >
-                                    CANCELAR
+                                    {t('cancel').toUpperCase()}
                                 </button>
                                 <button
                                     onClick={handleDelete}
                                     style={{ flex: 1, padding: '10px', fontSize: '11px', background: '#ef4444', border: 'none', borderRadius: '6px', color: 'white', cursor: 'pointer', fontWeight: 600 }}
                                 >
-                                    ELIMINAR
+                                    {t('delete').toUpperCase()}
                                 </button>
                             </div>
                         </div>
@@ -128,6 +130,7 @@ const ProjectSettingsModal: React.FC<{
 };
 
 export const HomeMenu: React.FC = () => {
+    const { t } = useTranslation();
     const loadProject = useStore(state => state.loadProject);
     const plugins = useStore(state => state.plugins);
     const isGalleryOpen = useStore(state => state.isGalleryOpen);
@@ -174,7 +177,7 @@ export const HomeMenu: React.FC = () => {
             setIsCreatingProject(false);
             loadProject(proj);
         } else {
-            alert('Error creating project or name already exists.');
+            alert(t('error_create_project'));
         }
     };
 
@@ -182,7 +185,7 @@ export const HomeMenu: React.FC = () => {
         const pluginExists = plugins.some(p => p.manifest.id === proj.pluginId);
 
         if (!pluginExists) {
-            alert(`❌ ERROR DE INTEGRIDAD:\nEl plugin "${proj.pluginId}" no está instalado.\n\nInstala el plugin necesario para poder abrir este proyecto.`);
+            alert(t('integrity_error').replace('{id}', proj.pluginId));
             return;
         }
 
@@ -211,7 +214,7 @@ export const HomeMenu: React.FC = () => {
                     <input
                         className="home-search-input"
                         type="text"
-                        placeholder="Buscar proyecto..."
+                        placeholder={t('search_projects')}
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         autoComplete="off"
@@ -222,7 +225,7 @@ export const HomeMenu: React.FC = () => {
                     <button
                         className="home-view-btn"
                         onClick={() => setViewMode('list')}
-                        title="Vista lista"
+                        title={t('list_view')}
                         aria-pressed={viewMode === 'list'}
                     >
                         <List size={15} />
@@ -230,17 +233,17 @@ export const HomeMenu: React.FC = () => {
                     <button
                         className="home-view-btn"
                         onClick={() => setViewMode('grid')}
-                        title="Vista cuadrícula"
+                        title={t('grid_view')}
                         aria-pressed={viewMode === 'grid'}
                     >
                         <LayoutGrid size={15} />
                     </button>
                     <button
-                        className="dv-btn"
+                        className="dv-btn dv-new-project-btn"
                         onClick={() => setIsCreatingProject(!isCreatingProject)}
                         style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                     >
-                        <Plus size={14} /> Nuevo Proyecto
+                        <Plus size={14} /> {t('new_project')}
                     </button>
                 </div>
             </div>
@@ -250,7 +253,7 @@ export const HomeMenu: React.FC = () => {
                 <form className="create-project-card" onSubmit={handleCreateProject}>
                     <input
                         className="dv-input"
-                        placeholder="Nombre del proyecto..."
+                        placeholder={t('new_project_placeholder')}
                         value={newProjectName}
                         onChange={e => setNewProjectName(e.target.value)}
                         autoFocus
@@ -262,7 +265,7 @@ export const HomeMenu: React.FC = () => {
                         onChange={e => setNewProjectPluginId(e.target.value)}
                         required
                     >
-                        <option value="" disabled>Selecciona un plugin base...</option>
+                        <option value="" disabled>{t('select_plugin_base')}</option>
                         {plugins.map(p => (
                             <option key={p.manifest.id} value={p.manifest.id}>
                                 {p.manifest.name}
@@ -270,8 +273,8 @@ export const HomeMenu: React.FC = () => {
                         ))}
                     </select>
                     <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                        <button type="submit" className="dv-btn">Crear y Abrir</button>
-                        <button type="button" className="dv-btn secondary" onClick={() => setIsCreatingProject(false)}>Cancelar</button>
+                        <button type="submit" className="dv-btn">{t('create_and_open')}</button>
+                        <button type="button" className="dv-btn secondary" onClick={() => setIsCreatingProject(false)}>{t('cancel')}</button>
                     </div>
                 </form>
             )}
@@ -281,29 +284,29 @@ export const HomeMenu: React.FC = () => {
                 {projects
                     .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
                     .map(proj => (
-                            <div key={proj.id} className="project-item" onClick={() => handleProjectClick(proj)}>
-                                <div className="project-info">
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <strong>{proj.name}</strong>
-                                        {!plugins.some(p => p.manifest.id === proj.pluginId) && (
-                                            <span style={{ fontSize: '9px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>MISSING PLUGIN</span>
-                                        )}
-                                    </div>
-                                    <span className="project-meta">Plugin: {proj.pluginId} • Editado: {new Date(proj.updatedAt).toLocaleDateString()}</span>
+                        <div key={proj.id} className="project-item dv-project-item" onClick={() => handleProjectClick(proj)}>
+                            <div className="project-info">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <strong>{proj.name}</strong>
+                                    {!plugins.some(p => p.manifest.id === proj.pluginId) && (
+                                        <span style={{ fontSize: '9px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>{t('missing_plugin')}</span>
+                                    )}
                                 </div>
-                                <div className="project-actions">
-                                    <button className="btn-icon" onClick={(e) => openSettings(proj, e)} title="Configuración">
-                                        <Settings size={16} />
-                                    </button>
-                                    <button className="btn-icon" onClick={(e) => openProjectFolder(proj.id, e)} title="Abrir carpeta">
-                                        <FolderOpen size={16} />
-                                    </button>
-                                </div>
+                                <span className="project-meta">Plugin: {proj.pluginId} • {t('edited')}: {new Date(proj.updatedAt).toLocaleDateString()}</span>
                             </div>
-                        ))}
+                            <div className="project-actions">
+                                <button className="btn-icon" onClick={(e) => openSettings(proj, e)} title={t('settings')}>
+                                    <Settings size={16} />
+                                </button>
+                                <button className="btn-icon" onClick={(e) => openProjectFolder(proj.id, e)} title={t('open_folder_tooltip')}>
+                                    <FolderOpen size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 {projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && !isCreatingProject && (
                     <div className="empty-state">
-                        {searchQuery ? `Sin resultados para "${searchQuery}"` : 'No hay proyectos. Crea uno nuevo para comenzar.'}
+                        {searchQuery ? `${t('no_results')} "${searchQuery}"` : t('no_projects')}
                     </div>
                 )}
             </div>
@@ -322,7 +325,7 @@ export const HomeMenu: React.FC = () => {
                     style={{ background: 'rgba(228,76,48,0.12)', color: 'var(--accent)', border: '1px solid rgba(228,76,48,0.25)' }}
                     onClick={toggleGallery}
                 >
-                    <ShoppingBag size={13} style={{ marginRight: '5px' }} /> Catálogo de Plugins
+                    <ShoppingBag size={13} style={{ marginRight: '5px' }} /> {t('plugin_catalog')}
                 </button>
                 <span className="home-footer-meta">v{APP_VERSION}</span>
             </div>

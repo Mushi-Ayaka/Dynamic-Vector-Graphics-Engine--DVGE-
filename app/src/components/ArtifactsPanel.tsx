@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FormField } from '../env';
 import { useStore } from '../store/useStore';
 import { DynamicField } from './InspectorTabs';
-import { Plus, Trash2, Settings2, Check, Scissors, X, AlertCircle, FileImage, FolderOpen, RefreshCcw, Link, UploadCloud } from 'lucide-react';
+import { Plus, Trash2, Settings2, Check, Scissors, X, AlertCircle, FileImage, FolderOpen, RefreshCcw, Link, UploadCloud, Table } from 'lucide-react';
+import { useTranslation } from '../i18n/useTranslation';
+import { DataGridEditor } from './DataGridEditor';
 
 // --- Sub-componente: Toast de Notificación ---
 const Toast: React.FC<{ message: string; type: 'error' | 'success'; onClear: () => void }> = ({ message, type, onClear }) => {
@@ -41,6 +43,7 @@ const CropModal: React.FC<{
     onConfirm: (base64: string) => void; 
     onCancel: () => void; 
 }> = ({ src, onConfirm, onCancel }) => {
+    const { t } = useTranslation();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const imgRef = useRef<HTMLImageElement>(null);
     const [crop, setCrop] = useState({ x: 0, y: 0, width: 0, height: 0 });
@@ -153,7 +156,7 @@ const CropModal: React.FC<{
                 <div style={{ padding: '16px 24px', borderBottom: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#111', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <Scissors size={14} color="#E44C30" />
-                        <span style={{ fontSize: '11px', fontWeight: 800, color: '#eee', textTransform: 'uppercase', letterSpacing: '2px' }}>Recorte Profesional</span>
+                        <span style={{ fontSize: '11px', fontWeight: 800, color: '#eee', textTransform: 'uppercase', letterSpacing: '2px' }}>{t('crop_professional')}</span>
                     </div>
                     <button onClick={onCancel} style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }}><X size={20}/></button>
                 </div>
@@ -194,13 +197,13 @@ const CropModal: React.FC<{
                 <div style={{ padding: '16px 24px', borderTop: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#111', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
                     <div style={{ display: 'flex', gap: '20px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: '8px', color: '#555', textTransform: 'uppercase', fontWeight: 800 }}>Resolución de salida</span>
+                            <span style={{ fontSize: '8px', color: '#555', textTransform: 'uppercase', fontWeight: 800 }}>{t('output_resolution')}</span>
                             <span style={{ fontSize: '11px', color: '#aaa', fontFamily: 'var(--font-mono)' }}>{Math.round(crop.width)} x {Math.round(crop.height)} px</span>
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: '12px' }}>
-                        <button onClick={onCancel} style={{ padding: '10px 24px', background: 'transparent', border: '1px solid #333', color: '#888', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 600 }}>Cancelar</button>
-                        <button onClick={handleConfirm} style={{ padding: '10px 32px', background: '#E44C30', border: 'none', color: '#fff', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', boxShadow: '0 8px 16px rgba(228,76,48,0.2)' }}>Aplicar Recorte</button>
+                        <button onClick={onCancel} style={{ padding: '10px 24px', background: 'transparent', border: '1px solid #333', color: '#888', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 600 }}>{t('cancel')}</button>
+                        <button onClick={handleConfirm} style={{ padding: '10px 32px', background: '#E44C30', border: 'none', color: '#fff', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', boxShadow: '0 8px 16px rgba(228,76,48,0.2)' }}>{t('apply_crop')}</button>
                     </div>
                 </div>
             </div>
@@ -210,6 +213,7 @@ const CropModal: React.FC<{
 };
 
 export const ArtifactsPanel: React.FC = () => {
+    const { t } = useTranslation();
     const { 
         artifactFields, 
         addArtifactField, 
@@ -218,7 +222,8 @@ export const ArtifactsPanel: React.FC = () => {
         properties, 
         setProperties,
         activeProject,
-        saveProjectState
+        saveProjectState,
+        appSettings
     } = useStore();
     
     const [showTypeMenu, setShowTypeMenu] = useState(false);
@@ -228,19 +233,21 @@ export const ArtifactsPanel: React.FC = () => {
     const [physicalAssets, setPhysicalAssets] = useState<{ name: string, path: string }[]>([]);
     const [viewMode, setViewMode] = useState<'fields' | 'explorer'>('fields');
     const [isDraggingOver, setIsDraggingOver] = useState(false);
+    const [datasetToEdit, setDatasetToEdit] = useState<{ id: string, data: string[][] | null } | null>(null);
 
     const typeLabels: Record<string, string> = {
-        'string': 'Texto',
-        'number': 'Número',
-        'boolean': 'Interruptor',
-        'color': 'Color',
-        'slider': 'Control Deslizante',
-        'select': 'Opciones',
-        'image': 'Imagen',
-        'file': 'Archivo',
-        'code': 'Código',
-        'alignment': 'Anclaje',
-        'easing': 'Animación'
+        'string': t('field_string'),
+        'number': t('field_number'),
+        'boolean': t('field_boolean'),
+        'color': t('field_color'),
+        'slider': t('field_slider'),
+        'select': t('field_select'),
+        'image': t('field_image'),
+        'file': t('field_file'),
+        'code': t('field_code'),
+        'alignment': t('field_alignment'),
+        'easing': t('field_easing'),
+        'dataset': t('field_dataset')
     };
 
     const activeProjectId = activeProject?.id;
@@ -273,12 +280,37 @@ export const ArtifactsPanel: React.FC = () => {
         }
         setShowTypeMenu(false);
         setEditingFieldId(id);
-        setTimeout(() => saveProjectState(), 100);
-    }, [addArtifactField, artifactFields.length, saveProjectState, setProperties]);
+        if (appSettings.autoSave) {
+            setTimeout(() => saveProjectState(), 100);
+        }
+    }, [addArtifactField, appSettings.autoSave, artifactFields.length, saveProjectState, setProperties, typeLabels]);
 
     const handleLinkToArtifact = useCallback(async (assetPath: string, fileName: string) => {
         if (!activeProjectId || !window.ipcRenderer) return;
         try {
+            // [v5.8.5] Detección proactiva de tablas antes de indexar (evita mover el archivo antes de leerlo)
+            const isTable = fileName.match(/\.(csv|xlsx|xls)$/i);
+            
+            if (isTable && (window.ipcRenderer as any).parseTableFile) {
+                const parseResult = await (window.ipcRenderer as any).parseTableFile(assetPath);
+                if (parseResult.success) {
+                    // Indexamos para que se mueva a artifacts (esto invalida assetPath para futuras lecturas)
+                    const indexResult = await window.ipcRenderer.indexAsset({
+                        projectId: activeProjectId,
+                        assetPath
+                    });
+                    
+                    if (indexResult.success) {
+                        handleAddField('dataset', JSON.stringify(parseResult.data), fileName);
+                        setViewMode('fields');
+                        setToast({ message: `${t('indexed_msg')} (Dataset): ${fileName}`, type: 'success' });
+                        loadPhysicalAssets();
+                        return;
+                    }
+                }
+            }
+
+            // Flujo estándar para imágenes y otros archivos
             const result = await window.ipcRenderer.indexAsset({
                 projectId: activeProjectId,
                 assetPath
@@ -289,15 +321,16 @@ export const ArtifactsPanel: React.FC = () => {
                 const type = isImage ? 'image' : 'file';
                 handleAddField(type, result.filePath, fileName);
                 setViewMode('fields');
-                setToast({ message: `Indexado: ${fileName}`, type: 'success' });
+                setToast({ message: `${t('indexed_msg')}: ${fileName}`, type: 'success' });
                 loadPhysicalAssets();
             } else {
-                setToast({ message: 'Error al indexar el archivo.', type: 'error' });
+                setToast({ message: t('error_indexing'), type: 'error' });
             }
         } catch (err) {
-            setToast({ message: 'Error en el proceso de indexación.', type: 'error' });
+            console.error('Error linking artifact:', err);
+            setToast({ message: t('error_indexing'), type: 'error' });
         }
-    }, [activeProjectId, handleAddField, loadPhysicalAssets]);
+    }, [activeProjectId, handleAddField, loadPhysicalAssets, t]);
 
     const handleDrop = async (e: React.DragEvent) => {
         e.preventDefault();
@@ -326,18 +359,47 @@ export const ArtifactsPanel: React.FC = () => {
                 }
                 setViewMode('explorer');
                 loadPhysicalAssets();
-                setToast({ message: `${files.length} archivos añadidos al explorador.`, type: 'success' });
+                setToast({ message: `${files.length} ${t('drag_assets_hint')}`, type: 'success' });
             }
         } else if (text) {
             const num = Number(text);
             if (!isNaN(num) && text.trim() !== '') {
-                handleAddField('number', num, `Valor ${text}`);
+                handleAddField('number', num, `Value ${text}`);
             } else {
-                handleAddField('string', text, `Texto: ${text.substring(0, 10)}...`);
+                handleAddField('string', text, `Text: ${text.substring(0, 10)}...`);
             }
             setViewMode('fields');
-            setToast({ message: 'Artefacto de datos creado.', type: 'success' });
+            setToast({ message: t('artifact_created'), type: 'success' });
         }
+    };
+
+    const handleSaveDataset = (data: string[][]) => {
+        if (datasetToEdit) {
+            const jsonValue = JSON.stringify(data);
+            if (datasetToEdit.id === 'NEW') {
+                const id = `art_dataset_${Date.now()}`;
+                const newField: FormField = {
+                    id,
+                    type: 'dataset',
+                    label: `Dataset ${artifactFields.length + 1}`,
+                    defaultValue: jsonValue
+                };
+                addArtifactField(newField);
+                setProperties({ [id]: jsonValue });
+            } else {
+                // Actualizamos tanto las propiedades en vivo como el esquema persistente
+                setProperties({ [datasetToEdit.id]: jsonValue });
+                updateArtifactField(datasetToEdit.id, { defaultValue: jsonValue });
+            }
+
+            setToast({ message: t('changes_saved'), type: 'success' });
+            
+            if (appSettings.autoSave) {
+                // Pequeño delay para asegurar sincronización del store
+                setTimeout(() => saveProjectState(), 100);
+            }
+        }
+        setDatasetToEdit(null);
     };
 
     const handleImportExternal = async () => {
@@ -357,17 +419,19 @@ export const ArtifactsPanel: React.FC = () => {
             });
 
             if (result.success) {
-                setToast({ message: 'Archivo importado a assets.', type: 'success' });
+                setToast({ message: t('changes_saved'), type: 'success' });
                 loadPhysicalAssets();
             }
         } catch (err) {
-            setToast({ message: 'Error al importar archivo.', type: 'error' });
+            setToast({ message: t('error_create_project'), type: 'error' });
         }
     };
 
     const handleRemoveField = (id: string) => {
         removeArtifactField(id);
-        setTimeout(() => saveProjectState(), 100);
+        if (appSettings.autoSave) {
+            setTimeout(() => saveProjectState(), 100);
+        }
     };
 
     const handleOpenCrop = (fieldId: string) => {
@@ -380,7 +444,7 @@ export const ArtifactsPanel: React.FC = () => {
             }
             setCropTarget({ fieldId, src: finalSrc });
         } else {
-            setToast({ message: 'Selecciona una imagen primero.', type: 'error' });
+            setToast({ message: t('select_image_first'), type: 'error' });
         }
     };
 
@@ -397,11 +461,11 @@ export const ArtifactsPanel: React.FC = () => {
             if (result.success && result.filePath) {
                 setProperties({ [cropTarget.fieldId]: result.filePath });
                 setCropTarget(null);
-                setToast({ message: 'Recorte guardado en Artefactos.', type: 'success' });
-                saveProjectState();
+                setToast({ message: t('crop_saved'), type: 'success' });
+                if (appSettings.autoSave) saveProjectState();
             }
         } catch (err) {
-            setToast({ message: 'Error al procesar el recorte.', type: 'error' });
+            setToast({ message: t('error_indexing'), type: 'error' });
         }
     };
 
@@ -435,7 +499,7 @@ export const ArtifactsPanel: React.FC = () => {
                     pointerEvents: 'none'
                 }}>
                     <UploadCloud size={48} color="var(--accent)" style={{ marginBottom: '12px' }} />
-                    <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '2px' }}>Suelta para Importar</span>
+                    <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '2px' }}>{t('drop_to_import')}</span>
                 </div>
             )}
 
@@ -447,18 +511,28 @@ export const ArtifactsPanel: React.FC = () => {
                 />
             )}
 
+            {datasetToEdit && (
+                <DataGridEditor 
+                    initialData={datasetToEdit.data}
+                    onSave={handleSaveDataset}
+                    onClose={() => setDatasetToEdit(null)}
+                />
+            )}
+
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', flexShrink: 0 }}>
                 <button 
                     onClick={() => setViewMode('fields')}
+                    className="dv-artifacts-tab"
                     style={{ flex: 1, padding: '10px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', background: viewMode === 'fields' ? 'var(--bg-primary)' : 'transparent', border: 'none', color: viewMode === 'fields' ? 'var(--accent)' : 'var(--text-disabled)', cursor: 'pointer', borderBottom: viewMode === 'fields' ? '2px solid var(--accent)' : 'none' }}
                 >
-                    Artefactos
+                    {t('artifacts')}
                 </button>
                 <button 
                     onClick={() => { setViewMode('explorer'); loadPhysicalAssets(); }}
+                    className="dv-explorer-tab"
                     style={{ flex: 1, padding: '10px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', background: viewMode === 'explorer' ? 'var(--bg-primary)' : 'transparent', border: 'none', color: viewMode === 'explorer' ? 'var(--accent)' : 'var(--text-disabled)', cursor: 'pointer', borderBottom: viewMode === 'explorer' ? '2px solid var(--accent)' : 'none' }}
                 >
-                    Explorador Assets
+                    {t('asset_explorer')}
                 </button>
             </div>
 
@@ -467,7 +541,7 @@ export const ArtifactsPanel: React.FC = () => {
                     <>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                             <h3 style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '1.5px', margin: 0 }}>
-                                Mis Artefactos
+                                {t('my_artifacts')}
                             </h3>
                             <span className="dv-badge" style={{ fontSize: '9px' }}>{artifactFields.length}</span>
                         </div>
@@ -476,21 +550,47 @@ export const ArtifactsPanel: React.FC = () => {
                             {artifactFields.map(field => {
                                 const isEditing = editingFieldId === field.id;
                                 return (
-                                    <div key={field.id} style={{ 
+                                    <div key={field.id} className="dv-artifact-item" style={{ 
                                         padding: '12px', 
                                         background: isEditing ? 'rgba(228, 76, 48, 0.04)' : 'var(--bg-elevated)', 
                                         borderRadius: '6px', 
                                         border: isEditing ? '1px solid var(--accent)' : '1px solid var(--border)'
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                            <span style={{ fontSize: '9px', fontWeight: 800, color: isEditing ? 'var(--accent)' : 'var(--text-secondary)', textTransform: 'uppercase' }}>
-                                                {typeLabels[field.type] || field.type}
-                                            </span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span style={{ fontSize: '9px', fontWeight: 800, color: isEditing ? 'var(--accent)' : 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                                                    {typeLabels[field.type] || field.type}
+                                                </span>
+                                                {field.type === 'dataset' && properties[field.id] && (
+                                                    <span style={{ fontSize: '8px', color: 'var(--text-disabled)', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '10px' }}>
+                                                        {(() => {
+                                                            try {
+                                                                const d = typeof properties[field.id] === 'string' ? JSON.parse(properties[field.id]) : properties[field.id];
+                                                                return `${d.length} ${t('rows') || 'filas'}`;
+                                                            } catch(e) { return ''; }
+                                                        })()}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div style={{ display: 'flex', gap: '4px' }}>
                                                 {field.type === 'image' && (
-                                                    <button onClick={() => handleOpenCrop(field.id)} className="btn-icon" title="Recortar Imagen"><Scissors size={13}/></button>
+                                                    <button onClick={() => handleOpenCrop(field.id)} className="btn-icon dv-artifact-crop-btn" title={t('crop_image_tooltip')}><Scissors size={13}/></button>
                                                 )}
-                                                <button onClick={() => setEditingFieldId(isEditing ? null : field.id)} className="btn-icon">
+                                                {field.type === 'dataset' && (
+                                                    <button onClick={() => {
+                                                        let currentData = null;
+                                                        const val = properties[field.id];
+                                                        if (val) {
+                                                            try { 
+                                                                currentData = typeof val === 'string' ? JSON.parse(val) : val; 
+                                                            } catch(e) {
+                                                                console.error("Error parsing dataset JSON:", e);
+                                                            }
+                                                        }
+                                                        setDatasetToEdit({ id: field.id, data: currentData });
+                                                    }} className="btn-icon dv-artifact-dataset-btn" title={t('edit_data')}><Table size={13}/></button>
+                                                )}
+                                                <button onClick={() => setEditingFieldId(isEditing ? null : field.id)} className="btn-icon dv-artifact-edit-btn">
                                                     {isEditing ? <Check size={14} color="var(--accent)"/> : <Settings2 size={14}/>}
                                                 </button>
                                                 <button onClick={() => handleRemoveField(field.id)} className="btn-icon"><Trash2 size={13}/></button>
@@ -500,64 +600,69 @@ export const ArtifactsPanel: React.FC = () => {
                                         {isEditing ? (
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                                 <div className="dv-field">
-                                                    <input className="dv-input" value={field.label} onChange={e => {
+                                                    <input className="dv-input dv-artifact-label-input" value={field.label} onChange={e => {
                                                         updateArtifactField(field.id, { label: e.target.value });
-                                                        saveProjectState();
+                                                        if (appSettings.autoSave) saveProjectState();
                                                     }}/>
                                                 </div>
                                                 <div className="dv-field">
-                                                    <label>Descripción</label>
+                                                    <label>{t('description_label')}</label>
                                                     <textarea 
-                                                        className="dv-input" 
-                                                        placeholder="Ej: Logo que aparece con glitch al final..."
+                                                        className="dv-input dv-artifact-desc-input" 
+                                                        placeholder={t('artifact_desc_placeholder')}
                                                         rows={2}
                                                         value={field.description || ''} 
                                                         onChange={e => {
                                                             updateArtifactField(field.id, { description: e.target.value });
-                                                            saveProjectState();
+                                                            if (appSettings.autoSave) saveProjectState();
                                                         }}
                                                     />
                                                 </div>
                                                 {(field.type === 'number' || field.type === 'slider') && (
                                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                                                         <div className="dv-field">
-                                                            <label>Mín</label>
+                                                            <label>{t('min_label')}</label>
                                                             <input type="number" className="dv-input" value={field.min ?? 0} onChange={e => {
                                                                 updateArtifactField(field.id, { min: Number(e.target.value) });
-                                                                saveProjectState();
+                                                                if (appSettings.autoSave) saveProjectState();
                                                             }}/>
                                                         </div>
                                                         <div className="dv-field">
-                                                            <label>Máx</label>
+                                                            <label>{t('max_label')}</label>
                                                             <input type="number" className="dv-input" value={field.max ?? 100} onChange={e => {
                                                                 updateArtifactField(field.id, { max: Number(e.target.value) });
-                                                                saveProjectState();
+                                                                if (appSettings.autoSave) saveProjectState();
                                                             }}/>
                                                         </div>
                                                         <div className="dv-field">
-                                                            <label>Paso</label>
+                                                            <label>{t('step_label')}</label>
                                                             <input type="number" className="dv-input" value={field.step ?? 1} onChange={e => {
                                                                 updateArtifactField(field.id, { step: Number(e.target.value) });
-                                                                saveProjectState();
+                                                                if (appSettings.autoSave) saveProjectState();
                                                             }}/>
                                                         </div>
                                                     </div>
                                                 )}
                                                 {field.type === 'select' && (
                                                     <div className="dv-field">
-                                                        <label>Opciones (separar con coma)</label>
+                                                        <label>{t('options_hint')}</label>
                                                         <textarea className="dv-input" rows={2} value={field.options?.map(o => o.label).join(', ') || ''} onChange={e => {
                                                             updateArtifactField(field.id, { options: e.target.value.split(',').map(s => ({ label: s.trim(), value: s.trim() })) });
-                                                            saveProjectState();
+                                                            if (appSettings.autoSave) saveProjectState();
                                                         }}/>
                                                     </div>
                                                 )}
                                             </div>
                                         ) : (
-                                            <DynamicField field={field} value={properties[field.id]} onChange={(id, val) => {
-                                                setProperties({ [id]: val });
-                                                saveProjectState();
-                                            }} />
+                                            <DynamicField 
+                                                field={field} 
+                                                value={properties[field.id]} 
+                                                onChange={(id, val) => {
+                                                    setProperties({ [id]: val });
+                                                    if (appSettings.autoSave) saveProjectState();
+                                                }} 
+                                                onOpenDataEditor={(f, data) => setDatasetToEdit({ id: f.id, data })}
+                                            />
                                         )}
                                     </div>
                                 );
@@ -568,19 +673,19 @@ export const ArtifactsPanel: React.FC = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                             <h3 style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '1.5px', margin: 0 }}>
-                                Explorador de Assets
+                                {t('asset_explorer')}
                             </h3>
                             <div style={{ display: 'flex', gap: '4px' }}>
-                                <button onClick={loadPhysicalAssets} className="btn-icon" title="Refrescar"><RefreshCcw size={13}/></button>
-                                <button onClick={() => window.ipcRenderer.openProjectFolder(activeProjectId)} className="btn-icon" title="Abrir Carpeta"><FolderOpen size={14}/></button>
+                                <button onClick={loadPhysicalAssets} className="btn-icon" title={t('refresh_tooltip')}><RefreshCcw size={13}/></button>
+                                <button onClick={() => window.ipcRenderer.openProjectFolder(activeProjectId)} className="btn-icon" title={t('open_folder_tooltip')}><FolderOpen size={14}/></button>
                             </div>
                         </div>
                         
                         {physicalAssets.length === 0 ? (
                             <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-disabled)', fontSize: '11px', border: '1px dashed var(--border)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
-                                <span>Arrastra archivos aquí para importarlos.</span>
+                                <span>{t('drag_assets_hint')}</span>
                                 <button onClick={handleImportExternal} className="dv-btn" style={{ height: '32px', fontSize: '9px', gap: '6px' }}>
-                                    <UploadCloud size={14}/> Importar Archivo
+                                    <UploadCloud size={14}/> {t('import_file_btn')}
                                 </button>
                             </div>
                         ) : (
@@ -617,7 +722,7 @@ export const ArtifactsPanel: React.FC = () => {
                                                 className="dv-btn"
                                                 style={{ height: '24px', fontSize: '8px', gap: '4px', background: 'var(--accent)', color: '#fff', border: 'none' }}
                                             >
-                                                <Link size={10}/> Cargar Artefacto
+                                                <Link size={10}/> {t('load_artifact_btn')}
                                             </button>
                                         </div>
                                     </div>
@@ -668,13 +773,13 @@ export const ArtifactsPanel: React.FC = () => {
                         ))}
                     </div>
                 )}
-                <button 
-                    onClick={() => setShowTypeMenu(!showTypeMenu)} 
-                    className="dv-btn" 
-                    style={{ gap: '8px', height: '36px', fontSize: '10px' }}
-                >
-                    <Plus size={14}/> Crear Artefacto Vacío
-                </button>
+                    <button 
+                        onClick={() => setShowTypeMenu(!showTypeMenu)} 
+                        className="dv-btn dv-add-artifact-btn" 
+                        style={{ gap: '8px', height: '36px', fontSize: '10px', width: '100%' }}
+                    >
+                        <Plus size={14}/> {t('create_empty_artifact')}
+                    </button>
             </div>
         </div>
     );

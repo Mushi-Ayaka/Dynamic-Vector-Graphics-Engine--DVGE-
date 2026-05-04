@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './TitleBar.css';
 import { useStore } from '../store/useStore';
+import { useTranslation } from '../i18n/useTranslation';
+import { APP_VERSION } from '../version';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -76,6 +78,7 @@ const MenuDropdown: React.FC<{ group: MenuGroup; isOpen: boolean; onToggle: () =
 // ─── TitleBar ─────────────────────────────────────────────────────────────────
 
 export const TitleBar: React.FC = () => {
+  const { t, language } = useTranslation();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [isMaximized, setIsMaximized] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
@@ -106,6 +109,11 @@ export const TitleBar: React.FC = () => {
     setOpenMenu(prev => (prev === label ? null : label));
 
   const toggleAbout = useStore(state => state.toggleAbout);
+  const toggleWelcomeGuide = useStore(state => state.toggleWelcomeGuide);
+  const toggleSettings = () => {
+    console.log("Toggling settings...");
+    useStore.getState().toggleSettings();
+  };
   const isManual = window.location.hash === '#manual';
 
   const handleMinimize = () => window.ipcRenderer?.windowMinimize?.();
@@ -119,47 +127,51 @@ export const TitleBar: React.FC = () => {
 
   const menus: MenuGroup[] = [
     {
-      label: 'Archivo',
+      label: t('archivo'),
       items: [
-        { label: 'Nueva Ventana', shortcut: 'Ctrl+N', action: () => window.ipcRenderer?.windowNew?.() },
+        { label: t('new_window'), shortcut: 'Ctrl+N', action: () => window.ipcRenderer?.windowNew?.() },
         { separator: true },
-        { label: 'Salir', shortcut: 'Alt+F4', action: () => window.ipcRenderer?.windowClose?.() },
+        { label: t('preferencias'), shortcut: 'Ctrl+,', action: toggleSettings },
+        { separator: true },
+        { label: t('exit'), shortcut: 'Alt+F4', action: () => window.ipcRenderer?.windowClose?.() },
       ],
     },
     {
-      label: 'Editar',
+      label: t('edit'),
       items: [
-        { label: 'Deshacer', shortcut: 'Ctrl+Z', action: () => document.execCommand('undo') },
-        { label: 'Rehacer', shortcut: 'Ctrl+Y', action: () => document.execCommand('redo') },
+        { label: t('undo'), shortcut: 'Ctrl+Z', action: () => document.execCommand('undo') },
+        { label: t('redo'), shortcut: 'Ctrl+Y', action: () => document.execCommand('redo') },
         { separator: true },
-        { label: 'Cortar', shortcut: 'Ctrl+X', action: () => document.execCommand('cut') },
-        { label: 'Copiar', shortcut: 'Ctrl+C', action: () => document.execCommand('copy') },
-        { label: 'Pegar', shortcut: 'Ctrl+V', action: () => document.execCommand('paste') },
+        { label: t('cut'), shortcut: 'Ctrl+X', action: () => document.execCommand('cut') },
+        { label: t('copy'), shortcut: 'Ctrl+C', action: () => document.execCommand('copy') },
+        { label: t('paste'), shortcut: 'Ctrl+V', action: () => document.execCommand('paste') },
       ],
     },
     {
-      label: 'Vista',
+      label: t('view'),
       items: [
-        { label: 'Pantalla Completa', shortcut: 'F11', action: handleMaximize },
+        { label: t('fullscreen'), shortcut: 'F11', action: handleMaximize },
         { separator: true },
-        { label: 'Aumentar Zoom', shortcut: 'Ctrl++', action: () => window.ipcRenderer?.windowZoomIn?.() },
-        { label: 'Alejar Zoom', shortcut: 'Ctrl+-', action: () => window.ipcRenderer?.windowZoomOut?.() },
-        { label: 'Zoom Normal', shortcut: 'Ctrl+0', action: () => window.ipcRenderer?.windowZoomReset?.() },
+        { label: t('zoom_in'), shortcut: 'Ctrl++', action: () => window.ipcRenderer?.windowZoomIn?.() },
+        { label: t('zoom_out'), shortcut: 'Ctrl+-', action: () => window.ipcRenderer?.windowZoomOut?.() },
+        { label: t('zoom_reset'), shortcut: 'Ctrl+0', action: () => window.ipcRenderer?.windowZoomReset?.() },
       ],
     },
     {
-      label: 'Ayuda',
+      label: t('help'),
       items: [
         {
-          label: 'Documentación',
-          action: () => window.ipcRenderer?.windowOpenExternal?.('https://mushi-ayaka.github.io/DVGE-Docs/'),
+          label: t('documentation'),
+          action: () => window.ipcRenderer?.windowOpenExternal?.(`https://ember-motion-studio-landing.vercel.app/${language === 'es' ? 'es/' : ''}`),
         },
         {
-          label: 'Manual',
+          label: t('manual'),
           action: () => window.ipcRenderer?.windowOpenManual?.(),
         },
         { separator: true },
-        { label: 'Acerca de DVGE', action: toggleAbout },
+        { label: t('welcome_guide'), action: toggleWelcomeGuide },
+        { separator: true },
+        { label: t('about_ember'), action: toggleAbout },
       ],
     },
   ];
@@ -174,7 +186,9 @@ export const TitleBar: React.FC = () => {
       {/* Left: App identity + menus */}
       {/* @ts-ignore */}
       <div className="tb-left" style={{ WebkitAppRegion: 'no-drag' }}>
-        <img src="logo.png" alt="" style={{ height: '36px', width: 'auto', marginRight: '16px', transform: 'scale(1.2)', transformOrigin: 'left center' }} />
+        <div style={{ display: 'flex', alignItems: 'center', marginRight: '16px' }}>
+          <img src="logo.png" alt="" style={{ height: '36px', width: 'auto', transform: 'scale(1.2)', transformOrigin: 'left center' }} />
+        </div>
         {!isManual && (
           <div className="tb-menus">
             {menus.map(group => (
@@ -196,7 +210,7 @@ export const TitleBar: React.FC = () => {
             fontFamily: 'Fira Sans, sans-serif',
             opacity: 0.8
           }}>
-            Manual de Usuario
+            {t('user_manual')}
           </span>
         )}
       </div>
@@ -210,8 +224,8 @@ export const TitleBar: React.FC = () => {
         <button
           className="tb-ctrl tb-ctrl-minimize"
           onClick={handleMinimize}
-          aria-label="Minimizar"
-          title="Minimizar"
+          aria-label={t('minimize')}
+          title={t('minimize')}
         >
           <svg width="10" height="1" viewBox="0 0 10 1">
             <rect width="10" height="1" fill="currentColor" />
@@ -220,8 +234,8 @@ export const TitleBar: React.FC = () => {
         <button
           className="tb-ctrl tb-ctrl-maximize"
           onClick={handleMaximize}
-          aria-label={isMaximized ? 'Restaurar' : 'Maximizar'}
-          title={isMaximized ? 'Restaurar' : 'Maximizar'}
+          aria-label={isMaximized ? t('restore') : t('maximize')}
+          title={isMaximized ? t('restore') : t('maximize')}
         >
           {isMaximized ? (
             <svg width="10" height="10" viewBox="0 0 10 10">
@@ -236,8 +250,8 @@ export const TitleBar: React.FC = () => {
         <button
           className="tb-ctrl tb-ctrl-close"
           onClick={handleClose}
-          aria-label="Cerrar"
-          title="Cerrar"
+          aria-label={t('close')}
+          title={t('close')}
         >
           <svg width="10" height="10" viewBox="0 0 10 10">
             <line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" strokeWidth="1.2" />

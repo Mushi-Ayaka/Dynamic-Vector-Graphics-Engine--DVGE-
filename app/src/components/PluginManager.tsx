@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react'
 import { FolderOpen, CheckCircle, Package } from 'lucide-react'
 import { DVPlugin } from '../env'
 import { useStore } from '../store/useStore'
+import { useTranslation } from '../i18n/useTranslation'
 import './PluginManager.css'
 
 export const PluginManagerUI: React.FC = () => {
+  const { t } = useTranslation();
   const [plugins, setPlugins] = useState<DVPlugin[]>([])
   const { renderState } = useStore()
   const isRendering = renderState === 'RENDERING'
@@ -28,7 +30,6 @@ export const PluginManagerUI: React.FC = () => {
   }
 
   const handleActivate = (id: string) => {
-    // Aquí actualizaremos el status global pero por ahora console log
     console.log("Activando plugin:", id)
     useStore.setState({ activePluginId: id })
   }
@@ -40,16 +41,16 @@ export const PluginManagerUI: React.FC = () => {
           <Package className="pm-icon" />
           <h2>Template Ecosystem</h2>
         </div>
-        <button onClick={handleOpenFolder} className="btn-secondary" title="Open OS Folder">
+        <button onClick={handleOpenFolder} className="btn-secondary" title={t('open_os_folder')}>
           <FolderOpen size={18} />
-          <span>Open Folder</span>
+          <span>{t('open_folder_tooltip')}</span>
         </button>
       </div>
 
       <div className="pm-grid">
         {plugins.length === 0 ? (
           <div className="pm-empty">
-            <p>No valid plugins found.</p>
+            <p>{t('no_plugins_found')}</p>
           </div>
         ) : (
           plugins.map((pl) => {
@@ -57,14 +58,12 @@ export const PluginManagerUI: React.FC = () => {
             return (
               <div key={pl.manifest.id} className={`pm-card ${isActive ? 'active' : ''}`}>
                 <div className="pm-card-thumb">
-                  {/* Si tuviéramos un preview.png se leería vía protocolo custom o base64, 
-                      por ahora un placeholder estilizadísimo */}
                   <div className="pm-placeholder-img">
                     <span className="pm-version">v{pl.manifest.version}</span>
                   </div>
                   {isActive && (
                     <div className="pm-indicator">
-                      <CheckCircle size={16} /> Active
+                      <CheckCircle size={16} /> {t('active_label')}
                     </div>
                   )}
                 </div>
@@ -83,7 +82,7 @@ export const PluginManagerUI: React.FC = () => {
                           disabled={isRendering}
                           onClick={() => handleActivate(pl.manifest.id)}
                         >
-                          Activate
+                          {t('activate_btn')}
                         </button>
                       )}
                     </div>

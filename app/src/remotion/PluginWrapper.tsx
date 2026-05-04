@@ -24,9 +24,20 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
     const { fps, width, height, durationInFrames } = useVideoConfig();
 
     const store = useStore();
-    // [BUGFIX] Durante el renderizado headless, el store está vacío. Debemos priorizar passedProps.
-    const activePluginFiles = passedProps.files || passedProps.activePluginFiles || store.activePluginFiles;
-    const properties = passedProps.properties || (passedProps.presets ? passedProps : store.properties);
+    
+    // [v6.8.1] FIXED: Extracción de propiedades con filtrado de metadatos.
+    const { 
+        properties: passedProperties, 
+        files: passedFiles, 
+        activePluginFiles: passedFilesAlt, 
+        _isPreview, 
+        ...rest 
+    } = passedProps;
+
+    // Filtramos para ver si 'rest' tiene datos reales o solo flags de sistema
+    const hasRealProps = Object.keys(rest).length > 0;
+    const properties = passedProperties || (hasRealProps ? rest : store.properties);
+    const activePluginFiles = passedFiles || passedFilesAlt || store.activePluginFiles;
 
     const [shadow, setShadow] = useState<ShadowRoot | null>(null);
     const lifecycleRef = useRef<DVLifecycle | null>(null);

@@ -6,7 +6,7 @@ export interface FormField {
   type: 'string' | 'color' | 'number' | 'image' | 'code' | 'info'
       | 'select' | 'artifact' | 'prompt' | 'boolean' | 'slider' | 'button'
       | 'file-ref' | 'file'
-      | 'image-ref'
+      | 'image-ref' | 'dataset'
       | 'alignment' | 'easing' | 'range-dual' | 'icon' | 'gradient' | 'font'
   id: string
   label: string
@@ -67,6 +67,15 @@ export interface DVPlugin {
   hasJs: boolean
 }
 
+export interface AIContextOptions {
+  includeCanvas: boolean;
+  includeArtifacts: boolean;
+  includeCode: boolean;
+  includeDataPreview: boolean; // [v5.7.3] Nueva opción para privacidad de datos
+  visualSkill: string;
+  stylePresets?: string[];
+}
+
 declare global {
   interface Window {
     ipcRenderer: {
@@ -84,7 +93,7 @@ declare global {
       deletePlugin: (pluginId: string) => Promise<boolean>;
       logSync: (data: any) => void;
       getDocContent: (docName: string) => Promise<string>;
-      generateRulesPdf: (data: { rulesText: string, projectContext?: any }) => Promise<string>;
+      generateRulesPdf: (data: { rulesText: string, projectContext?: any, options?: AIContextOptions }) => Promise<string>;
 
       // [INS-02/03] File Dialog — IPC nativo para selector de archivos
       showOpenDialog: (options: {
