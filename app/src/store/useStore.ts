@@ -355,7 +355,7 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   getProjectContext: () => {
-    const { activeProject, artifactFields } = get();
+    const { activeProject, artifactFields, properties } = get();
     return {
       id: activeProject?.id,
       pluginId: activeProject?.pluginId,
@@ -366,12 +366,17 @@ export const useStore = create<StoreState>((set, get) => ({
       fps: activeProject?.fps,
       durationInFrames: activeProject?.durationInFrames,
       creativeBrief: activeProject?.creativeBrief || "Diseño premium, minimalista y corporativo. Priorizar fluidez visual mediante interpolaciones suaves (lerp) y transiciones sutiles (opacidad/escala). El ritmo de animación debe ser determinista y solemne, atado estrictamente a ctx.timeline. \n\nPROHIBIDO: Uso de colores neón, desenfoques de movimiento excesivos (motion blur), o animaciones con rebotes elásticos (spring) que resten seriedad al gráfico.",
+      // [v5.9.1] Código actual editado por el usuario (Studio Master / Proyecto Vacío)
+      // Prioridad sobre los archivos estáticos del plugin en disco.
+      htmlCode: properties['htmlCode'] as string | undefined,
+      cssCode: properties['cssCode'] as string | undefined,
+      jsCode: properties['jsCode'] as string | undefined,
       artifacts: artifactFields.map(f => ({
         id: f.id,
         label: f.label,
         type: f.type,
         description: f.description || '',
-        value: get().properties[f.id] // Se pasa el valor actual para que la IA sepa qué contiene
+        value: properties[f.id] // Se pasa el valor actual para que la IA sepa qué contiene
       }))
     };
   }

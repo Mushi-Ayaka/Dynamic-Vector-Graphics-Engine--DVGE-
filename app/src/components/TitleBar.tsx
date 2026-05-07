@@ -161,7 +161,7 @@ export const TitleBar: React.FC = () => {
       items: [
         {
           label: t('documentation'),
-          action: () => window.ipcRenderer?.windowOpenExternal?.(`https://ember-motion-studio-landing.vercel.app/${language === 'es' ? 'es/' : ''}`),
+          action: () => window.ipcRenderer?.windowOpenExternal?.(`https://ember-motion-studio-landing.vercel.app/${language === 'es' ? 'es/' : ''}engine/architecture/`),
         },
         {
           label: t('manual'),

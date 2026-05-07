@@ -410,19 +410,32 @@ if (media_${a.id} && src_${a.id} && media_${a.id}.getAttribute('src') !== src_${
         // 3. Bloque de Código Fuente
         let codeHtml = '';
         if (options.includeCode && pluginId) {
-          const files = await pluginManager.getPluginFiles(pluginId);
+          // [v5.9.1] PRIORIDAD: usar el código editado en las properties del proyecto
+          // (Studio Master / Proyecto Vacío). Si no existe, fallback a los archivos estáticos del plugin.
+          let html_src = data.projectContext.htmlCode;
+          let css_src  = data.projectContext.cssCode;
+          let js_src   = data.projectContext.jsCode;
+
+          if (!html_src && !css_src && !js_src) {
+            const files = await pluginManager.getPluginFiles(pluginId);
+            html_src = files?.html || '';
+            css_src  = files?.css  || '';
+            js_src   = files?.js   || '';
+          }
+
+          const escape = (s: string) => (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
           codeHtml = `
             <h3 style="color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 25px;">💻 Código Fuente Actual</h3>
             <p style="font-size: 13px; color: #aaa; margin-bottom: 15px;">A continuación se muestra el código actual del plugin. Modifica SOLO lo necesario basándote en este código en lugar de reescribir de cero.</p>
             
             <div style="font-family: monospace; font-size: 12px; color: #4CAF50; margin-bottom: 5px;">[HTML]</div>
-            <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>${(files?.html || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>
+            <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>${escape(html_src)}</code></pre>
 
             <div style="font-family: monospace; font-size: 12px; color: #2196F3; margin-bottom: 5px; margin-top: 15px;">[CSS]</div>
-            <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>${(files?.css || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>
+            <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>${escape(css_src)}</code></pre>
 
             <div style="font-family: monospace; font-size: 12px; color: #FFC107; margin-bottom: 5px; margin-top: 15px;">[JAVASCRIPT]</div>
-            <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>${(files?.js || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>
+            <pre style="background: #111; color: #eee; padding: 10px; border-radius: 4px; margin-top: 0; border: 1px solid #222; white-space: pre-wrap;"><code>${escape(js_src)}</code></pre>
           `;
         }
 

@@ -38,16 +38,19 @@ export class TagExtractorService {
     while ((match = regex.exec(content)) !== null) {
       try {
         const jsonPayload = match[1];
-        const fieldData = JSON.parse(jsonPayload);
+        // [v6.0.1] Sanitización defensiva: JSON.parse falla con saltos de línea literales.
+        // Reemplazamos saltos de línea por espacios para permitir formatos multilínea en los comentarios.
+        const sanitizedPayload = jsonPayload.replace(/[\n\r]/g, ' ');
+        const fieldData = JSON.parse(sanitizedPayload);
         
         // Validación básica
-        if (fieldData.id && fieldData.type && fieldData.label) {
+        if (fieldData && fieldData.id && fieldData.type && fieldData.label) {
           fields.push(fieldData as FormField);
         } else {
           console.warn('[TagExtractor] Campo ignorado por falta de id, type o label:', fieldData);
         }
-      } catch (e) {
-        console.error('[TagExtractor] Error parseando tag JSON:', match[1], e);
+      } catch (e: any) {
+        console.warn('[TagExtractor] Error parseando tag JSON (posible sintaxis inválida):', e.message);
       }
     }
 

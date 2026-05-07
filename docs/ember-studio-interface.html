@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ember Motion Studio — Interface Navigation Mockup</title>
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&family=Outfit:wght@400;500;800;900&display=swap"
+        rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-primary: #000000;
+            /* OLED Black */
+            --bg-secondary: #0A0A0A;
+            --bg-surface: #111111;
+            --bg-elevated: #1A1A1A;
+            --bg-input: #050505;
+
+            --text-primary: #E2E8F0;
+            --text-secondary: #94A3B8;
+            --text-disabled: #475569;
+            --text-label: #64748B;
+
+            --accent: #E44C30;
+            /* Rojo-Coral DVGE */
+            --accent-hover: #F05A3E;
+
+            --border: #1E293B;
+            --border-focus: #334155;
+
+            --success: #22C55E;
+
+            --radius-sm: 2px;
+            --radius: 4px;
+            --font-body: 'Fira Sans', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            --font-brand: 'Outfit', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            scrollbar-width: thin;
+            scrollbar-color: var(--bg-surface) var(--bg-primary);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- TitleBar --- */
+        .title-bar {
+            height: 32px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            user-select: none;
+        }
+
+        .title-bar .app-icon {
+            color: var(--accent);
+            margin-right: 8px;
+        }
+
+        .title-bar .window-controls {
+            margin-left: auto;
+            display: flex;
+            gap: 15px;
+        }
+
+        /* --- Main Layout --- */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding-top: 32px;
+        }
+
+        /* --- TopBar --- */
+        .top-bar {
+            height: 40px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .top-bar .project-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .project-name {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #fff;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-disabled);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 6px 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 2px;
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            background: var(--bg-elevated);
+        }
+
+        .tab-btn:hover:not(.active):not(.disabled) {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* --- Viewport Layout --- */
+        .viewport {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* --- Left Panel --- */
+        .left-panel {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .panel-section-header {
+            height: 40px;
+            padding: 0 12px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-label);
+            letter-spacing: 1px;
+        }
+
+        .config-group {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field-group label {
+            font-size: 10px;
+            color: var(--text-label);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .dv-input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            padding: 6px 10px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            outline: none;
+        }
+
+        .dv-input:focus {
+            border-color: var(--accent);
+        }
+
+        .template-core-header {
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-surface);
+            height: 40px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 10px;
+        }
+
+        .template-core-info {
+            flex: 1;
+        }
+
+        .template-core-info .label {
+            font-size: 9px;
+            color: var(--text-label);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .template-core-info .value {
+            font-size: 12px;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .inspector-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .code-field-mini {
+            margin-bottom: 16px;
+        }
+
+        .code-field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .code-field-header label {
+            font-size: 10px;
+            color: var(--text-label);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .code-field-expand {
+            background: transparent;
+            border: none;
+            color: var(--text-disabled);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 2px;
+        }
+
+        .code-field-textarea {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            padding: 8px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            resize: vertical;
+            height: 80px;
+            outline: none;
+        }
+
+        .action-footer {
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-render {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+
+        .btn-render:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* --- Center Preview --- */
+        .center-area {
+            flex: 1;
+            background: #050505;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-width: 500px;
+        }
+
+        .preview-toolbar {
+            height: 40px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 16px;
+        }
+
+        .preview-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .stats-badge {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px 12px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-disabled);
+        }
+
+        .stats-badge b {
+            color: var(--text-secondary);
+        }
+
+        .aspect-ratio-selector {
+            display: flex;
+            gap: 6px;
+            background: var(--bg-elevated);
+            padding: 2px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .ratio-btn {
+            padding: 4px 8px;
+            font-size: 9px;
+            color: var(--text-disabled);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            border-radius: 2px;
+        }
+
+        .ratio-btn.active {
+            background: var(--bg-surface);
+            color: var(--accent);
+        }
+
+        .preview-viewport {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            position: relative;
+            background: #0a0a0a;
+        }
+
+        .canvas-mock {
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 16/9;
+            background: #000;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.1s ease-out;
+        }
+
+        .render-status-panel {
+            width: 100%;
+            max-width: 800px;
+            margin: 10px auto 10px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            padding: 12px 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        /* --- Right Panel --- */
+        .right-panel {
+            width: 320px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .right-tabs-header {
+            height: 40px;
+            padding: 0 8px;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .right-tab-btn {
+            flex: 1;
+            height: 28px;
+            background: transparent;
+            border: none;
+            color: var(--text-disabled);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            letter-spacing: 1px;
+        }
+
+        .right-tab-btn.active {
+            background: var(--bg-elevated);
+            color: var(--accent);
+        }
+
+        .inspector-group-title {
+            font-size: 11px;
+            color: var(--text-primary);
+            font-weight: 700;
+            padding: 12px 0 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+
+        /* Custom UI components */
+        .color-picker-mock {
+            height: 32px;
+            background: var(--accent);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 10px;
+            font-family: var(--font-mono);
+            cursor: pointer;
+        }
+
+        .alignment-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            width: 100px;
+        }
+
+        .alignment-dot {
+            aspect-ratio: 1;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        .alignment-dot.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* --- Modal --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-container {
+            width: 900px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-top: 2px solid var(--accent);
+            border-radius: 2px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 32px 80px rgba(0, 0, 0, 0.7);
+            height: 560px;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            height: 44px;
+            padding: 0 16px;
+            background: var(--bg-elevated);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-family: var(--font-mono);
+        }
+
+        .modal-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* --- Context Modal Columns --- */
+        .modal-col-left {
+            width: 180px;
+            border-right: 1px solid var(--border);
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-col-center {
+            flex: 1;
+            background: #050505;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-right: 1px solid var(--border);
+        }
+
+        .modal-col-right {
+            width: 240px;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            gap: 20px;
+        }
+
+        .warning-box {
+            padding: 10px;
+            background: rgba(228, 76, 48, 0.07);
+            border: 1px solid rgba(228, 76, 48, 0.2);
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+        .drag-export-zone {
+            padding: 16px 8px;
+            border: 1px dashed rgba(228, 76, 48, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: grab;
+            color: var(--text-disabled);
+            font-size: 10px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .drag-export-zone:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(228, 76, 48, 0.05);
+        }
+
+        .context-option-item {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .context-option-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .context-option-item input {
+            margin-top: 2px;
+            accent-color: var(--accent);
+        }
+
+        .option-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .option-desc {
+            font-size: 10px;
+            color: var(--text-disabled);
+            line-height: 1.4;
+            margin-top: 2px;
+        }
+
+        .preset-item {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .preset-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .preset-item input {
+            margin-top: 2px;
+            accent-color: var(--accent);
+        }
+
+        .code-block-mock {
+            background: #050505;
+            border: none;
+            padding: 16px;
+            font-family: 'JetBrains Mono', var(--font-mono);
+            font-size: 10.5px;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            overflow-y: auto;
+            line-height: 1.7;
+            flex: 1;
+        }
+
+        .code-block-mock b {
+            color: var(--accent);
+        }
+
+        .code-block-mock i {
+            color: #50fa7b;
+        }
+
+        .btn-open-folder {
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            color: var(--text-secondary);
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .btn-open-folder:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+        }
+
+        /* --- Real Render Modal --- */
+        #renderConfigModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 5000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        #renderConfigModal.active {
+            display: flex;
+        }
+
+        .render-modal-card {
+            background: #121212;
+            border-radius: 16px;
+            max-width: 800px;
+            width: 95%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8);
+            animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .render-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .render-modal-body {
+            display: flex;
+            flex-direction: row;
+            height: auto;
+        }
+
+        .render-modal-preview {
+            flex: 1;
+            padding: 24px;
+            background: black;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .render-modal-settings {
+            width: 320px;
+            padding: 24px;
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .render-format-select {
+            width: 100%;
+            background: #0A0A0A;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .render-format-info {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* --- Real Render Status Panel (Center Area) --- */
+        .render-status-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto 0;
+            display: none;
+        }
+
+        .rendering-panel {
+            text-align: center;
+            padding: 20px;
+            background: rgba(228, 76, 48, 0.03);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .rendering-progress-track {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-elevated);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 15px 0 8px;
+        }
+
+        .rendering-progress-fill {
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.2s;
+        }
+
+        .done-drag-box {
+            padding: 30px;
+            border: 2px dashed var(--success);
+            background: rgba(34, 197, 94, 0.05);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: grab;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="title-bar">
+        <span>Ember Motion Studio</span>
+        <div class="window-controls">
+            <i data-lucide="minus" size="14"></i>
+            <i data-lucide="square" size="12"></i>
+            <i data-lucide="x" size="14"></i>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- TopBar -->
+        <div class="top-bar">
+            <div class="project-info">
+                <i data-lucide="chevron-left" size="18" style="cursor: pointer; color: var(--text-secondary);"></i>
+                <span class="project-name">Broadcast_Title_Concept_A</span>
+            </div>
+
+            <div class="nav-tabs">
+                <button class="tab-btn active">Studio</button>
+                <button class="tab-btn">Library</button>
+                <button class="tab-btn">Render</button>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button class="tab-btn"
+                    style="color: var(--accent); border: 1px solid var(--accent); border-radius: 0; padding: 4px 12px; font-size: 10px; letter-spacing: 1px;">Guide</button>
+            </div>
+        </div>
+
+        <div class="viewport">
+            <!-- Left Panel -->
+            <div class="left-panel">
+                <div class="panel-section-header">
+                    <i data-lucide="layout" size="14" style="color: var(--accent);"></i>
+                    Canvas Configuration
+                </div>
+
+                <div class="config-group">
+                    <div class="field-group">
+                        <label>Resolution</label>
+                        <select class="dv-input">
+                            <option>1920 x 1080 (16:9)</option>
+                            <option>1080 x 1920 (9:16)</option>
+                            <option>1080 x 1080 (1:1)</option>
+                        </select>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="field-group">
+                            <label>Framerate</label>
+                            <input type="number" class="dv-input" value="60">
+                        </div>
+                        <div class="field-group">
+                            <label>Duration (f)</label>
+                            <input type="number" class="dv-input" value="300">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="template-core-header">
+                    <div style="padding: 6px; background: var(--bg-elevated); border: 1px solid var(--border);">
+                        <i data-lucide="puzzle" size="14" color="var(--accent)"></i>
+                    </div>
+                    <div class="template-core-info">
+                        <div class="label">Template Core</div>
+                        <div class="value">Studio Master Core</div>
+                    </div>
+                    <i data-lucide="feather" size="16" style="color: var(--accent); cursor: pointer;"
+                        onclick="toggleModal('briefModal')"></i>
+                </div>
+
+                <div class="inspector-content">
+                    <!-- AI Context Builder Field (PDF) -->
+                    <div class="field-group" style="margin-bottom: 20px;">
+                        <label>Studio AI Master</label>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <button onclick="toggleModal('aiContextModal')" style="
+                                    width: 100%;
+                                    padding: 9px 12px;
+                                    background: transparent;
+                                    border: 1px solid var(--border);
+                                    border-left: 2px solid var(--accent);
+                                    border-radius: 2px;
+                                    color: var(--text-primary);
+                                    font-weight: 700;
+                                    font-size: 10px;
+                                    font-family: var(--font-mono);
+                                    cursor: pointer;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                    transition: all 0.15s;
+                                    text-transform: uppercase;
+                                    letter-spacing: 1px;
+                                "
+                                onmouseover="this.style.background='rgba(228,76,48,0.07)'; this.style.borderColor='var(--accent)'; this.style.color='var(--accent)';"
+                                onmouseout="this.style.background='transparent'; this.style.borderColor='var(--border)'; this.style.color='var(--text-primary)'; this.style.borderLeftColor='var(--accent)';">
+                                <div style="width: 6px; height: 6px; background: var(--accent); border-radius: 1px;">
+                                </div>
+                                <span style="flex: 1; text-align: left;">AI Context Builder</span>
+                            </button>
+                            <div class="drag-export-zone"
+                                style="padding: 8px 12px; border-style: dashed; border-color: rgba(228,76,48,0.4);">
+                                <i data-lucide="move" size="12"></i>
+                                <span>Arrastra el contexto a tu IA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HTML Field -->
+                    <div class="code-field-mini">
+                        <div class="code-field-header">
+                            <label>HTML</label>
+                            <button class="code-field-expand"><i data-lucide="maximize-2" size="12"></i></button>
+                        </div>
+                        <textarea class="code-field-textarea">&lt;div id="wrapper"&gt;
+  &lt;div id="scene"&gt;
+    &lt;div id="video-frame"&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</textarea>
+                    </div>
+
+                    <!-- CSS Field -->
+                    <div class="code-field-mini">
+                        <div class="code-field-header">
+                            <label>CSS</label>
+                            <button class="code-field-expand"><i data-lucide="maximize-2" size="12"></i></button>
+                        </div>
+                        <textarea class="code-field-textarea">#wrapper {
+  width: 100%;
+  height: 100%;
+  background: #000;
+}</textarea>
+                    </div>
+
+                    <!-- JS Field -->
+                    <div class="code-field-mini">
+                        <div class="code-field-header">
+                            <label>JS</label>
+                            <button class="code-field-expand"><i data-lucide="maximize-2" size="12"></i></button>
+                        </div>
+                        <textarea class="code-field-textarea">ctx.onRender(() => {
+  const { t } = ctx.timeline;
+});</textarea>
+                    </div>
+                </div>
+
+                <div class="action-footer">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 10px; color: var(--text-label)">Saved at 10:28 AM</span>
+                        <i data-lucide="save" size="14" style="color: var(--text-secondary); cursor: pointer;"></i>
+                    </div>
+                    <button class="btn-render" id="btnRender" onclick="toggleModal('renderConfigModal')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        Render Video
+                    </button>
+                </div>
+            </div>
+
+            <!-- Center Preview -->
+            <div class="center-area">
+                <div class="preview-toolbar">
+                    <div class="preview-label">Preview</div>
+
+                    <div class="stats-badge">
+                        <span>Res: <b>1920x1080</b></span>
+                        <span style="width: 1px; height: 10px; background: var(--border);"></span>
+                        <span>FPS: <b>60</b></span>
+                        <span style="width: 1px; height: 10px; background: var(--border);"></span>
+                        <span>Len: <b>5.0s</b></span>
+                    </div>
+
+                    <div class="aspect-ratio-selector">
+                        <button class="ratio-btn active">16:9</button>
+                        <button class="ratio-btn">9:16</button>
+                        <button class="ratio-btn">1:1</button>
+                    </div>
+                </div>
+
+                <div class="preview-viewport">
+                    <div class="canvas-mock">
+                        <div
+                            style="font-family: var(--font-brand); color: #fff; font-size: 32px; font-weight: 800; opacity: 0.8;">
+                            EMBER <span style="color: var(--accent)">STUDIO</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="renderStatusArea" class="render-status-container">
+                    <!-- Estado: Rendering -->
+                    <div id="statusPanelRendering" class="rendering-panel">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 5px;">
+                            <i data-lucide="loader-2" class="animate-spin" size="18" style="color: var(--accent);"></i>
+                            <h3 style="margin: 0; color: var(--accent); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Processing...</h3>
+                        </div>
+                        <div class="rendering-progress-track">
+                            <div id="statusProgressBar" class="rendering-progress-fill" style="width: 0%;"></div>
+                        </div>
+                        <div style="font-size: 10px; color: var(--text-secondary); font-family: var(--font-mono);">
+                            <span id="statusProgressPct">0</span>% Completed
+                        </div>
+                    </div>
+
+                    <!-- Estado: Done -->
+                    <div id="statusPanelDone" class="done-drag-box" draggable="true">
+                        <i data-lucide="check-circle" size="32" style="color: var(--success); margin-bottom: 12px;"></i>
+                        <strong style="font-size: 16px; display: block; margin-bottom: 4px; color: white;">Render Finished</strong>
+                        <p style="color: var(--text-secondary); font-size: 11px; margin: 0 0 15px;">
+                            Drag this box to your AI chat or desktop to export the video.
+                        </p>
+                        <button class="btn-open-folder" onclick="resetRender()" style="padding: 10px 20px; font-size: 11px;">
+                            <i data-lucide="folder-open" size="14"></i> Open Folder
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel (Inspector) -->
+            <div class="right-panel">
+                <div class="right-tabs-header">
+                    <button class="right-tab-btn active">Inspector</button>
+                    <button class="right-tab-btn">Artifacts</button>
+                </div>
+
+                <div class="inspector-content">
+                    <div class="inspector-group-title">Main Content</div>
+
+                    <div class="field-group" style="margin-bottom: 16px;">
+                        <label>Headline Text</label>
+                        <input type="text" class="dv-input" value="Breaking News: Motion Studio">
+                    </div>
+
+                    <div class="field-group" style="margin-bottom: 16px;">
+                        <label>Sub-Headline</label>
+                        <input type="text" class="dv-input" value="Frame-perfect rendering engine.">
+                    </div>
+
+                    <div class="inspector-group-title">Visual Styling</div>
+
+                    <div class="field-group" style="margin-bottom: 16px;">
+                        <label>Accent Color</label>
+                        <div class="color-picker-mock">
+                            #E44C30
+                            <div
+                                style="margin-left: auto; width: 14px; height: 14px; background: #fff; opacity: 0.2; border-radius: 1px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field-group" style="margin-bottom: 16px;">
+                        <label>Logo Position</label>
+                        <div class="alignment-grid">
+                            <div class="alignment-dot"></div>
+                            <div class="alignment-dot"></div>
+                            <div class="alignment-dot"></div>
+                            <div class="alignment-dot active"></div>
+                            <div class="alignment-dot"></div>
+                            <div class="alignment-dot"></div>
+                            <div class="alignment-dot"></div>
+                            <div class="alignment-dot"></div>
+                            <div class="alignment-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Context Modal -->
+    <div id="aiContextModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-title" style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 8px; height: 8px; background: var(--accent); border-radius: 1px;"></div>
+                    AI Context Builder
+                    <span style="width: 1px; height: 14px; background: var(--border);"></span>
+                    <span
+                        style="font-size: 10px; color: var(--text-disabled); font-weight: 400; text-transform: none;">Genera
+                        el contexto para tu IA</span>
+                </div>
+                <button style="background: transparent; border: none; color: var(--text-disabled); cursor: pointer;"
+                    onclick="toggleModal('aiContextModal')">
+                    <i data-lucide="x" size="18"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Col Izquierda: Export -->
+                <div class="modal-col-left">
+                    <div class="warning-box">
+                        <div
+                            style="display: flex; align-items: center; gap: 5px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">
+                            <i data-lucide="alert-triangle" size="11"></i> Token Budget
+                        </div>
+                        Activa solo los bloques necesarios. Más contexto aumenta latencia y costo.
+                    </div>
+                    <div class="drag-export-zone">
+                        <i data-lucide="grip-horizontal" size="16"></i>
+                        <span>Exportar PDF<br>y arrastrar a la IA</span>
+                    </div>
+                </div>
+
+                <!-- Col Central: Preview -->
+                <div class="modal-col-center">
+                    <div class="code-block-mock"><b>DVGE PROJECT CONTEXT</b> — BROADCAST_TITLE_CONCEPT_A
+                        VERSIÓN: 2026-05-07 | PLUGIN: studio-master | ESTADO: PROYECTO ACTIVO
+
+                        ⚙️ Configuración del Canvas (Video)
+                        ────────────────────────────────────────────────────────────────
+                        Resolución : 1920x1080
+                        Framerate : 60 FPS
+                        Duración Total : 300 frames (5.0s)
+
+                        🎨 Brief Creativo
+                        ────────────────────────────────────────────────────────────────
+                        Diseño premium, minimalista y corporativo. Priorizar fluidez visual
+                        mediante interpolaciones suaves y transiciones sutiles.
+
+                        💻 Código Fuente Actual
+                        ────────────────────────────────────────────────────────────────
+                        Se ha adjuntado el código HTML, CSS y JS actual de la plantilla.
+
+                        ⚠️ CRITICAL DIRECTIVE: MANDATORY ANIMATION STYLE PRESETS
+                        ────────────────────────────────────────────────────────────────
+                        [STYLE PRESET: GLASSMORPHISM]
+                        › Cristal técnico, refracción dinámica y micro-grids.</div>
+                </div>
+
+                <!-- Col Derecha: Config -->
+                <div class="modal-col-right">
+                    <div>
+                        <p
+                            style="margin: 0 0 10px; font-size: 9px; font-weight: 700; color: var(--text-label); text-transform: uppercase; letter-spacing: 1.5px;">
+                            Bloques de contexto</p>
+                        <div class="context-option-item">
+                            <input type="checkbox" checked>
+                            <div>
+                                <div class="option-label">Canvas</div>
+                                <div class="option-desc">Resolución, FPS y duración.</div>
+                            </div>
+                        </div>
+                        <div class="context-option-item">
+                            <input type="checkbox" checked>
+                            <div>
+                                <div class="option-label">Artefactos</div>
+                                <div class="option-desc">Imágenes y datasets vinculados.</div>
+                            </div>
+                        </div>
+                        <div class="context-option-item">
+                            <input type="checkbox" checked>
+                            <div>
+                                <div class="option-label">Código fuente</div>
+                                <div class="option-desc">HTML, CSS y JS actual.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p
+                            style="margin: 0 0 10px; font-size: 9px; font-weight: 700; color: var(--text-label); text-transform: uppercase; letter-spacing: 1.5px;">
+                            Style Presets</p>
+                        <div class="preset-item">
+                            <input type="checkbox" checked>
+                            <div>
+                                <div class="option-label">Glassmorphism</div>
+                                <div class="option-desc">Cristal técnico y refracción.</div>
+                            </div>
+                        </div>
+                        <div class="preset-item">
+                            <input type="checkbox">
+                            <div>
+                                <div class="option-label">Block Reveal</div>
+                                <div class="option-desc">Efecto editorial de cortina.</div>
+                            </div>
+                        </div>
+                        <div class="preset-item">
+                            <input type="checkbox">
+                            <div>
+                                <div class="option-label">Cyberpunk HUD</div>
+                                <div class="option-desc">Interfaz Sci-Fi y glitch.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Creative Brief Modal -->
+    <div id="briefModal" class="modal-overlay">
+        <div
+            style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; width: 500px; max-width: 90%; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.5)">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="feather" size="20" style="color: var(--accent);"></i>
+                    <h2
+                        style="margin: 0; font-size: 16px; color: white; font-family: var(--font-mono); text-transform: uppercase;">
+                        Creative Brief</h2>
+                    <div title="Define el objetivo creativo para la IA"
+                        style="color: var(--text-disabled); cursor: help; display: flex;">
+                        <i data-lucide="help-circle" size="16"></i>
+                    </div>
+                </div>
+                <button onclick="toggleModal('briefModal')"
+                    style="background: transparent; border: none; color: var(--text-disabled); cursor: pointer;"><i
+                        data-lucide="x" size="20"></i></button>
+            </div>
+
+            <textarea class="dv-input"
+                style="flex: 1; resize: none; height: 150px; font-size: 13px; line-height: 1.6; font-family: var(--font-body); padding: 12px; border-radius: 4px;"
+                placeholder="Describe el estilo, tono y objetivos visuales..."></textarea>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button onclick="toggleModal('briefModal')"
+                    style="padding: 8px 16px; background: transparent; border: 1px solid var(--border); border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">
+                    Cancelar
+                </button>
+                <button onclick="toggleModal('briefModal')" class="btn-render"
+                    style="padding: 8px 16px; font-size: 12px; width: auto;">
+                    Guardar Brief
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Render Config Modal -->
+    <div id="renderConfigModal" class="modal-overlay">
+        <div class="render-modal-card">
+            <div class="render-modal-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="padding: 8px; background: var(--accent); border-radius: 8px;">
+                        <i data-lucide="file-video" size="20" color="white"></i>
+                    </div>
+                    <div>
+                        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Render Configuration</h2>
+                        <div style="font-size: 11px; color: var(--text-disabled);">Broadcast_Title_Concept_A</div>
+                    </div>
+                </div>
+                <button onclick="toggleModal('renderConfigModal')" style="background: transparent; border: none; color: #666; cursor: pointer;">
+                    <i data-lucide="x" size="20"></i>
+                </button>
+            </div>
+            
+            <div class="render-modal-body">
+                <div class="render-modal-preview">
+                    <div style="aspect-ratio: 16/9; width: 100%; background: #050505; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="play-circle" size="48" style="color: var(--accent); opacity: 0.5;"></i>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 9px; color: var(--text-disabled); text-transform: uppercase; margin-bottom: 4px;">Resolution</div>
+                            <div style="font-size: 13px; font-weight: 600; color: white;">1920x1080</div>
+                        </div>
+                        <div style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size: 9px; color: var(--text-disabled); text-transform: uppercase; margin-bottom: 4px;">Duration</div>
+                            <div style="font-size: 13px; font-weight: 600; color: white;">5.0 Seconds</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="render-modal-settings">
+                    <div>
+                        <label style="font-size: 10px; color: var(--text-disabled); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px;">Output Format</label>
+                        <select class="render-format-select">
+                            <option>MOV (ProRes 4444 + Alpha)</option>
+                            <option>MP4 (H.264 - Standard)</option>
+                            <option>WebM (VP9 + Alpha)</option>
+                        </select>
+                    </div>
+
+                    <div class="render-format-info">
+                        <div style="font-size: 12px; font-weight: 700; color: white;">MOV (ProRes 4444)</div>
+                        <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.4;">Broadcast quality with transparent background support. High file size.</div>
+                    </div>
+
+                    <div style="margin-top: auto;">
+                        <button class="btn-render" onclick="confirmRender()" style="width: 100%; height: 50px; font-size: 14px;">
+                            <i data-lucide="download" size="18"></i> START EXPORT
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Render Overlay -->
+    <div id="renderOverlay">
+        <div class="render-spinner">
+            <div class="render-spinner-ring"></div>
+            <div class="render-spinner-ring-2"></div>
+            <div class="render-spinner-label">DVGE</div>
+        </div>
+
+        <div class="render-status-text">
+            <div class="phase" id="renderPhaseLabel">Initializing Engine</div>
+            <div class="detail" id="renderDetailLabel">Verifying hardware capabilities...</div>
+        </div>
+
+        <div class="render-progress-wrap">
+            <div class="render-progress-bar-track">
+                <div class="render-progress-bar-fill" id="renderProgressBar"></div>
+            </div>
+            <div class="render-progress-info">
+                <span id="renderFrameInfo">Frame 0 / 300</span>
+                <span class="pct" id="renderPctLabel">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize icons
+        lucide.createIcons();
+
+        // Modal toggle logic
+        function toggleModal(id) {
+            const modal = document.getElementById(id);
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            } else {
+                modal.style.display = 'flex';
+            }
+        }
+
+        // Simula interactividad en la grilla de alineación
+        document.querySelectorAll('.alignment-dot').forEach(dot => {
+            dot.addEventListener('click', () => {
+                document.querySelectorAll('.alignment-dot').forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+            });
+        });
+
+        // Simula selectores de ratio
+        document.querySelectorAll('.ratio-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.ratio-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // Micro-animación de hover en el canvas
+        const canvas = document.querySelector('.canvas-mock');
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            const y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+            canvas.style.transform = `perspective(1000px) rotateX(${y * -2}deg) rotateY(${x * 2}deg)`;
+        });
+        canvas.addEventListener('mouseleave', () => {
+            canvas.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+        });
+
+        // ─── Real Render Simulation (v5.9.0 Flow) ────────────────────────────────
+        let renderProgressInterval = null;
+
+        function startRender() {
+            toggleModal('renderConfigModal');
+        }
+
+        function confirmRender() {
+            toggleModal('renderConfigModal');
+            
+            const statusArea = document.getElementById('renderStatusArea');
+            const panelRendering = document.getElementById('statusPanelRendering');
+            const panelDone = document.getElementById('statusPanelDone');
+            const btnRender = document.getElementById('btnRender');
+
+            // Setup UI states
+            statusArea.style.display = 'block';
+            panelRendering.style.display = 'block';
+            panelDone.style.display = 'none';
+            btnRender.disabled = true;
+            btnRender.textContent = 'Rendering...';
+
+            let progress = 0;
+            renderProgressInterval = setInterval(() => {
+                progress += Math.random() * 5;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(renderProgressInterval);
+                    setTimeout(finishRender, 500);
+                }
+                document.getElementById('statusProgressBar').style.width = progress + '%';
+                document.getElementById('statusProgressPct').textContent = Math.floor(progress);
+            }, 100);
+        }
+
+        function finishRender() {
+            document.getElementById('statusPanelRendering').style.display = 'none';
+            document.getElementById('statusPanelDone').style.display = 'flex';
+            
+            const btnRender = document.getElementById('btnRender');
+            btnRender.disabled = false;
+            btnRender.innerHTML = `<i data-lucide="play" size="14" fill="currentColor"></i> Render Video`;
+            lucide.createIcons();
+        }
+
+        function resetRender() {
+            document.getElementById('renderStatusArea').style.display = 'none';
+        }
+
+    </script>
+</body>
+
+</html>

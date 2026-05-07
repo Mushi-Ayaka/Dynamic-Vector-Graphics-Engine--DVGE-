@@ -485,18 +485,18 @@ export default function App() {
       <TitleBar />
       <AboutModal />
       <SettingsModal />
-      <WorkflowModal 
-          isOpen={isWorkflowModalOpen} 
-          onClose={() => setIsWorkflowModalOpen(false)} 
+      <WorkflowModal
+        isOpen={isWorkflowModalOpen}
+        onClose={() => setIsWorkflowModalOpen(false)}
       />
       <RenderModal onConfirm={handleRenderReal} />
       {showTutorial && (
-        <TutorialOverlay 
+        <TutorialOverlay
           onClose={() => {
             setShowTutorial(false);
             setIsWorkflowModalOpen(true);
-          }} 
-          steps={studioSteps} 
+          }}
+          steps={studioSteps}
         />
       )}
       <StudioGuideReminder />
@@ -615,7 +615,7 @@ export default function App() {
             </div>
 
             <div style={{ flex: 1, overflow: 'hidden' }}>
-              <InspectorErrorBoundary t={t}>
+              <InspectorErrorBoundary t={t} key={`left-boundary-${activeProject.id}`}>
                 {activePlugin && (
                   <InspectorTabs
                     schema={activePlugin.manifest.schema || []}
@@ -830,16 +830,16 @@ export default function App() {
             </div>
 
             <div style={{ flex: 1, overflow: 'hidden' }}>
-              <InspectorErrorBoundary t={t}>
+              <InspectorErrorBoundary t={t} key={`right-boundary-${activeProject.id}`}>
                 {activeRightTab === 'inspector' ? (
                   (() => {
                     const nativeSchema = activePlugin?.manifest?.schema || [];
                     const finalSchema = [...nativeSchema, ...extractedSchema];
-                    
+
                     // Eliminar duplicados por ID (priorizar extraídos sobre nativos si coinciden)
                     const uniqueMap = new Map();
                     finalSchema.forEach(f => uniqueMap.set(f.id, f));
-                    
+
                     // [v5.9.1] Filtrar campos internos de Studio Master que se manejan en otros paneles
                     const EXCLUDED_IDS = ['masterRules', 'htmlCode', 'cssCode', 'jsCode'];
                     const uniqueSchema = Array.from(uniqueMap.values())
