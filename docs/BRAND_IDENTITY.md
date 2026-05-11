@@ -1,7 +1,7 @@
 # Ember Motion Studio — Brand Identity
 
 > Fuente de verdad para el naming, posicionamiento y herencia técnica del producto.  
-> Versión aplicable desde: **v6.0.0**
+> Versión aplicable desde: **v5.9.0**
 
 ---
 

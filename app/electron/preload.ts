@@ -68,4 +68,5 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   indexAsset: (data: { projectId: string, assetPath: string }) => ipcRenderer.invoke('index-asset', data),
   parseTableFile: (filePath: string) => ipcRenderer.invoke('parse-table-file', filePath),
   fetchRemoteRegistry: () => ipcRenderer.invoke('fetch-remote-registry'),
+  downloadAndRunUpdate: (url: string) => ipcRenderer.invoke('download-and-run-update', url),
 })

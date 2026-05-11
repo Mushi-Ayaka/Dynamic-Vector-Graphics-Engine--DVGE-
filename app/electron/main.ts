@@ -756,6 +756,38 @@ if (media_${a.id} && src_${a.id} && media_${a.id}.getAttribute('src') !== src_${
     }
   })
 
+  // [v5.9.0] Descargar y ejecutar actualizador automáticamente
+  ipcMain.handle('download-and-run-update', async (_event, url: string) => {
+    try {
+      const { spawn } = require('node:child_process');
+      const tempPath = join(app.getPath('temp'), 'DVGE-Update-Setup.exe');
+
+      console.log('[Main] Descargando actualización desde:', url);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      
+      const arrayBuffer = await res.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      fs.writeFileSync(tempPath, buffer);
+      
+      console.log('[Main] Actualización descargada en:', tempPath);
+      
+      // Ejecutar el instalador en un proceso separado (detached)
+      const child = spawn(tempPath, [], {
+        detached: true,
+        stdio: 'ignore'
+      });
+      child.unref();
+
+      // Cerrar la app para que el instalador pueda sobrescribir
+      app.quit();
+      return { success: true };
+    } catch (error: any) {
+      console.error('[Main] Error descargando actualización:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })

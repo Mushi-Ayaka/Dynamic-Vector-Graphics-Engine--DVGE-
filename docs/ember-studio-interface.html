@@ -724,7 +724,7 @@
         }
 
         .btn-open-folder:hover {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             color: white;
         }
 
@@ -813,8 +813,15 @@
         }
 
         @keyframes scaleIn {
-            from { transform: scale(0.95); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         /* --- Real Render Status Panel (Center Area) --- */
@@ -1016,7 +1023,10 @@
                         <i data-lucide="save" size="14" style="color: var(--text-secondary); cursor: pointer;"></i>
                     </div>
                     <button class="btn-render" id="btnRender" onclick="toggleModal('renderConfigModal')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                            fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
                         Render Video
                     </button>
                 </div>
@@ -1050,31 +1060,31 @@
                         </div>
                     </div>
                 </div>
-                
-                <div id="renderStatusArea" class="render-status-container">
+
+                <div id="renderStatusArea" style="margin-top: 20px; display: none; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto; padding-bottom: 20px;">
                     <!-- Estado: Rendering -->
-                    <div id="statusPanelRendering" class="rendering-panel">
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 5px;">
-                            <i data-lucide="loader-2" class="animate-spin" size="18" style="color: var(--accent);"></i>
-                            <h3 style="margin: 0; color: var(--accent); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Processing...</h3>
+                    <div id="statusPanelRendering" style="text-align: center; padding: 20px; background: rgba(59,130,246,0.05); border-radius: 6px; border: 1px solid var(--border); display: none;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px;">
+                            <i data-lucide="loader-2" class="animate-spin" size="20" style="color: var(--accent);"></i>
+                            <h3 style="margin: 0; color: var(--accent); font-size: 14px;">Processing...</h3>
                         </div>
-                        <div class="rendering-progress-track">
-                            <div id="statusProgressBar" class="rendering-progress-fill" style="width: 0%;"></div>
+                        <div style="width: 100%; height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden;">
+                            <div id="statusProgressBar" style="height: 100%; width: 0%; background: var(--accent); transition: width 0.2s;"></div>
                         </div>
-                        <div style="font-size: 10px; color: var(--text-secondary); font-family: var(--font-mono);">
+                        <div style="margin-top: 8px; font-size: 10px; color: var(--text-secondary); font-family: var(--font-mono);">
                             <span id="statusProgressPct">0</span>% Completed
                         </div>
                     </div>
 
                     <!-- Estado: Done -->
-                    <div id="statusPanelDone" class="done-drag-box" draggable="true">
+                    <div id="statusPanelDone" class="done-drag-box" draggable="true" style="border: 2px dashed var(--success); background: rgba(34,197,94,0.05); display: none; padding: 30px; border-radius: 12px; text-align: center; align-items: center; justify-content: center; flex-direction: column;">
                         <i data-lucide="check-circle" size="32" style="color: var(--success); margin-bottom: 12px;"></i>
                         <strong style="font-size: 16px; display: block; margin-bottom: 4px; color: white;">Render Finished</strong>
                         <p style="color: var(--text-secondary); font-size: 11px; margin: 0 0 15px;">
                             Drag this box to your AI chat or desktop to export the video.
                         </p>
-                        <button class="btn-open-folder" onclick="resetRender()" style="padding: 10px 20px; font-size: 11px;">
-                            <i data-lucide="folder-open" size="14"></i> Open Folder
+                        <button class="btn-open-folder" onclick="resetRender()" style="font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px;">
+                            <i data-lucide="folder-open" size="14"></i> Open OS Folder
                         </button>
                     </div>
                 </div>
@@ -1296,49 +1306,76 @@
                         <i data-lucide="file-video" size="20" color="white"></i>
                     </div>
                     <div>
-                        <h2 style="margin: 0; font-size: 16px; color: white; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Render Configuration</h2>
+                        <h2
+                            style="margin: 0; font-size: 16px; color: white; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                            Render Configuration</h2>
                         <div style="font-size: 11px; color: var(--text-disabled);">Broadcast_Title_Concept_A</div>
                     </div>
                 </div>
-                <button onclick="toggleModal('renderConfigModal')" style="background: transparent; border: none; color: #666; cursor: pointer;">
+                <button onclick="toggleModal('renderConfigModal')"
+                    style="background: transparent; border: none; color: #666; cursor: pointer;">
                     <i data-lucide="x" size="20"></i>
                 </button>
             </div>
-            
+
             <div class="render-modal-body">
                 <div class="render-modal-preview">
-                    <div style="aspect-ratio: 16/9; width: 100%; background: #050505; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                    <div
+                        style="aspect-ratio: 16/9; width: 100%; background: #050505; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
                         <i data-lucide="play-circle" size="48" style="color: var(--accent); opacity: 0.5;"></i>
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div style="font-size: 9px; color: var(--text-disabled); text-transform: uppercase; margin-bottom: 4px;">Resolution</div>
+                        <div
+                            style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div
+                                style="font-size: 9px; color: var(--text-disabled); text-transform: uppercase; margin-bottom: 4px;">
+                                Resolution</div>
                             <div style="font-size: 13px; font-weight: 600; color: white;">1920x1080</div>
                         </div>
-                        <div style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                            <div style="font-size: 9px; color: var(--text-disabled); text-transform: uppercase; margin-bottom: 4px;">Duration</div>
+                        <div
+                            style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <div
+                                style="font-size: 9px; color: var(--text-disabled); text-transform: uppercase; margin-bottom: 4px;">
+                                Duration</div>
                             <div style="font-size: 13px; font-weight: 600; color: white;">5.0 Seconds</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="render-modal-settings">
-                    <div>
-                        <label style="font-size: 10px; color: var(--text-disabled); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px;">Output Format</label>
-                        <select class="render-format-select">
-                            <option>MOV (ProRes 4444 + Alpha)</option>
-                            <option>MP4 (H.264 - Standard)</option>
-                            <option>WebM (VP9 + Alpha)</option>
+                    <div style="position: relative;">
+                        <label
+                            style="font-size: 10px; color: var(--text-disabled); text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px;">Output
+                            Format</label>
+                        <select class="render-format-select" id="real-format-select" style="width: 100%; background: #0A0A0A; border: 1px solid #333; border-radius: 8px; padding: 12px; color: white; font-size: 13px; outline: none; appearance: none;">
+                            <option value="prores">MOV (ProRes 4444 + Alpha)</option>
+                            <option value="h264">MP4 (H.264 - Estándar)</option>
+                            <option value="webm">WebM (VP9 + Alpha)</option>
+                            <option value="gif">GIF Animado</option>
+                            <option value="standard">MOV (ProRes 422)</option>
+                            <option value="png">PNG (Secuencia de Imágenes)</option>
+                            <option value="jpg">JPEG (Secuencia de Imágenes)</option>
                         </select>
+                        <i data-lucide="chevron-down" size="14" style="position: absolute; right: 12px; top: 38px; color: #666; pointer-events: none;"></i>
+                        
+                        <!-- Mock Dropdown para la Animación -->
+                        <div id="mock-dropdown" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; background: #0A0A0A; border: 1px solid #333; border-radius: 8px; margin-top: 4px; z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.8); overflow: hidden;">
+                            <div style="padding: 10px 12px; font-size: 13px; color: white;">MOV (ProRes 4444 + Alpha)</div>
+                            <div id="mock-opt-mp4" style="padding: 10px 12px; font-size: 13px; color: white; background: rgba(255,255,255,0.05); transition: background 0.2s;">MP4 (H.264 - Estándar)</div>
+                            <div style="padding: 10px 12px; font-size: 13px; color: white;">WebM (VP9 + Alpha)</div>
+                            <div style="padding: 10px 12px; font-size: 13px; color: white;">GIF Animado</div>
+                            <div style="padding: 10px 12px; font-size: 13px; color: white;">MOV (ProRes 422)</div>
+                        </div>
                     </div>
 
-                    <div class="render-format-info">
-                        <div style="font-size: 12px; font-weight: 700; color: white;">MOV (ProRes 4444)</div>
-                        <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.4;">Broadcast quality with transparent background support. High file size.</div>
-                    </div>
+                        <div style="margin-top: 12px; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 8px; border-left: 4px solid #38bdf8; display: flex; flex-direction: column; gap: 8px;" id="fmtInfoContainer">
+                            <div class="render-format-info-title" style="font-size: 12px; font-weight: 700; color: white;">MOV (ProRes 4444 + Alpha)</div>
+                            <div class="render-format-info-desc" style="font-size: 11px; color: var(--text-secondary); line-height: 1.4;">Alta calidad broadcast. Soporta canal alpha (transparencia). Archivo pesado.</div>
+                        </div>
 
                     <div style="margin-top: auto;">
-                        <button class="btn-render" onclick="confirmRender()" style="width: 100%; height: 50px; font-size: 14px;">
+                        <button class="btn-render" onclick="confirmRender()"
+                            style="width: 100%; height: 50px; font-size: 14px;">
                             <i data-lucide="download" size="18"></i> START EXPORT
                         </button>
                     </div>
@@ -1422,7 +1459,7 @@
 
         function confirmRender() {
             toggleModal('renderConfigModal');
-            
+
             const statusArea = document.getElementById('renderStatusArea');
             const panelRendering = document.getElementById('statusPanelRendering');
             const panelDone = document.getElementById('statusPanelDone');
@@ -1451,7 +1488,7 @@
         function finishRender() {
             document.getElementById('statusPanelRendering').style.display = 'none';
             document.getElementById('statusPanelDone').style.display = 'flex';
-            
+
             const btnRender = document.getElementById('btnRender');
             btnRender.disabled = false;
             btnRender.innerHTML = `<i data-lucide="play" size="14" fill="currentColor"></i> Render Video`;

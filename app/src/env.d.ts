@@ -132,6 +132,7 @@ declare global {
       copyToProject: (data: { projectId: string, sourcePath: string }) => Promise<{ success: boolean, filePath?: string, error?: string }>;
       listAssets: (projectId: string) => Promise<{ name: string, path: string }[]>;
       indexAsset: (data: { projectId: string, assetPath: string }) => Promise<{ success: boolean, filePath?: string, error?: string }>;
+      downloadAndRunUpdate?: (url: string) => Promise<{ success: boolean, error?: string }>;
     }
   }
 }

@@ -23,6 +23,8 @@ import { DataGridEditor } from './components/DataGridEditor'
 import { WelcomeGuide } from './components/WelcomeGuide'
 import { WorkflowModal } from './components/WorkflowModal'
 import { StudioGuideReminder } from './components/StudioGuideReminder'
+import { UpdateModal } from './components/UpdateModal'
+import { VERSION_CODE } from './version'
 
 class InspectorErrorBoundary extends React.Component<
   { children: React.ReactNode; t: (key: any) => string },
@@ -87,7 +89,25 @@ export default function App() {
   const [isWorkflowModalOpen, setIsWorkflowModalOpen] = React.useState(false);
   const [showTutorial, setShowTutorial] = React.useState(false);
   const [datasetToEdit, setDatasetToEdit] = React.useState<{ id: string, data: string[][] } | null>(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = React.useState(false);
+  const [updateInfo, setUpdateInfo] = React.useState<{ url: string, notes: string } | null>(null);
 
+  React.useEffect(() => {
+    const checkUpdates = async () => {
+      try {
+        const res = await fetch('https://raw.githubusercontent.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-/main/app/public/version.json');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.versionCode > VERSION_CODE) {
+          setUpdateInfo({ url: data.downloadUrl, notes: data.releaseNotes || '' });
+          setIsUpdateModalOpen(true);
+        }
+      } catch (err) {
+        console.log('[Updater] Error checking updates:', err);
+      }
+    };
+    setTimeout(checkUpdates, 4000);
+  }, []);
   const defaultBrief = "Diseño premium, minimalista y corporativo. Priorizar fluidez visual mediante interpolaciones suaves (lerp) y transiciones sutiles (opacidad/escala). El ritmo de animación debe ser determinista y solemne, atado estrictamente a ctx.timeline. \n\nPROHIBIDO: Uso de colores neón, desenfoques de movimiento excesivos (motion blur), o animaciones con rebotes elásticos (spring) que resten seriedad al gráfico.";
 
   const [briefText, setBriefText] = React.useState('');
@@ -397,6 +417,16 @@ export default function App() {
         <TitleBar />
         <AboutModal />
         <SettingsModal />
+        <UpdateModal
+          isOpen={isUpdateModalOpen}
+          releaseNotes={updateInfo?.notes || ''}
+          onClose={() => setIsUpdateModalOpen(false)}
+          onUpdate={() => {
+            if (updateInfo?.url && window.ipcRenderer?.downloadAndRunUpdate) {
+              window.ipcRenderer.downloadAndRunUpdate(updateInfo.url);
+            }
+          }}
+        />
         <HomeMenu />
         <WelcomeGuide />
         {!activeProject && startHomeTutorial && (
@@ -485,6 +515,16 @@ export default function App() {
       <TitleBar />
       <AboutModal />
       <SettingsModal />
+      <UpdateModal
+        isOpen={isUpdateModalOpen}
+        releaseNotes={updateInfo?.notes || ''}
+        onClose={() => setIsUpdateModalOpen(false)}
+        onUpdate={() => {
+          if (updateInfo?.url && window.ipcRenderer?.downloadAndRunUpdate) {
+            window.ipcRenderer.downloadAndRunUpdate(updateInfo.url);
+          }
+        }}
+      />
       <WorkflowModal
         isOpen={isWorkflowModalOpen}
         onClose={() => setIsWorkflowModalOpen(false)}
