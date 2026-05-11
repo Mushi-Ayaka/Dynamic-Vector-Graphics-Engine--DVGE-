@@ -131,8 +131,8 @@ declare global {
       saveArtifact: (data: { projectId: string, fileName: string, base64Data: string }) => Promise<{ success: boolean, filePath?: string, error?: string }>;
       copyToProject: (data: { projectId: string, sourcePath: string }) => Promise<{ success: boolean, filePath?: string, error?: string }>;
       listAssets: (projectId: string) => Promise<{ name: string, path: string }[]>;
-      indexAsset: (data: { projectId: string, assetPath: string }) => Promise<{ success: boolean, filePath?: string, error?: string }>;
-      downloadAndRunUpdate?: (url: string) => Promise<{ success: boolean, error?: string }>;
+      downloadUpdate?: (url: string) => Promise<{ success: boolean, tempPath?: string, error?: string }>;
+      installUpdate?: (tempPath: string) => Promise<{ success: boolean, error?: string }>;
     }
   }
 }

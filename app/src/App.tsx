@@ -421,9 +421,15 @@ export default function App() {
           isOpen={isUpdateModalOpen}
           releaseNotes={updateInfo?.notes || ''}
           onClose={() => setIsUpdateModalOpen(false)}
-          onUpdate={() => {
-            if (updateInfo?.url && window.ipcRenderer?.downloadAndRunUpdate) {
-              window.ipcRenderer.downloadAndRunUpdate(updateInfo.url);
+          onDownload={async () => {
+            if (updateInfo?.url && window.ipcRenderer?.downloadUpdate) {
+              const res = await window.ipcRenderer.downloadUpdate(updateInfo.url);
+              return res.success ? res.tempPath : undefined;
+            }
+          }}
+          onInstall={(path) => {
+            if (window.ipcRenderer?.installUpdate) {
+              window.ipcRenderer.installUpdate(path);
             }
           }}
         />
@@ -519,9 +525,15 @@ export default function App() {
         isOpen={isUpdateModalOpen}
         releaseNotes={updateInfo?.notes || ''}
         onClose={() => setIsUpdateModalOpen(false)}
-        onUpdate={() => {
-          if (updateInfo?.url && window.ipcRenderer?.downloadAndRunUpdate) {
-            window.ipcRenderer.downloadAndRunUpdate(updateInfo.url);
+        onDownload={async () => {
+          if (updateInfo?.url && window.ipcRenderer?.downloadUpdate) {
+            const res = await window.ipcRenderer.downloadUpdate(updateInfo.url);
+            return res.success ? res.tempPath : undefined;
+          }
+        }}
+        onInstall={(path) => {
+          if (window.ipcRenderer?.installUpdate) {
+            window.ipcRenderer.installUpdate(path);
           }
         }}
       />

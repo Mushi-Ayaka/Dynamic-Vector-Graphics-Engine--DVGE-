@@ -756,12 +756,10 @@ if (media_${a.id} && src_${a.id} && media_${a.id}.getAttribute('src') !== src_${
     }
   })
 
-  // [v5.9.0] Descargar y ejecutar actualizador automáticamente
-  ipcMain.handle('download-and-run-update', async (_event, url: string) => {
+  // [v5.9.0] Descargar actualización
+  ipcMain.handle('download-update', async (_event, url: string) => {
     try {
-      const { spawn } = require('node:child_process');
       const tempPath = join(app.getPath('temp'), 'DVGE-Update-Setup.exe');
-
       console.log('[Main] Descargando actualización desde:', url);
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -771,7 +769,17 @@ if (media_${a.id} && src_${a.id} && media_${a.id}.getAttribute('src') !== src_${
       fs.writeFileSync(tempPath, buffer);
       
       console.log('[Main] Actualización descargada en:', tempPath);
-      
+      return { success: true, tempPath };
+    } catch (error: any) {
+      console.error('[Main] Error descargando actualización:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // [v5.9.0] Ejecutar instalación
+  ipcMain.handle('install-update', async (_event, tempPath: string) => {
+    try {
+      const { spawn } = require('node:child_process');
       // Ejecutar el instalador en un proceso separado (detached)
       const child = spawn(tempPath, [], {
         detached: true,
@@ -783,7 +791,7 @@ if (media_${a.id} && src_${a.id} && media_${a.id}.getAttribute('src') !== src_${
       app.quit();
       return { success: true };
     } catch (error: any) {
-      console.error('[Main] Error descargando actualización:', error);
+      console.error('[Main] Error instalando actualización:', error);
       return { success: false, error: error.message };
     }
   });
