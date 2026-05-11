@@ -95,7 +95,7 @@ export default function App() {
   React.useEffect(() => {
     const checkUpdates = async () => {
       try {
-        const res = await fetch('https://raw.githubusercontent.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-/main/app/public/version.json');
+        const res = await fetch('https://gist.githubusercontent.com/Mushi-Ayaka/4fd670d4f78b1764fd24a4d4f7a4fb82/raw/version.json');
         if (!res.ok) return;
         const data = await res.json();
         if (data.versionCode > VERSION_CODE) {
