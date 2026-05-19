@@ -24,14 +24,14 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
     const { fps, width, height, durationInFrames } = useVideoConfig();
 
     const store = useStore();
-    
+
     // [v6.8.1] FIXED: Extracción de propiedades con filtrado de metadatos.
-    const { 
-        properties: passedProperties, 
-        files: passedFiles, 
-        activePluginFiles: passedFilesAlt, 
-        _isPreview, 
-        ...rest 
+    const {
+        properties: passedProperties,
+        files: passedFiles,
+        activePluginFiles: passedFilesAlt,
+        _isPreview,
+        ...rest
     } = passedProps;
 
     // Filtramos para ver si 'rest' tiene datos reales o solo flags de sistema
@@ -172,12 +172,12 @@ export const PluginWrapper: React.FC<any> = (passedProps) => {
     const baseHeight = 1080;
     const scaleX = width / baseWidth;
     const scaleY = height / baseHeight;
-    const scale = Math.min(scaleX, scaleY, 1); 
+    const scale = Math.min(scaleX, scaleY, 1);
 
     return (
-        <div style={{ 
-            width, 
-            height, 
+        <div style={{
+            width,
+            height,
             position: 'relative',
             overflow: 'hidden',
             display: 'flex',
