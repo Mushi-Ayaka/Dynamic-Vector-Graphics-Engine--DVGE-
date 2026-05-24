@@ -76,6 +76,7 @@ function calculateTimeline(
 ```
 
 Returns a `DVTimeline` object:
+
 * `progress` (number, `0.0` to `1.0`): Total animation timeline progress.
 * `isIntro` (boolean): Active during the default intro phase (first 0.8 seconds).
 * `isOutro` (boolean): Active during the default outro phase (last 0.5 seconds).
@@ -87,7 +88,7 @@ Returns a `DVTimeline` object:
 Optimized mathematical utilities tailored for vector animation and typesetting:
 
 | Method | Signature | Description |
-|---|---|---|
+| --- | --- | --- |
 | `lerp` | `(a: number, b: number, t: number): number` | Linear interpolation. |
 | `bezier` | `(curveParams: string \| number[], t: number): number` | Cubic bezier easing. |
 | `clamp` | `(val: number, min: number, max: number): number` | Restricts a value within specified bounds. |
