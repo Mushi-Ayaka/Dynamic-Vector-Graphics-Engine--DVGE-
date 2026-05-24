@@ -2,6 +2,7 @@
 
 # Specs & internal agent docs (SDD workflow)
 .agent/
+.claude/
 
 # Node
 node_modules/

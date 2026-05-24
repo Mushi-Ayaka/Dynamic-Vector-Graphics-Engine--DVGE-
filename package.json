@@ -1,0 +1,58 @@
+{
+  "name": "@dvge/core",
+  "version": "6.0.0-beta.1",
+  "description": "Deterministic vector graphics engine — framework-agnostic animation runtime.",
+  "author": "Jonatan Baron",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "jsdom": "^24.0.0",
+    "@types/jsdom": "^21.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "animation",
+    "motion",
+    "vector-graphics",
+    "deterministic",
+    "broadcast",
+    "rendering"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-.git"
+  }
+}
