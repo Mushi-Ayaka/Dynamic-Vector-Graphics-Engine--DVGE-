@@ -54,6 +54,6 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-.git"
+    "url": "git+https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-.git"
   }
 }

@@ -4,7 +4,7 @@
  */
 
 export const DVGE_MASTER_RULES = `
-# DYNAMIC VECTOR GRAPHICS ENGINE (DVGE) v5.5.0 GA
+# DVGE (Dynamic Vector Graphics Engine) Runtime Bridge v5.5.0 GA
 ## GUÍA TÉCNICA PARA ASISTENTES DE IA
 
 ### 1. ARQUITECTURA CORE

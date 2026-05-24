@@ -63,3 +63,5 @@ AUDIT_ENGINE_v58.md
 TECHNICAL_DEBT.md
 *.txt
 !app/EULA.txt
+*.npmrc
+.gitignore
