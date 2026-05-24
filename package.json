@@ -1,7 +1,7 @@
 {
-  "name": "@dvge/core",
+  "name": "@dvge/runtime-bridge",
   "version": "6.0.0-beta.1",
-  "description": "Deterministic vector graphics engine — framework-agnostic animation runtime.",
+  "description": "DVGE Runtime Bridge — deterministic vector graphics engine runtime.",
   "author": "Jonatan Baron",
   "license": "MIT",
   "main": "./dist/index.js",
@@ -26,7 +26,30 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --noEmit",
+    "pack": "pnpm pack --pack-destination .",
+    "release": "pnpm publish --access public",
     "prepublishOnly": "pnpm build"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "keywords": [
+    "animation",
+    "motion",
+    "vector-graphics",
+    "deterministic",
+    "broadcast",
+    "rendering",
+    "runtime",
+    "runtime-bridge",
+    "dvge-runtime",
+    "dvge"
+  ],
+  "bugs": {
+    "url": "https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-/issues"
+  },
+  "homepage": "https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-.git"
   },
   "dependencies": {},
   "devDependencies": {
@@ -43,17 +66,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "keywords": [
-    "animation",
-    "motion",
-    "vector-graphics",
-    "deterministic",
-    "broadcast",
-    "rendering"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Mushi-Ayaka/Dynamic-Vector-Graphics-Engine--DVGE-.git"
   }
 }

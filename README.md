@@ -37,6 +37,33 @@ yarn add @dvge/core
 
 ---
 
+## Publishing
+
+This package is ready for npm publishing from the repository root.
+
+1. Ensure you have a valid npm token in `NPM_TOKEN`.
+2. Build the package:
+
+```bash
+pnpm build
+```
+
+3. Publish to npm:
+
+```bash
+pnpm release
+```
+
+If you want to verify the package contents first:
+
+```bash
+pnpm pack --pack-destination .
+```
+
+> Do not commit your npm auth token to Git. The local `.npmrc` file should reference `${NPM_TOKEN}`.
+
+---
+
 ## Technical API Reference
 
 The package exports three primary execution and utility primitives:
