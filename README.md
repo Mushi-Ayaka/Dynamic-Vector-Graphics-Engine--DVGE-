@@ -1,80 +1,187 @@
-# Ember Motion Studio v5.9.0
+# @dvge/core
 
-[![Sitio Oficial](https://img.shields.io/badge/Sitio-Ember_Motion_Studio-E44C30?style=for-the-badge)](https://ember-motion-studio-landing.vercel.app/)
+Headless, framework-agnostic dynamic vector graphics and deterministic animation engine.
 
-**Ember Motion Studio** es un software de escritorio de alto rendimiento diseñado para gráficos o animaciones profesionales. Construido con React, Electron y Remotion, permite a los productores y editores crear, personalizar y exportar gráficos dinámicos (lower thirds, títulos, callouts) con retroalimentación en tiempo real y soporte nativo para ProRes 4444 + Alpha.
+---
 
-> [!IMPORTANT]
-> **Estado del Proyecto**: Ember Motion Studio es actualmente un proyecto **Open Source** libre y gratuito bajo la **MIT License**, mantenido por un único desarrollador independiente.
-> 
-> **Advertencia de Windows SmartScreen**: Debido a los elevados costes de los Certificados de Firma de Código EV ($300 - $500 USD anuales) y requisitos corporativos, nuestros ejecutables no están firmados digitalmente. Sin embargo, priorizamos la transparencia absoluta: nuestro código fuente es 100% auditable públicamente en GitHub. Para instalar con total tranquilidad, haz clic en **"Más información"** en la advertencia azul de Windows y selecciona **"Ejecutar de todos modos"**.
+## Overview
 
-## ✨ Key Features (v5.9.0)
+`@dvge/core` is a lightweight, high-performance runtime designed for running dynamic, vector-based visual plugins in a secure, mathematically deterministic environment. It provides a frame-accurate execution layer suitable for real-time design tools, video editors, and automated broadcast pipelines.
 
-- **Studio Master Core**: Integración nativa de proyectos en blanco. Programa desde cero sin dependencias externas, utilizando el motor como un lienzo en blanco profesional de alto rendimiento.
-- **Dynamic Inspector v2**: Extracción automática y dinámica de propiedades a partir de comentarios `/* @dv-prop */` en tu código fuente. Soporta inputs complejos como `alignment`, `slider`, `easing` e `icon` sincronizados al instante.
-- **Transparency Transformer**: Motor de estabilidad avanzado para exportaciones ProRes 4444. Garantiza una captura del canal Alpha matemáticamente perfecta desde el fotograma cero.
-- **Flujo Vibe Motion (Knowledge Bridge)**: Diseña de forma ultra-rápida definiendo la dirección artística y exportando las propiedades de tu lienzo a un PDF estructurado. Este documento entrena perfectamente a modelos de IA externos (como Claude 3.5 Sonnet) para que generen código Javascript compatible que solo tienes que pegar de vuelta en el canvas.
-- **Bilingual Interface**: Soporte total de localización en Inglés y Español, sincronizado a través de un sistema de traducción dinámica en toda la aplicación.
-- **Atomic Async I/O**: Sistema de guardado y persistencia de proyectos inmune a corrupciones de archivos mediante escrituras transaccionales atómicas en disco.
+By decoupling animation logic from system CPU time, `@dvge/core` ensures that rendering a given frame $N$ always yields identical visual output across any platform, device, or rendering engine.
 
-## 🚀 Technical Stack
+---
 
-- **Core**: React 18, Electron 29, Vite.
-- **Rendering**: Remotion (Frame-accurate determinism).
-- **State**: Zustand (Persistence & Global Sync).
-- **Security**: Shadow DOM Sandboxing & Polyfilled Roots.
+## Core Capabilities
 
-## 🛠️ Getting Started
+* **Deterministic Animation Runtime**: Timeline calculations are purely algebraic. The animation state relies strictly on the current frame index, eliminating dependencies on `requestAnimationFrame`, `setTimeout`, or system clock drift.
+* **Shadow DOM Sandboxing**: Runs user-provided scripts inside isolated Shadow Roots. The execution layer virtualizes standard global objects (`window`, `globalThis`) to prevent namespace pollution and style leakage.
+* **Native Math & Physics**: Built-in math utilities for cubic bezier easing, spring physics (stiffness and damping), typewriter text effects, and continuous tickers.
+* **Fluid Layout Support**: Native coordinate translation utilities (`remapX`, `remapY`) to support dynamic scaling for arbitrary canvas sizes or orientation switches.
+* **Declarative Schemas**: Extends template parameters into structured property schemas to dynamically populate inspector UI panels in host applications.
 
-### Requisitos Previos
+---
 
-- [Node.js](https://nodejs.org/) (v18 o superior)
-- **Google Chrome** (Instalado para el renderizado headless)
-
-### Instalación para Desarrollo
-
-1. Clonar el repositorio.
-2. Entrar en la carpeta del proyecto:
-
-   ```bash
-   cd "Dynamic Vector Graphics Engine"/app
-   ```
-
-3. Instalar dependencias:
-
-   ```bash
-   npm install
-   ```
-
-4. Iniciar el entorno de desarrollo:
-
-   ```bash
-   npm run dev
-   ```
-
-### Producción
-
-Para generar el instalador oficial (.exe):
+## Installation
 
 ```bash
-npm run build
+# Using pnpm
+pnpm add @dvge/core
+
+# Using npm
+npm install @dvge/core
+
+# Using yarn
+yarn add @dvge/core
 ```
 
-## 📁 Estructura del Proyecto
+---
 
-```text
-app/
-├── electron/          # Lógica del proceso principal (IPC, Filesystem, Render API)
-├── src/               # Interfaz de usuario (React, i18n, Global Store)
-│   ├── components/    # Componentes de UI (Inspector, Project Manager, Modales)
-│   ├── remotion/      # Composiciones de video y PluginWrapper
-│   └── engine/        # Núcleo del motor y Sandbox (Bridge, TagExtractor)
-└── TECHNICAL.md       # Documentación técnica profunda del motor
+## Technical API Reference
+
+The package exports three primary execution and utility primitives:
+
+```typescript
+import {
+  dvUtils,
+  executePluginSandbox,
+  calculateTimeline
+} from '@dvge/core';
 ```
 
-## 📜 Licencia
+### 1. `executePluginSandbox`
 
-MIT — ver el archivo [LICENSE](LICENSE) para más detalles.
+Compiles and executes raw JavaScript code inside a virtualized scope bound to an isolated Shadow Root.
 
-© 2026 Jonatan Baron. All rights reserved.
+```typescript
+function executePluginSandbox(
+  jsCode: string,
+  context: DVContext,
+  onRegister: (lifecycle: DVLifecycle) => void
+): void
+```
+
+The execution layer intercepts standard global namespaces (`window`, `globalThis`, `process`, `require`) to enforce isolation. It evaluates the source code and hooks into the declared update lifecycle.
+
+### 2. `calculateTimeline`
+
+Calculates localized phase indicators for a specific frame index.
+
+```typescript
+function calculateTimeline(
+  frame: number,
+  fps: number,
+  duration: number
+): DVTimeline
+```
+
+Returns a `DVTimeline` object:
+* `progress` (number, `0.0` to `1.0`): Total animation timeline progress.
+* `isIntro` (boolean): Active during the default intro phase (first 0.8 seconds).
+* `isOutro` (boolean): Active during the default outro phase (last 0.5 seconds).
+* `introProgress` (number, `0.0` to `1.0`): Normalized progress of the intro phase.
+* `outroProgress` (number, `0.0` to `1.0`): Normalized progress of the outro phase.
+
+### 3. `dvUtils` (Math & Animation Suite)
+
+Optimized mathematical utilities tailored for vector animation and typesetting:
+
+| Method | Signature | Description |
+|---|---|---|
+| `lerp` | `(a: number, b: number, t: number): number` | Linear interpolation. |
+| `bezier` | `(curveParams: string \| number[], t: number): number` | Cubic bezier easing. |
+| `clamp` | `(val: number, min: number, max: number): number` | Restricts a value within specified bounds. |
+| `spring` | `(t: number, stiffness?: number, damping?: number): number` | Analytical spring physical movement. |
+| `mapRange` | `(val, inMin, inMax, outMin, outMax): number` | Linearly maps a value from an input range to an output range. |
+| `typewriter` | `(text: string, frame: number, framesPerChar?: number): string` | Returns a substring based on frame progress. |
+| `tickerOffset` | `(frame: number, speed: number, textWidth: number): number` | Computes a seamless scrolling horizontal offset. |
+| `loop` | `(frame: number, duration: number): number` | Returns the progression of a repeating loop. |
+| `remapX` | `(x: number, designWidth: number, currentWidth: number): number` | Linearly scales a horizontal position relative to viewport width. |
+| `remapY` | `(y: number, designHeight: number, currentHeight: number): number` | Linearly scales a vertical position relative to viewport height. |
+
+---
+
+## Integration Example
+
+Below is a complete, minimal implementation of how a host application initializes `@dvge/core` inside a Shadow Root and renders a single frame:
+
+```typescript
+import { executePluginSandbox, dvUtils, calculateTimeline } from '@dvge/core';
+
+// 1. Initialize canvas container and attach Shadow Root
+const container = document.getElementById('canvas-container')!;
+const shadowRoot = container.attachShadow({ mode: 'open' });
+
+// 2. Build the execution context for frame 30 (1 second at 30 fps)
+const frame = 30;
+const fps = 30;
+const duration = 150; // 5 seconds total duration
+
+const context = {
+  root: shadowRoot,
+  frame: frame,
+  props: {
+    title: "Headless Engine",
+    color: "#E44C30",
+    slideDistance: 300
+  },
+  utils: dvUtils,
+  timeline: calculateTimeline(frame, fps, duration),
+  state: {}, // Volatile state cache persisted across renders
+  refs: {},  // HTMLElement cache persisted across renders
+  env: {
+    isExporting: false,
+    resolution: { width: 1920, height: 1080 },
+    aspectRatio: 16 / 9,
+    isPortrait: false
+  },
+  global: {} // Shared variables across multiple layers
+};
+
+// 3. Define the plugin source code (dynamic user script)
+const pluginSource = `
+  window.update = (frame, props, ctx) => {
+    let element = ctx.root.getElementById('text-node');
+    if (!element) {
+      element = document.createElement('div');
+      element.id = 'text-node';
+      element.style.position = 'absolute';
+      element.style.fontFamily = 'sans-serif';
+      element.style.fontSize = '48px';
+      ctx.root.appendChild(element);
+    }
+
+    // Spring entrance animation
+    const springProgress = ctx.utils.spring(ctx.timeline.introProgress, 200, 20);
+    const x = ctx.utils.lerp(-props.slideDistance, 50, springProgress);
+
+    element.textContent = ctx.utils.typewriter(props.title, frame, 2);
+    element.style.color = props.color;
+    element.style.transform = \`translateX(\${x}px)\`;
+  };
+`;
+
+// 4. Run the code in the sandbox environment
+executePluginSandbox(pluginSource, context, (lifecycle) => {
+  if (lifecycle.awake) lifecycle.awake(context);
+  if (lifecycle.start) lifecycle.start(context);
+  if (lifecycle.update) lifecycle.update(context);
+});
+```
+
+---
+
+## Quality & Specifications
+
+`@dvge/core` is rigorously tested to ensure exact mathematical idempotence, isolated global scopes, and zero leakage of layout styles.
+
+```bash
+# Run unit and Property-Based Tests (PBT)
+pnpm test
+```
+
+---
+
+## License
+
+MIT License. Copyright © 2026 Jonatan Baron. All rights reserved.
